@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Folha de Ponto - Usuário</title>
+
+<style>
+  :root{
+    --primary:#1f2d3d;
+    --info:#2980b9;
+    --success:#27ae60;
+    --danger:#e74c3c;
+    --warning:#f39c12;
+    --bg:#f4f7f6;
+    --border:#e6eaee;
+    --muted:#6b7a80;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Segoe UI,system-ui,Arial;background:var(--bg);color:#122}
+  .wrap{max-width:1200px;margin:18px auto;padding:0 14px}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+  .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  h1{margin:0;color:var(--primary);font-size:18px}
+  .sub{margin-top:6px;color:var(--muted);font-weight:800;font-size:12px}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:14px}
+  @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+  label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase}
+  input, textarea{
+    width:100%;
+    padding:10px;
+    border:1px solid #dfe6ee;
+    border-radius:10px;
+    font-size:14px;
+    outline:none;
+    background:#fff;
+  }
+  input:focus, textarea:focus{border-color:var(--info)}
+  textarea{min-height:86px;resize:vertical}
+  button{
+    border:none;border-radius:10px;padding:10px 12px;font-weight:900;
+    cursor:pointer;color:#fff
+  }
+  .btn-info{background:var(--info)}
+  .btn-success{background:var(--success)}
+  .btn-danger{background:var(--danger)}
+  .btn-warn{background:var(--warning)}
+  .btn-ghost{background:#eef2f6;color:#223;border:1px solid var(--border)}
+  .muted{color:var(--muted);font-weight:800;font-size:12px}
+  .helper{font-size:11px;font-weight:900;color:var(--muted);margin-top:6px;min-height:14px}
+  .hidden{display:none !important;}
+  table{width:100%;border-collapse:collapse}
+  th{background:var(--primary);color:#fff;text-align:left;padding:10px;font-size:12px;white-space:nowrap}
+  td{padding:9px;border-bottom:1px solid #edf0f3;font-size:13px;vertical-align:top}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  .actions button{padding:7px 10px;font-size:11px;border-radius:8px}
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:999px;
+    font-size:11px;font-weight:1000;border:1px solid var(--border);
+    background:#f6f8fa;color:#334
+  }
+  .badge.red{background:#ffe9e8;border-color:#ffd0cc;color:#a11}
+  .badge.orange{background:#fff3e1;border-color:#ffe2b6;color:#8a4b00}
+  .badge.green{background:#e8ffef;border-color:#c8f6d7;color:#0b6a2d}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width: 700px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="top">
+      <div>
+        <h1>Folha de Ponto – Usuário</h1>
+        <div class="sub">Funcionários fixos • Registro • Exportação • Envio para ADM</div>
+      </div>
+      <div class="muted">
+        <span class="badge">Dica</span> Digite a matrícula ou comece a digitar o nome.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ===== FORMULÁRIO ===== -->
+    <div class="card">
+      <h2 style="margin:0;color:var(--primary);font-size:14px;">Lançar Registro</h2>
+      <div class="muted">Os funcionários são pré-cadastrados (somente leitura).</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
+
+      <form id="formRegistro">
+        <input type="hidden" id="editIndexRegistro">
+
+        <div class="split">
+          <div>
+            <label>Matrícula</label>
+            <input id="matricula" class="mono" placeholder="Ex: 110" />
+            <div id="msgMatricula" class="helper"></div>
+          </div>
+
+          <div>
+            <label>Nome</label>
+            <input id="nome" list="listaNomes" placeholder="Ex: ju..." autocomplete="off" required />
+            <datalist id="listaNomes"></datalist>
+            <div id="msgNome" class="helper"></div>
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <label>Função</label>
+            <input id="funcao" placeholder="Preenchimento automático" readonly />
+          </div>
+          <div>
+            <label>Vínculo</label>
+            <input id="vinculo" placeholder="Preenchimento automático" readonly />
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <label>Carga</label>
+            <input id="carga" placeholder="Preenchimento automático" readonly />
+          </div>
+          <div>
+            <label>Mês/Ano do registro</label>
+            <input id="periodo" type="month" />
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <label>Horas extras</label>
+            <input id="horas" type="number" min="0" value="0" />
+          </div>
+          <div>
+            <label>Total de faltas</label>
+            <input id="totalFaltas" type="number" value="0" disabled />
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <label>Falta com atestado (0-15)</label>
+            <input id="faltaA" type="number" min="0" max="15" value="0" />
+          </div>
+          <div>
+            <label>Falta sem atestado (0-15)</label>
+            <input id="faltaS" type="number" min="0" max="15" value="0" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label>Observações</label>
+          <textarea id="obs" placeholder="Ex: justificativa, afastamento, observações..."></textarea>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+          <button class="btn-success" type="submit" id="btnAddRegistro">Adicionar</button>
+          <button class="btn-warn hidden" type="button" id="btnSalvarRegistro" onclick="salvarEdicaoRegistro()">Salvar Alterações</button>
+          <button class="btn-info" type="button" onclick="exportarCSV()">Exportar CSV</button>
+          <button class="btn-info" type="button" onclick="enviarParaADM()">📤 Enviar para ADM</button>
+          <button class="btn-danger" type="button" onclick="limparRegistros()">Limpar registros</button>
+        </div>
+
+        <div class="muted" style="margin-top:10px;">
+          <span class="badge">Obs</span> Se a matrícula não existir na lista fixa, o sistema não preencherá os dados.
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== TABELA ===== -->
+    <div class="card">
+      <h2 style="margin:0;color:var(--primary);font-size:14px;">Tabela de Registros</h2>
+      <div class="muted">Salvo automaticamente neste navegador.</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
+
+      <div class="row">
+        <div>
+          <label>Filtrar por período</label><br/>
+          <input id="filtroPeriodo" type="month" />
+        </div>
+        <div>
+          <label>Buscar</label><br/>
+          <input id="buscaRegistro" placeholder="nome, matrícula..." />
+        </div>
+      </div>
+
+      <div style="overflow:auto;margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Matrícula</th>
+              <th>Nome</th>
+              <th>HE</th>
+              <th>Falta A</th>
+              <th>Falta S</th>
+              <th>Total</th>
+              <th>Obs</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRegistros"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   1) FUNCIONÁRIOS FIXOS (SOMENTE LEITURA)
+   👉 Edite aqui a lista oficial
+========================= */
+const FUNCIONARIOS = {
+  "101": { nome: "Ana Souza", funcao: "Professor", vinculo: "Efetivo", carga: "40h" },
+  "102": { nome: "Bruno Lima", funcao: "Secretaria", vinculo: "Contratado", carga: "40h" },
+  "103": { nome: "Carlos Silva", funcao: "Vigilante", vinculo: "Efetivo", carga: "40h" },
+  "104": { nome: "Daniela Rocha", funcao: "Diretora", vinculo: "Efetivo", carga: "40h" },
+  "110": { nome: "Juliana Ribeiro", funcao: "Merendeira", vinculo: "Contratado", carga: "40h" },
+  "120": { nome: "Yasmin Duarte", funcao: "Professor", vinculo: "Efetivo", carga: "40h" }
+};
+
+/* =========================
+   2) REGISTROS (salvos no navegador)
+========================= */
+const KEY_REG  = "SEMEC_REGISTROS_V1";
+let registros = [];
+
+/* =========================
+   HELPERS
+========================= */
+function toNum(n){
+  const x = Number(n);
+  return Number.isFinite(x) ? x : 0;
+}
+function clamp015(n){
+  n = toNum(n);
+  return Math.max(0, Math.min(15, n));
+}
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function periodoHoje(){
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${d.getFullYear()}-${mm}`;
+}
+function badgeTotal(total){
+  if (total >= 10) return `<span class="badge red">${total}</span>`;
+  if (total >= 5)  return `<span class="badge orange">${total}</span>`;
+  return `<span class="badge green">${total}</span>`;
+}
+function setMsg(el, text, color){
+  el.textContent = text || "";
+  if (color) el.style.color = color;
+}
+
+/* =========================
+   ELEMENTOS
+========================= */
+const formRegistro = document.getElementById("formRegistro");
+const editIndexRegistro = document.getElementById("editIndexRegistro");
+const btnAddRegistro = document.getElementById("btnAddRegistro");
+const btnSalvarRegistro = document.getElementById("btnSalvarRegistro");
+
+const matricula = document.getElementById("matricula");
+const nome = document.getElementById("nome");
+const funcao = document.getElementById("funcao");
+const vinculo = document.getElementById("vinculo");
+const carga = document.getElementById("carga");
+const periodo = document.getElementById("periodo");
+const horas = document.getElementById("horas");
+const faltaA = document.getElementById("faltaA");
+const faltaS = document.getElementById("faltaS");
+const totalFaltas = document.getElementById("totalFaltas");
+const obs = document.getElementById("obs");
+
+const msgMatricula = document.getElementById("msgMatricula");
+const msgNome = document.getElementById("msgNome");
+
+const filtroPeriodo = document.getElementById("filtroPeriodo");
+const buscaRegistro = document.getElementById("buscaRegistro");
+const tbodyReg = document.getElementById("tbodyRegistros");
+
+/* =========================
+   AUTOCOMPLETE (datalist)
+========================= */
+function montarListaNomes(){
+  const dl = document.getElementById("listaNomes");
+  dl.innerHTML = "";
+  Object.entries(FUNCIONARIOS)
+    .map(([mat, f]) => ({ mat, ...f }))
+    .sort((a,b)=> (a.nome||"").localeCompare(b.nome||"","pt-BR"))
+    .forEach(f=>{
+      const opt = document.createElement("option");
+      opt.value = f.nome;
+      dl.appendChild(opt);
+    });
+}
+
+function acharMatriculaPorNome(nm){
+  const alvo = (nm||"").trim().toLowerCase();
+  for (const m in FUNCIONARIOS){
+    if ((FUNCIONARIOS[m].nome||"").trim().toLowerCase() === alvo) return m;
+  }
+  return null;
+}
+
+function preencherPorMatricula(m){
+  const f = FUNCIONARIOS[m];
+  if (!f) return false;
+  nome.value = f.nome || "";
+  funcao.value = f.funcao || "";
+  vinculo.value = f.vinculo || "";
+  carga.value = f.carga || "";
+  return true;
+}
+
+/* =========================
+   Total faltas
+========================= */
+function calcTotalFaltas(){
+  const a = clamp015(faltaA.value);
+  const s = clamp015(faltaS.value);
+  totalFaltas.value = String(a + s);
+}
+faltaA.addEventListener("input", ()=>{ faltaA.value = clamp015(faltaA.value); calcTotalFaltas(); });
+faltaS.addEventListener("input", ()=>{ faltaS.value = clamp015(faltaS.value); calcTotalFaltas(); });
+
+/* =========================
+   Auto-fill matrícula / nome
+========================= */
+matricula.addEventListener("input", ()=>{
+  setMsg(msgMatricula,"");
+  setMsg(msgNome,"");
+
+  const m = (matricula.value||"").trim();
+  if (!m) return;
+
+  if (preencherPorMatricula(m)){
+    setMsg(msgMatricula, "Funcionário encontrado.", "var(--success)");
+  } else {
+    // limpa campos automáticos se matrícula inválida
+    funcao.value = "";
+    vinculo.value = "";
+    carga.value = "";
+    setMsg(msgMatricula, "Matrícula não cadastrada na lista fixa.", "var(--danger)");
+  }
+});
+
+nome.addEventListener("change", ()=>{
+  setMsg(msgMatricula,"");
+  setMsg(msgNome,"");
+
+  const m = acharMatriculaPorNome(nome.value);
+  if (m){
+    matricula.value = m;
+    preencherPorMatricula(m);
+    setMsg(msgNome, "Nome encontrado.", "var(--success)");
+  }
+});
+
+/* =========================
+   STORAGE registros
+========================= */
+function loadRegistros(){
+  try{
+    const raw = localStorage.getItem(KEY_REG);
+    registros = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(registros)) registros = [];
+  }catch{ registros = []; }
+}
+function saveRegistros(){
+  localStorage.setItem(KEY_REG, JSON.stringify(registros));
+}
+
+/* =========================
+   FILTRO/RENDER
+========================= */
+function getRegistrosFiltrados(){
+  const p = (filtroPeriodo.value||"").trim();
+  const q = (buscaRegistro.value||"").trim().toLowerCase();
+
+  return registros.filter(r=>{
+    const okP = !p || (r.periodo||"") === p;
+    const hay = `${r.periodo} ${r.matricula} ${r.nome} ${r.obs}`.toLowerCase();
+    const okQ = !q || hay.includes(q);
+    return okP && okQ;
+  });
+}
+
+function renderRegistros(){
+  const lista = getRegistrosFiltrados();
+  tbodyReg.innerHTML = lista.map((r)=>{
+    const idx = registros.findIndex(x=>x.id === r.id);
+    const total = toNum(r.faltaA) + toNum(r.faltaS);
+    return `
+      <tr>
+        <td class="mono">${escapeHtml(r.periodo||"")}</td>
+        <td class="mono">${escapeHtml(r.matricula||"")}</td>
+        <td>${escapeHtml(r.nome||"")}</td>
+        <td>${toNum(r.horas)}</td>
+        <td>${toNum(r.faltaA)}</td>
+        <td>${toNum(r.faltaS)}</td>
+        <td>${badgeTotal(total)}</td>
+        <td>${escapeHtml(r.obs||"").replace(/\n/g,"<br>")}</td>
+        <td class="actions">
+          <button class="btn-warn" type="button" onclick="editarRegistro(${idx})">Editar</button>
+          <button class="btn-danger" type="button" onclick="apagarRegistro(${idx})">Apagar</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  saveRegistros();
+}
+
+/* =========================
+   CRUD registros
+========================= */
+formRegistro.addEventListener("submit", (e)=>{
+  e.preventDefault();
+
+  const m = (matricula.value||"").trim();
+  const n = (nome.value||"").trim();
+
+  if (!m || !FUNCIONARIOS[m]){
+    setMsg(msgMatricula, "Use uma matrícula válida da lista fixa.", "var(--danger)");
+    return;
+  }
+  if (!n){
+    setMsg(msgNome, "Informe o nome.", "var(--danger)");
+    return;
+  }
+
+  const r = {
+    id: Date.now(),
+    periodo: (periodo.value || periodoHoje()),
+    matricula: m,
+    nome: n,
+    funcao: funcao.value || "",
+    vinculo: vinculo.value || "",
+    carga: carga.value || "",
+    horas: Math.max(0, toNum(horas.value)),
+    faltaA: clamp015(faltaA.value),
+    faltaS: clamp015(faltaS.value),
+    obs: (obs.value||"").trim()
+  };
+
+  registros.push(r);
+
+  formRegistro.reset();
+  periodo.value = periodoHoje();
+  horas.value = 0;
+  faltaA.value = 0;
+  faltaS.value = 0;
+  calcTotalFaltas();
+
+  // mantém campos readonly limpos (serão preenchidos ao digitar matrícula)
+  funcao.value = "";
+  vinculo.value = "";
+  carga.value = "";
+
+  renderRegistros();
+});
+
+function editarRegistro(i){
+  const r = registros[i];
+  if (!r) return;
+
+  editIndexRegistro.value = String(i);
+
+  periodo.value = r.periodo || periodoHoje();
+  matricula.value = r.matricula || "";
+  preencherPorMatricula(matricula.value);
+  horas.value = toNum(r.horas);
+  faltaA.value = toNum(r.faltaA);
+  faltaS.value = toNum(r.faltaS);
+  obs.value = r.obs || "";
+  calcTotalFaltas();
+
+  btnAddRegistro.classList.add("hidden");
+  btnSalvarRegistro.classList.remove("hidden");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function salvarEdicaoRegistro(){
+  const i = toNum(editIndexRegistro.value);
+  const old = registros[i];
+  if (!old) return;
+
+  const m = (matricula.value||"").trim();
+  if (!m || !FUNCIONARIOS[m]){
+    setMsg(msgMatricula, "Use uma matrícula válida da lista fixa.", "var(--danger)");
+    return;
+  }
+
+  registros[i] = {
+    ...old,
+    periodo: (periodo.value || periodoHoje()),
+    matricula: m,
+    nome: (nome.value||"").trim(),
+    funcao: funcao.value || "",
+    vinculo: vinculo.value || "",
+    carga: carga.value || "",
+    horas: Math.max(0, toNum(horas.value)),
+    faltaA: clamp015(faltaA.value),
+    faltaS: clamp015(faltaS.value),
+    obs: (obs.value||"").trim()
+  };
+
+  btnAddRegistro.classList.remove("hidden");
+  btnSalvarRegistro.classList.add("hidden");
+
+  formRegistro.reset();
+  periodo.value = periodoHoje();
+  horas.value = 0;
+  faltaA.value = 0;
+  faltaS.value = 0;
+  calcTotalFaltas();
+
+  funcao.value = "";
+  vinculo.value = "";
+  carga.value = "";
+
+  renderRegistros();
+}
+
+function apagarRegistro(i){
+  if (!confirm("Apagar este registro?")) return;
+  registros.splice(i,1);
+  renderRegistros();
+}
+
+function limparRegistros(){
+  if (!confirm("Apagar TODOS os registros?")) return;
+  registros = [];
+  saveRegistros();
+  renderRegistros();
+}
+
+filtroPeriodo.addEventListener("input", renderRegistros);
+buscaRegistro.addEventListener("input", renderRegistros);
+
+/* =========================
+   EXPORTAR CSV
+========================= */
+function exportarCSV(){
+  const lista = getRegistrosFiltrados();
+  if (lista.length === 0){
+    alert("Não há registros para exportar no filtro atual.");
+    return;
+  }
+
+  let csv = "Periodo;Matricula;Nome;Funcao;Vinculo;Carga;HorasExtras;FaltaAtestado;FaltaSemAtestado;Obs\n";
+  lista.forEach(r=>{
+    const obsClean = String(r.obs||"").replace(/\n/g," ").replaceAll(";", ",");
+    csv += `${r.periodo||""};${r.matricula||""};${r.nome||""};${r.funcao||""};${r.vinculo||""};${r.carga||""};${toNum(r.horas)};${toNum(r.faltaA)};${toNum(r.faltaS)};${obsClean}\n`;
+  });
+
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "relatorio_folha.csv";
+  a.click();
+}
+
+/* =========================
+   ENVIAR PARA ADM (SITE)
+========================= */
+async function enviarParaADM(){
+  if (!registros || registros.length === 0){
+    alert("Não há registros para enviar.");
+    return;
+  }
+
+  const source = prompt("Nome da escola ou setor:", "Escola");
+  if (source === null) return;
+
+  const payload = {
+    source: (source || "Escola").trim(),
+    records: registros.map(r => ({
+      period: r.periodo || "",
+      matricula: r.matricula || "",
+      nome: r.nome || "",
+      funcao: r.funcao || "",
+      vinculo: r.vinculo || "",
+      carga: r.carga || "",
+      horas_extras: Number(r.horas || 0),
+      falta_atestado: Number(r.faltaA || 0),
+      falta_sem_atestado: Number(r.faltaS || 0),
+      obs: r.obs || ""
+    }))
+  };
+
+  try{
+    const resp = await fetch("/api/reports", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok){
+      const err = await resp.json().catch(()=>({}));
+      alert("Erro ao enviar: " + (err.error || resp.status));
+      return;
+    }
+
+    alert("Enviado para o ADM com sucesso!");
+  }catch(e){
+    alert("Não foi possível enviar. (Servidor ainda não está online ou sem internet)");
+  }
+}
+
+/* =========================
+   INIT
+========================= */
+window.addEventListener("load", ()=>{
+  montarListaNomes();
+  loadRegistros();
+  periodo.value = periodoHoje();
+  calcTotalFaltas();
+  renderRegistros();
+});
+
+// expõe funções usadas em onclick
+window.editarRegistro = editarRegistro;
+window.apagarRegistro = apagarRegistro;
+window.salvarEdicaoRegistro = salvarEdicaoRegistro;
+window.exportarCSV = exportarCSV;
+window.enviarParaADM = enviarParaADM;
+window.limparRegistros = limparRegistros;
+</script>
+
+</body>
+</html>
