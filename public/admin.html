@@ -579,7 +579,122 @@
   if(localStorage.getItem(TOKEN_KEY) === "1"){
     abrirPainel();
   }
+  let relatorioGeralCache = [];
+
+function periodoAtual(){
+  const p = (document.getElementById("fPeriod").value||"").trim();
+  return p || null;
+}
+
+async function carregarRelatorioGeral(){
+  const p = periodoAtual();
+  const url = p ? `/api/relatorio/geral?periodo=${encodeURIComponent(p)}` : `/api/relatorio/geral`;
+  const resp = await fetch(url);
+  if(!resp.ok){ alert("Não foi possível obter o Relatório Geral."); return; }
+
+  const data = await resp.json();
+  relatorioGeralCache = data.rows || [];
+  renderRelatorioGeral();
+}
+
+function renderRelatorioGeral(){
+  const tbody = document.getElementById("tbodyRelGeral");
+  const rows = relatorioGeralCache.map(r=>{
+    const he = Number(r.horas_extras||0);
+    const fa = Number(r.falta_atestado||0);
+    const fs = Number(r.falta_sem_atestado||0);
+
+    return `
+      <tr>
+        <td class="mono">${escapeHtml(r.matricula||"")}</td>
+        <td>${escapeHtml(r.nome||"")}</td>
+        <td>${escapeHtml(r.funcao||"")}</td>
+        <td>${escapeHtml(r.vinculo||"")}</td>
+        <td>${escapeHtml(r.carga||"")}</td>
+        <td>${escapeHtml(r.escolas||"")}</td>
+        <td>${he}</td>
+        <td>${fa}</td>
+        <td>${fs}</td>
+        <td>${Number(r.envios||0)}</td>
+        <td>${escapeHtml(r.obs_consolidada||"").replace(/\n/g,"<br>")}</td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.innerHTML = rows || `<tr><td colspan="11" class="muted">Sem dados no período.</td></tr>`;
+  document.getElementById("countRelGeral").textContent = String(relatorioGeralCache.length);
+}
+
+// CSV do Relatório Geral
+function csvRelatorioGeral(){
+  if(!relatorioGeralCache.length){ alert("Carregue o Relatório Geral primeiro."); return; }
+
+  let csv = "matricula;nome;funcao;vinculo;carga;escolas;horas_extras;falta_atestado;falta_sem_atestado;envios;obs\n";
+  relatorioGeralCache.forEach(r=>{
+    const obs = String(r.obs_consolidada||"").replace(/\n/g," ").replaceAll(";", ",");
+    csv += `${r.matricula||""};${r.nome||""};${r.funcao||""};${r.vinculo||""};${r.carga||""};${(r.escolas||"").replaceAll(";",",")};${r.horas_extras||0};${r.falta_atestado||0};${r.falta_sem_atestado||0};${r.envios||0};${obs}\n`;
+  });
+
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "relatorio_geral_semec.csv";
+  a.click();
+}
+
+// PDF do Relatório Geral (usa impressão)
+function pdfRelatorioGeral(){
+  if(!relatorioGeralCache.length){ alert("Carregue o Relatório Geral primeiro."); return; }
+
+  const p = periodoAtual() || "Último mês (filtro)";
+  const rows = relatorioGeralCache.map(r=>`
+    <tr>
+      <td class="mono">${escapeHtml(r.matricula||"")}</td>
+      <td>${escapeHtml(r.nome||"")}</td>
+      <td>${escapeHtml(r.funcao||"")}</td>
+      <td>${escapeHtml(r.vinculo||"")}</td>
+      <td>${escapeHtml(r.carga||"")}</td>
+      <td>${escapeHtml(r.escolas||"")}</td>
+      <td>${Number(r.horas_extras||0)}</td>
+      <td>${Number(r.falta_atestado||0)}</td>
+      <td>${Number(r.falta_sem_atestado||0)}</td>
+      <td>${Number(r.envios||0)}</td>
+      <td>${escapeHtml(r.obs_consolidada||"")}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+  <html><head><meta charset="utf-8"/>
+    <title>Relatório Geral</title>
+    ${cssPDF()}
+    <style>
+      th,td{font-size:10px}
+      table{table-layout:fixed}
+      td{word-wrap:break-word}
+    </style>
+  </head>
+  <body>
+    <h1>Relatório Geral – Funcionários (todas as escolas juntas)</h1>
+    <div class="sub">Período: <span class="mono">${p}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
+    <div class="box">
+      <table>
+        <thead>
+          <tr>
+            <th>Matrícula</th><th>Nome</th><th>Função</th><th>Vínculo</th><th>Carga</th>
+            <th>Escolas</th><th>HE</th><th>Falta A</th><th>Falta S</th><th>Envios</th><th>Obs</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
+  </body></html>`;
+
+  abrirJanelaPDF(html);
+}
+
 </script>
 </body>
 </html>
+
 
