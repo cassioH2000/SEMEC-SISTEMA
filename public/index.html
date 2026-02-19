@@ -1,22 +1,95 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEMEC - Sistema</title>
-  <style>
-    body{font-family:Arial;background:#f4f7f6;padding:30px}
-    .box{max-width:520px;margin:auto;background:#fff;padding:18px;border-radius:12px;border:1px solid #e6eaee}
-    a{display:block;margin-top:10px;padding:12px;border-radius:10px;text-decoration:none;color:#fff;font-weight:800;text-align:center;background:#2980b9}
-    a.admin{background:#1f2d3d}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEMEC - Sistema Oficial</title>
+
+<style>
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f4f6f9;
+  margin:0;
+  padding:0;
+}
+
+.topo{
+  background:#0d3b66;
+  padding:20px;
+  text-align:center;
+}
+
+.logo{
+  max-width:420px;
+  width:90%;
+}
+
+.container{
+  max-width:600px;
+  margin:40px auto;
+  background:#fff;
+  padding:30px;
+  border-radius:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.1);
+  text-align:center;
+}
+
+h2{
+  margin-top:0;
+  color:#0d3b66;
+}
+
+.botao{
+  display:block;
+  margin:15px auto;
+  padding:15px;
+  width:90%;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+  text-decoration:none;
+  color:white;
+}
+
+.folha{
+  background:#27ae60;
+}
+
+.admin{
+  background:#1f2d3d;
+}
+
+.rodape{
+  text-align:center;
+  font-size:12px;
+  color:#777;
+  margin-top:20px;
+}
+</style>
 </head>
+
 <body>
-  <div class="box">
-    <h2>SEMEC - Sistema</h2>
-    <p>Escolha um módulo:</p>
-    <a href="/folha.html">Abrir Folha</a>
-    <a class="admin" href="/admin.html">Abrir Admin</a>
+
+<div class="topo">
+  <img src="logo.png" class="logo">
+</div>
+
+<div class="container">
+  <h2>Sistema de Folha de Ponto</h2>
+  <p>Secretaria Municipal de Educação</p>
+
+  <a href="/folha.html" class="botao folha">
+  Acessar Folha das Escolas
+  </a>
+
+  <a href="/admin.html" class="botao admin">
+  Painel Administrativo
+  </a>
+
+  <div class="rodape">
+    Sistema oficial • SEMEC 2026
   </div>
+</div>
+
 </body>
 </html>
