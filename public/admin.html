@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>ADM - SEMEC</title>
   <style>
     :root{
@@ -13,10 +13,11 @@
       --bg:#f4f7f6;
       --border:#e6eaee;
       --muted:#6b7a80;
+      --soft:#f7fafc;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Segoe UI,system-ui,Arial;background:var(--bg);color:#122}
-    .wrap{max-width:1200px;margin:18px auto;padding:0 14px}
+    .wrap{max-width:1250px;margin:18px auto;padding:0 14px}
     .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
     .top{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
     h1{margin:0;color:var(--primary);font-size:18px}
@@ -35,6 +36,7 @@
     .btn-success{background:var(--success)}
     .btn-danger{background:var(--danger)}
     .btn-ghost{background:#eef2f6;color:#223;border:1px solid var(--border)}
+    .btn-mini{padding:6px 10px;border-radius:10px;font-size:12px}
     .muted{color:var(--muted);font-weight:800;font-size:12px}
     .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#f6f8fa;font-size:11px;font-weight:900}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
@@ -49,6 +51,10 @@
     .kpi .v{font-size:18px;font-weight:1000;margin-top:3px;color:#111}
     .sep{border:none;border-top:1px solid var(--border);margin:12px 0}
     .warn{color:#8a4b00;background:#fff3e1;border:1px solid #ffe2b6;padding:10px;border-radius:12px;font-weight:900;font-size:12px}
+    .ok{color:#155724;background:#d4edda;border:1px solid #c3e6cb;padding:10px;border-radius:12px;font-weight:900;font-size:12px}
+    .soft{background:var(--soft);border:1px dashed var(--border);border-radius:14px;padding:12px}
+    .right{margin-left:auto}
+    .link{color:var(--info);font-weight:900;text-decoration:none}
   </style>
 </head>
 <body>
@@ -59,18 +65,20 @@
     <div class="top">
       <div>
         <h1>ADM – SEMEC</h1>
-        <div class="sub">Acesso restrito • Balanços e consultas</div>
+        <div class="sub">Acesso restrito • Balanços, relatórios e correções</div>
       </div>
       <div class="pill">URL: <span class="mono" id="baseUrl"></span></div>
     </div>
 
-    <hr class="sep" />
+    <hr class="sep"/>
 
     <div class="row">
       <div style="min-width:260px;flex:1">
-        <label>Senha do ADM</label><br>
-        <input id="senha" type="password" placeholder="Digite a senha" style="width:100%" />
-        <div class="muted" style="margin-top:6px">Senha vem do Render: ADMIN_PASSWORD</div>
+        <label>Senha do ADM</label><br/>
+        <input id="senha" type="password" placeholder="Digite a senha" style="width:100%"/>
+        <div class="muted" style="margin-top:6px">
+          A senha vem do Render (ADMIN_PASSWORD). O servidor retorna um token para proteger edição/apagar.
+        </div>
       </div>
       <button class="btn-success" onclick="loginADM()">Entrar</button>
     </div>
@@ -83,7 +91,7 @@
     <div class="top">
       <div>
         <h1>Painel do Administrador</h1>
-        <div class="sub">Balanço geral • Por escola • Por matrícula</div>
+        <div class="sub">Padrão: último mês • Tudo consolidado por escola e geral</div>
       </div>
       <div class="row">
         <button class="btn-ghost" onclick="sair()">Sair</button>
@@ -91,63 +99,34 @@
       </div>
     </div>
 
-    <hr class="sep" />
+    <hr class="sep"/>
 
     <!-- FILTROS -->
     <div class="row">
       <div>
-        <label>Período</label><br/>
-        <input id="fPeriod" type="month" />
+        <label>Período (padrão: último mês)</label><br/>
+        <input id="fPeriod" type="month"/>
       </div>
       <div>
-        <label>Pesquisar (tabela)</label><br/>
-        <input id="q" placeholder="nome, matrícula, escola, obs..." style="min-width:320px" />
+        <label>Pesquisar (tabela de registros)</label><br/>
+        <input id="q" placeholder="nome, matrícula, escola, obs..." style="min-width:340px"/>
       </div>
-      <div class="row" style="margin-left:auto">
+      <div class="right row">
+        <button class="btn-info" onclick="exportarCSVRegistros()">CSV Registros (filtro)</button>
+      </div>
+    </div>
+
+    <!-- BALANÇO GERAL -->
+    <div class="top" style="margin-top:12px">
+      <div>
+        <div class="pill">Balanço Geral (todas as escolas juntas)</div>
+        <div class="sub">Resumo do período selecionado</div>
+      </div>
+      <div class="row">
         <button class="btn-danger" onclick="pdfBalancoGeral()">PDF Balanço Geral</button>
       </div>
     </div>
 
-    <hr class="sep" />
-
-<div class="top">
-  <div>
-    <div class="pill">Relatório Geral (todas as escolas juntas)</div>
-    <div class="sub">1 linha por funcionário (consolidado por matrícula)</div>
-  </div>
-  <div class="row">
-    <button class="btn-info" onclick="carregarRelatorioGeral()">Carregar</button>
-    <button class="btn-danger" onclick="pdfRelatorioGeral()">PDF Relatório Geral</button>
-    <button class="btn-info" onclick="csvRelatorioGeral()">CSV Relatório Geral</button>
-  </div>
-</div>
-
-<div style="overflow:auto;margin-top:10px">
-  <table>
-    <thead>
-      <tr>
-        <th>Matrícula</th>
-        <th>Nome</th>
-        <th>Função</th>
-        <th>Vínculo</th>
-        <th>Carga</th>
-        <th>Escolas</th>
-        <th>HE</th>
-        <th>Falta A</th>
-        <th>Falta S</th>
-        <th>Envios</th>
-        <th>Obs (consolidada)</th>
-      </tr>
-    </thead>
-    <tbody id="tbodyRelGeral"></tbody>
-  </table>
-</div>
-
-<div class="muted" style="margin-top:8px">
-  Funcionários no relatório: <span id="countRelGeral">0</span>
-</div>
-
-    <!-- BALANÇO GERAL -->
     <div class="kpis">
       <div class="kpi"><div class="t">Registros</div><div class="v" id="kReg">0</div></div>
       <div class="kpi"><div class="t">Horas extras</div><div class="v" id="kHE">0</div></div>
@@ -156,13 +135,13 @@
     </div>
     <div class="muted" style="margin-top:8px"><b>Total faltas:</b> <span id="kTot">0</span></div>
 
-    <hr class="sep" />
+    <hr class="sep"/>
 
-    <!-- POR ESCOLA -->
+    <!-- BALANÇO POR ESCOLA -->
     <div class="top">
       <div>
-        <div class="pill">Balanço por escola</div>
-        <div class="sub">Clique em uma escola para filtrar a tabela abaixo</div>
+        <div class="pill">Balanço por Escola</div>
+        <div class="sub">Clique em uma escola para filtrar a tabela de registros</div>
       </div>
       <div class="row">
         <button class="btn-info" onclick="limparFiltroEscola()">Ver todas</button>
@@ -186,23 +165,78 @@
       </table>
     </div>
 
-    <hr class="sep" />
+    <div class="muted" style="margin-top:8px">
+      <span id="escolaAtiva" class="pill hidden"></span>
+    </div>
 
-    <!-- POR MATRÍCULA -->
-    <div class="row">
-      <div style="min-width:220px">
-        <label>Resumo por matrícula</label><br/>
-        <input id="mat" class="mono" placeholder="Ex: 110" />
+    <hr class="sep"/>
+
+    <!-- RELATÓRIO GERAL (CONSOLIDADO POR FUNCIONÁRIO) -->
+    <div class="top">
+      <div>
+        <div class="pill">Relatório Geral (Funcionários • todas as escolas)</div>
+        <div class="sub">1 linha por funcionário (consolidado por matrícula)</div>
+      </div>
+      <div class="row">
+        <button class="btn-info" onclick="carregarRelatorioGeral()">Carregar</button>
+        <button class="btn-info" onclick="csvRelatorioGeral()">CSV Relatório</button>
+        <button class="btn-danger" onclick="pdfRelatorioGeral()">PDF Relatório</button>
+      </div>
+    </div>
+
+    <div style="overflow:auto;margin-top:10px">
+      <table>
+        <thead>
+          <tr>
+            <th>Matrícula</th>
+            <th>Nome</th>
+            <th>Função</th>
+            <th>Vínculo</th>
+            <th>Carga</th>
+            <th>Escolas</th>
+            <th>HE</th>
+            <th>Falta A</th>
+            <th>Falta S</th>
+            <th>Envios</th>
+            <th>Obs (consolidada)</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyRelGeral"></tbody>
+      </table>
+    </div>
+
+    <div class="muted" style="margin-top:8px">
+      Funcionários no relatório: <span id="countRelGeral">0</span>
+    </div>
+
+    <hr class="sep"/>
+
+    <!-- RESUMO POR MATRÍCULA -->
+    <div class="top">
+      <div>
+        <div class="pill">Resumo por Matrícula</div>
+        <div class="sub">Consulta rápida de um servidor</div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div style="min-width:240px">
+        <label>Matrícula</label><br/>
+        <input id="mat" class="mono" placeholder="Ex: 110"/>
       </div>
       <button class="btn-success" onclick="buscarResumoMatricula()">Buscar resumo</button>
       <button class="btn-danger" onclick="pdfResumoMatricula()">PDF matrícula</button>
     </div>
 
-    <div id="boxResumo" class="card hidden" style="margin-top:12px;border-style:dashed">
-      <div class="pill">Matrícula: <span class="mono" id="rMat"></span></div>
-      <div style="margin-top:10px;font-weight:1000;font-size:16px" id="rNome"></div>
-      <div class="muted" id="rMeta"></div>
-
+    <div id="boxResumo" class="soft hidden" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="pill">Matrícula: <span class="mono" id="rMat"></span></div>
+          <div style="margin-top:8px;font-weight:1000;font-size:16px" id="rNome"></div>
+          <div class="muted" id="rMeta"></div>
+        </div>
+        <div class="pill">Período: <span class="mono" id="rPer"></span></div>
+      </div>
       <div class="kpis" style="margin-top:12px">
         <div class="kpi"><div class="t">Horas extras</div><div class="v" id="rHE">0</div></div>
         <div class="kpi"><div class="t">Faltas c/ atestado</div><div class="v" id="rFA">0</div></div>
@@ -211,16 +245,16 @@
       </div>
     </div>
 
-    <hr class="sep" />
+    <hr class="sep"/>
 
-    <!-- TABELA REGISTROS -->
+    <!-- TABELA DE REGISTROS (EDITAR / APAGAR) -->
     <div class="top">
       <div>
-        <div class="pill">Registros</div>
-        <div class="sub">Filtrados por período, busca e (opcional) escola selecionada</div>
+        <div class="pill">Registros Recebidos</div>
+        <div class="sub">Editar e apagar (somente ADM)</div>
       </div>
       <div class="row">
-        <button class="btn-info" onclick="exportarCSV()">Exportar CSV (tabela)</button>
+        <button class="btn-info" onclick="atualizarRegistros()">Recarregar registros</button>
       </div>
     </div>
 
@@ -238,27 +272,81 @@
             <th>Falta A</th>
             <th>Falta S</th>
             <th>Obs</th>
+            <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="tbody"></tbody>
+        <tbody id="tbodyReg"></tbody>
       </table>
     </div>
 
     <div class="muted" style="margin-top:10px">
-      Mostrando <span id="count">0</span> registro(s).
-      <span id="escolaAtiva" class="pill hidden" style="margin-left:8px"></span>
+      Mostrando <span id="countReg">0</span> registro(s) no filtro atual.
     </div>
+
+    <div id="statusBox" class="ok hidden" style="margin-top:12px"></div>
   </div>
 
 </div>
 
+<!-- MODAL EDITAR -->
+<div id="modalEdit" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:14px">
+  <div class="card" style="max-width:980px;width:100%">
+    <div class="top">
+      <div>
+        <h1>Editar Registro</h1>
+        <div class="sub">Altere e clique em salvar</div>
+      </div>
+      <button class="btn-ghost" onclick="fecharEdicao()">Fechar</button>
+    </div>
+
+    <hr class="sep"/>
+
+    <input id="e_id" type="hidden"/>
+
+    <div class="row">
+      <div style="flex:1;min-width:220px"><label>Escola</label><br/><input id="e_escola" style="width:100%"></div>
+      <div style="flex:1;min-width:170px"><label>Período</label><br/><input id="e_periodo" type="month" style="width:100%"></div>
+      <div style="flex:1;min-width:170px"><label>Matrícula</label><br/><input id="e_matricula" class="mono" style="width:100%"></div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div style="flex:2;min-width:260px"><label>Nome</label><br/><input id="e_nome" style="width:100%"></div>
+      <div style="flex:1;min-width:220px"><label>Função</label><br/><input id="e_funcao" style="width:100%"></div>
+      <div style="flex:1;min-width:220px"><label>Vínculo</label><br/><input id="e_vinculo" style="width:100%"></div>
+      <div style="flex:1;min-width:170px"><label>Carga</label><br/><input id="e_carga" style="width:100%"></div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div><label>Horas extras</label><br/><input id="e_horas" type="number" min="0" style="width:160px"></div>
+      <div><label>Falta c/ atestado</label><br/><input id="e_fa" type="number" min="0" max="15" style="width:170px"></div>
+      <div><label>Falta s/ atestado</label><br/><input id="e_fs" type="number" min="0" max="15" style="width:170px"></div>
+    </div>
+
+    <div style="margin-top:10px">
+      <label>Observações</label><br/>
+      <input id="e_obs" style="width:100%" placeholder="Observações (opcional)">
+    </div>
+
+    <hr class="sep"/>
+
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn-success" onclick="salvarEdicao()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const TOKEN_KEY = "SEMEC_ADM_OK_V1";
+  // ====== CONFIG / ESTADO ======
+  const TOKEN_FLAG = "SEMEC_ADM_OK_V2";
+  const ADM_TOKEN_KEY = "SEMEC_ADM_TOKEN_V2";
+  let admToken = localStorage.getItem(ADM_TOKEN_KEY) || "";
+
   document.getElementById("baseUrl").textContent = location.origin;
 
-  let cache = [];
+  let cacheRegistros = [];
   let resumoCache = null;
-  let escolaFiltro = null; // escola clicada
+  let relatorioGeralCache = [];
+  let escolaFiltro = null;
 
   function show(el){ el.classList.remove("hidden"); }
   function hide(el){ el.classList.add("hidden"); }
@@ -268,11 +356,34 @@
       .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
       .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
+
+  function setStatus(msg){
+    const box = document.getElementById("statusBox");
+    box.textContent = msg;
+    show(box);
+    setTimeout(()=>hide(box), 2500);
+  }
+
+  function mesAnteriorYYYYMM(){
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}`;
+  }
+
   function periodoAtual(){
     const p = (document.getElementById("fPeriod").value||"").trim();
     return p || null;
   }
 
+  async function apiAdmin(url, options={}){
+    const headers = options.headers || {};
+    headers["Authorization"] = "Bearer " + (admToken || "");
+    options.headers = headers;
+    return fetch(url, options);
+  }
+
+  // ====== LOGIN ======
   async function loginADM(){
     const senha = document.getElementById("senha").value;
     const msg = document.getElementById("loginMsg");
@@ -280,28 +391,33 @@
 
     if(!senha){
       msg.textContent = "Digite a senha.";
-      show(msg);
-      return;
+      show(msg); return;
     }
 
-    const resp = await fetch("/api/login",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ senha })
-    });
+    try{
+      const resp = await fetch("/api/login",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ senha })
+      });
 
-    if(!resp.ok){
-      msg.textContent = "Senha inválida.";
-      show(msg);
-      return;
-    }
+      if(!resp.ok){
+        msg.textContent = "Senha inválida.";
+        show(msg); return;
+      }
 
-    const data = await resp.json();
-    if(data.ok){
-      localStorage.setItem(TOKEN_KEY, "1");
-      abrirPainel();
-    }else{
-      msg.textContent = "Senha inválida.";
+      const data = await resp.json();
+      if(data.ok && data.token){
+        admToken = data.token;
+        localStorage.setItem(ADM_TOKEN_KEY, admToken);
+        localStorage.setItem(TOKEN_FLAG, "1");
+        abrirPainel();
+      }else{
+        msg.textContent = "Servidor não retornou token. Verifique /api/login.";
+        show(msg);
+      }
+    }catch(e){
+      msg.textContent = "Falha ao conectar no servidor.";
       show(msg);
     }
   }
@@ -309,37 +425,48 @@
   function abrirPainel(){
     hide(document.getElementById("loginCard"));
     show(document.getElementById("panelCard"));
+
+    // padrão: último mês
+    document.getElementById("fPeriod").value = mesAnteriorYYYYMM();
+
     atualizarTudo();
   }
 
   function sair(){
-    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_FLAG);
+    localStorage.removeItem(ADM_TOKEN_KEY);
+    admToken = "";
     location.reload();
   }
 
+  // ====== FILTRO ESCOLA ======
   function setEscolaFiltro(nome){
     escolaFiltro = nome;
     const tag = document.getElementById("escolaAtiva");
-    tag.textContent = "Escola: " + nome;
+    tag.textContent = "Escola ativa: " + nome;
     show(tag);
-    renderTabela();
+    renderRegistros();
   }
-
   function limparFiltroEscola(){
     escolaFiltro = null;
     hide(document.getElementById("escolaAtiva"));
-    renderTabela();
+    renderRegistros();
   }
 
+  // ====== ATUALIZAÇÕES ======
   async function atualizarTudo(){
-    await Promise.all([atualizarBalancoGeral(), atualizarEscolas(), atualizarRegistros()]);
+    await Promise.all([
+      atualizarBalancoGeral(),
+      atualizarBalancoEscolas(),
+      atualizarRegistros()
+    ]);
   }
 
   async function atualizarBalancoGeral(){
     const p = periodoAtual();
     const url = p ? `/api/balanco/geral?periodo=${encodeURIComponent(p)}` : `/api/balanco/geral`;
     const resp = await fetch(url);
-    if(!resp.ok){ alert("Falha ao obter balanço geral"); return; }
+    if(!resp.ok){ alert("Falha ao obter balanço geral."); return; }
     const b = await resp.json();
 
     document.getElementById("kReg").textContent = b.registros ?? 0;
@@ -349,20 +476,25 @@
     document.getElementById("kTot").textContent = b.total_faltas ?? ((b.falta_atestado||0)+(b.falta_sem_atestado||0));
   }
 
-  async function atualizarEscolas(){
+  async function atualizarBalancoEscolas(){
     const p = periodoAtual();
     const url = p ? `/api/balanco/escolas?periodo=${encodeURIComponent(p)}` : `/api/balanco/escolas`;
     const resp = await fetch(url);
-    if(!resp.ok){ alert("Falha ao obter balanço por escola"); return; }
+    if(!resp.ok){ alert("Falha ao obter balanço por escola."); return; }
     const data = await resp.json();
 
     const tbody = document.getElementById("tbodyEscolas");
-    const rows = (data.escolas || []).map(e=>{
-      const total = (toNum(e.falta_atestado) + toNum(e.falta_sem_atestado));
+    const escolas = data.escolas || [];
+
+    tbody.innerHTML = escolas.map(e=>{
       const escola = e.escola || "(sem escola)";
+      const total = toNum(e.falta_atestado) + toNum(e.falta_sem_atestado);
+
+      // usamos dataset no click (mais seguro pra texto)
+      const escolaEsc = escapeHtml(escola);
       return `
-        <tr style="cursor:pointer" onclick="setEscolaFiltro('${escapeHtml(escola).replaceAll("'","&#039;")}')">
-          <td><b>${escapeHtml(escola)}</b></td>
+        <tr style="cursor:pointer" onclick="setEscolaFiltro('${escolaEsc.replaceAll("'","&#039;")}')">
+          <td><b>${escolaEsc}</b></td>
           <td>${toNum(e.registros)}</td>
           <td>${toNum(e.horas)}</td>
           <td>${toNum(e.falta_atestado)}</td>
@@ -370,85 +502,125 @@
           <td><b>${total}</b></td>
         </tr>
       `;
-    }).join("");
-
-    tbody.innerHTML = rows || `<tr><td colspan="6" class="muted">Nenhum dado ainda.</td></tr>`;
+    }).join("") || `<tr><td colspan="6" class="muted">Sem dados no período.</td></tr>`;
   }
 
   async function atualizarRegistros(){
-    // puxa todos (com período no backend se quiser, mas aqui filtramos na tela)
     const resp = await fetch("/api/registros");
-    if(!resp.ok){ alert("Não foi possível obter registros"); return; }
-    cache = await resp.json();
-    renderTabela();
+    if(!resp.ok){ alert("Não foi possível obter registros."); return; }
+    cacheRegistros = await resp.json();
+    renderRegistros();
   }
-
-  function filtradosTabela(){
+  // ====== FILTRO TABELA ======
+  function filtradosRegistros(){
     const p = (document.getElementById("fPeriod").value||"").trim();
     const q = (document.getElementById("q").value||"").trim().toLowerCase();
 
-    return cache.filter(r=>{
+    return cacheRegistros.filter(r=>{
       const okP = !p || String(r.periodo||"") === p;
-      const okE = !escolaFiltro || String(r.escola||"(sem escola)") === escolaFiltro;
-      const hay = `${r.id} ${r.escola} ${r.periodo} ${r.matricula} ${r.nome} ${r.funcao} ${r.obs}`.toLowerCase();
+      const esc = String(r.escola || "(sem escola)");
+      const okE = !escolaFiltro || esc === escolaFiltro;
+
+      const hay = `${r.id} ${esc} ${r.periodo} ${r.matricula} ${r.nome} ${r.funcao} ${r.vinculo} ${r.carga} ${r.obs}`.toLowerCase();
       const okQ = !q || hay.includes(q);
+
       return okP && okE && okQ;
     });
   }
 
-  function renderTabela(){
-    const list = filtradosTabela();
-    document.getElementById("tbody").innerHTML = list.map(r=>`
+  function renderRegistros(){
+    const list = filtradosRegistros();
+    const tbody = document.getElementById("tbodyReg");
+
+    tbody.innerHTML = list.map(r=>`
       <tr>
         <td class="mono">${escapeHtml(r.id)}</td>
         <td>${escapeHtml(r.escola || "(sem escola)")}</td>
-        <td class="mono">${escapeHtml(r.periodo||"")}</td>
-        <td class="mono">${escapeHtml(r.matricula||"")}</td>
-        <td>${escapeHtml(r.nome||"")}</td>
-        <td>${escapeHtml(r.funcao||"")}</td>
+        <td class="mono">${escapeHtml(r.periodo || "")}</td>
+        <td class="mono">${escapeHtml(r.matricula || "")}</td>
+        <td>${escapeHtml(r.nome || "")}</td>
+        <td>${escapeHtml(r.funcao || "")}</td>
         <td>${toNum(r.horas)}</td>
         <td>${toNum(r.falta_atestado)}</td>
         <td>${toNum(r.falta_sem_atestado)}</td>
-        <td>${escapeHtml(r.obs||"").replace(/\n/g,"<br>")}</td>
+        <td>${escapeHtml(r.obs || "").replace(/\n/g,"<br>")}</td>
+        <td>
+          <button class="btn-info btn-mini" onclick="abrirEdicao(${Number(r.id)})">Editar</button>
+          <button class="btn-danger btn-mini" onclick="apagarRegistro(${Number(r.id)})">Apagar</button>
+        </td>
       </tr>
-    `).join("");
+    `).join("") || `<tr><td colspan="11" class="muted">Sem registros no filtro.</td></tr>`;
 
-    document.getElementById("count").textContent = String(list.length);
+    document.getElementById("countReg").textContent = String(list.length);
   }
 
-  document.getElementById("fPeriod").addEventListener("input", ()=>atualizarTudo());
-  document.getElementById("q").addEventListener("input", renderTabela);
+  // ====== EVENTOS UI ======
+  document.getElementById("fPeriod").addEventListener("input", async ()=>{
+    await atualizarBalancoGeral();
+    await atualizarBalancoEscolas();
+    renderRegistros();
+  });
+  document.getElementById("q").addEventListener("input", renderRegistros);
 
-  async function buscarResumoMatricula(){
-    const mat = (document.getElementById("mat").value||"").trim();
-    if(!mat){ alert("Digite a matrícula."); return; }
+  // ====== RELATÓRIO GERAL (por funcionário) ======
+  async function carregarRelatorioGeral(){
+    const p = periodoAtual();
+    const url = p ? `/api/relatorio/geral?periodo=${encodeURIComponent(p)}` : `/api/relatorio/geral`;
+    const resp = await fetch(url);
+    if(!resp.ok){ alert("Não foi possível obter o Relatório Geral."); return; }
 
-    const resp = await fetch(`/api/resumo/${encodeURIComponent(mat)}`);
-    if(!resp.ok){ alert("Não foi possível obter o resumo."); return; }
     const data = await resp.json();
-    resumoCache = data;
-
-    show(document.getElementById("boxResumo"));
-    document.getElementById("rMat").textContent = mat;
-    document.getElementById("rNome").textContent = data.nome || "(sem nome)";
-    document.getElementById("rMeta").textContent =
-      [data.funcao ? `Função: ${data.funcao}` : null,
-       data.vinculo ? `Vínculo: ${data.vinculo}` : null,
-       data.carga ? `Carga: ${data.carga}` : null].filter(Boolean).join(" • ") || "—";
-
-    const he = toNum(data.horas);
-    const fa = toNum(data.falta_atestado);
-    const fs = toNum(data.falta_sem_atestado);
-
-    document.getElementById("rHE").textContent = he;
-    document.getElementById("rFA").textContent = fa;
-    document.getElementById("rFS").textContent = fs;
-    document.getElementById("rTot").textContent = fa + fs;
+    relatorioGeralCache = data.rows || [];
+    renderRelatorioGeral();
+    setStatus("Relatório geral carregado.");
   }
 
-  function exportarCSV(){
-    const list = filtradosTabela();
-    if(list.length === 0){ alert("Nada para exportar."); return; }
+  function renderRelatorioGeral(){
+    const tbody = document.getElementById("tbodyRelGeral");
+    tbody.innerHTML = relatorioGeralCache.map(r=>{
+      const he = toNum(r.horas_extras);
+      const fa = toNum(r.falta_atestado);
+      const fs = toNum(r.falta_sem_atestado);
+      return `
+        <tr>
+          <td class="mono">${escapeHtml(r.matricula || "")}</td>
+          <td>${escapeHtml(r.nome || "")}</td>
+          <td>${escapeHtml(r.funcao || "")}</td>
+          <td>${escapeHtml(r.vinculo || "")}</td>
+          <td>${escapeHtml(r.carga || "")}</td>
+          <td>${escapeHtml(r.escolas || "")}</td>
+          <td>${he}</td>
+          <td>${fa}</td>
+          <td>${fs}</td>
+          <td>${toNum(r.envios)}</td>
+          <td>${escapeHtml(r.obs_consolidada || "").replace(/\n/g,"<br>")}</td>
+        </tr>
+      `;
+    }).join("") || `<tr><td colspan="11" class="muted">Sem dados no período.</td></tr>`;
+
+    document.getElementById("countRelGeral").textContent = String(relatorioGeralCache.length);
+  }
+
+  function csvRelatorioGeral(){
+    if(!relatorioGeralCache.length){ alert("Clique em Carregar primeiro."); return; }
+
+    let csv = "matricula;nome;funcao;vinculo;carga;escolas;horas_extras;falta_atestado;falta_sem_atestado;envios;obs\n";
+    relatorioGeralCache.forEach(r=>{
+      const obs = String(r.obs_consolidada||"").replace(/\n/g," ").replaceAll(";", ",");
+      const esc = String(r.escolas||"").replaceAll(";", ",");
+      csv += `${r.matricula||""};${r.nome||""};${r.funcao||""};${r.vinculo||""};${r.carga||""};${esc};${toNum(r.horas_extras)};${toNum(r.falta_atestado)};${toNum(r.falta_sem_atestado)};${toNum(r.envios)};${obs}\n`;
+    });
+
+    const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "relatorio_geral_semec.csv";
+    a.click();
+  }
+
+  function exportarCSVRegistros(){
+    const list = filtradosRegistros();
+    if(!list.length){ alert("Nada para exportar no filtro."); return; }
 
     let csv = "id;escola;periodo;matricula;nome;funcao;horas;falta_atestado;falta_sem_atestado;obs\n";
     list.forEach(r=>{
@@ -463,25 +635,142 @@
     a.click();
   }
 
-  // ===== PDF (impressão) =====
+  // ====== RESUMO POR MATRÍCULA ======
+  async function buscarResumoMatricula(){
+    const mat = (document.getElementById("mat").value||"").trim();
+    if(!mat){ alert("Digite a matrícula."); return; }
+
+    const resp = await fetch(`/api/resumo/${encodeURIComponent(mat)}`);
+    if(!resp.ok){ alert("Não foi possível obter o resumo."); return; }
+
+    const data = await resp.json();
+    resumoCache = data;
+
+    document.getElementById("rMat").textContent = mat;
+    document.getElementById("rPer").textContent = periodoAtual() || "Último mês";
+    document.getElementById("rNome").textContent = data.nome || "(sem nome)";
+    document.getElementById("rMeta").textContent =
+      [data.funcao ? `Função: ${data.funcao}` : null,
+       data.vinculo ? `Vínculo: ${data.vinculo}` : null,
+       data.carga ? `Carga: ${data.carga}` : null].filter(Boolean).join(" • ") || "—";
+
+    const he = toNum(data.horas);
+    const fa = toNum(data.falta_atestado);
+    const fs = toNum(data.falta_sem_atestado);
+
+    document.getElementById("rHE").textContent = he;
+    document.getElementById("rFA").textContent = fa;
+    document.getElementById("rFS").textContent = fs;
+    document.getElementById("rTot").textContent = fa + fs;
+
+    show(document.getElementById("boxResumo"));
+    setStatus("Resumo carregado.");
+  }
+
+  // ====== MODAL EDITAR ======
+  function abrirModalEdit(){ document.getElementById("modalEdit").classList.remove("hidden"); }
+  function fecharEdicao(){ document.getElementById("modalEdit").classList.add("hidden"); }
+
+  function getRegistroPorId(id){
+    return (cacheRegistros || []).find(x => Number(x.id) === Number(id));
+  }
+
+  function abrirEdicao(id){
+    const r = getRegistroPorId(id);
+    if(!r){ alert("Registro não encontrado. Clique em recarregar."); return; }
+
+    document.getElementById("e_id").value = r.id;
+    document.getElementById("e_escola").value = r.escola || "";
+    document.getElementById("e_periodo").value = r.periodo || "";
+    document.getElementById("e_matricula").value = r.matricula || "";
+    document.getElementById("e_nome").value = r.nome || "";
+    document.getElementById("e_funcao").value = r.funcao || "";
+    document.getElementById("e_vinculo").value = r.vinculo || "";
+    document.getElementById("e_carga").value = r.carga || "";
+    document.getElementById("e_horas").value = toNum(r.horas);
+    document.getElementById("e_fa").value = toNum(r.falta_atestado);
+    document.getElementById("e_fs").value = toNum(r.falta_sem_atestado);
+    document.getElementById("e_obs").value = r.obs || "";
+
+    abrirModalEdit();
+  }
+
+  async function salvarEdicao(){
+    const id = document.getElementById("e_id").value;
+
+    const payload = {
+      escola: document.getElementById("e_escola").value.trim(),
+      periodo: document.getElementById("e_periodo").value.trim(),
+      matricula: document.getElementById("e_matricula").value.trim(),
+      nome: document.getElementById("e_nome").value.trim(),
+      funcao: document.getElementById("e_funcao").value.trim(),
+      vinculo: document.getElementById("e_vinculo").value.trim(),
+      carga: document.getElementById("e_carga").value.trim(),
+      horas: toNum(document.getElementById("e_horas").value),
+      falta_atestado: toNum(document.getElementById("e_fa").value),
+      falta_sem_atestado: toNum(document.getElementById("e_fs").value),
+      obs: document.getElementById("e_obs").value.trim()
+    };
+
+    const resp = await apiAdmin(`/api/registros/${encodeURIComponent(id)}`,{
+      method:"PUT",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if(!resp.ok){
+      alert("Não foi possível salvar. Faça login novamente (token inválido) ou confira backend.");
+      return;
+    }
+
+    fecharEdicao();
+    await atualizarRegistros();
+    await atualizarBalancoGeral();
+    await atualizarBalancoEscolas();
+    setStatus("Registro atualizado com sucesso.");
+  }
+
+  async function apagarRegistro(id){
+    const r = getRegistroPorId(id);
+    const info = r ? `${r.nome||""} • ${r.matricula||""} • ${r.periodo||""}` : `ID ${id}`;
+    const ok = confirm(`Tem certeza que deseja APAGAR este registro?\n\n${info}\n\nEssa ação não pode ser desfeita.`);
+    if(!ok) return;
+
+    const resp = await apiAdmin(`/api/registros/${encodeURIComponent(id)}`, { method:"DELETE" });
+    if(!resp.ok){
+      alert("Não foi possível apagar. Faça login novamente (token inválido) ou confira backend.");
+      return;
+    }
+
+    await atualizarRegistros();
+    await atualizarBalancoGeral();
+    await atualizarBalancoEscolas();
+    setStatus("Registro apagado.");
+  }
+
+  // ====== PDF (impressão -> salvar como PDF) ======
   function cssPDF(){
     return `
     <style>
-      @page{size:A4;margin:12mm;}
-      body{font-family:Arial;color:#111}
+      @page { size: A4; margin: 12mm; }
+      body{font-family: Arial, sans-serif; color:#111;}
       h1{font-size:16px;margin:0}
       .sub{font-size:11px;color:#555;margin-top:4px}
       .box{border:1px solid #ddd;border-radius:10px;padding:10px;margin-top:10px}
       table{width:100%;border-collapse:collapse;margin-top:10px}
-      th,td{border-bottom:1px solid #eee;padding:8px;font-size:11px;text-align:left;vertical-align:top}
+      th,td{border-bottom:1px solid #eee;padding:8px;font-size:10.5px;text-align:left;vertical-align:top}
       th{background:#1f2d3d;color:#fff}
-      .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+      .muted{color:#666;font-size:10px;margin-top:8px}
+      .mono{font-family: ui-monospace, Menlo, Consolas, monospace;}
+      td{word-wrap:break-word}
     </style>`;
   }
   function nowBR(){ return new Date().toLocaleString("pt-BR"); }
   function abrirJanelaPDF(html){
     const w = window.open("", "_blank");
-    w.document.open(); w.document.write(html); w.document.close();
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
     w.onload = ()=>{ w.focus(); w.print(); };
   }
 
@@ -489,14 +778,14 @@
     const p = periodoAtual();
     const url = p ? `/api/balanco/geral?periodo=${encodeURIComponent(p)}` : `/api/balanco/geral`;
     const r = await fetch(url);
+    if(!r.ok){ alert("Falha no balanço geral."); return; }
     const b = await r.json();
-    const periodoTxt = p || "Todos";
 
     const html = `
     <html><head><meta charset="utf-8"/><title>Balanço Geral</title>${cssPDF()}</head>
     <body>
       <h1>Balanço Geral</h1>
-      <div class="sub">Período: <span class="mono">${periodoTxt}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
+      <div class="sub">Período: <span class="mono">${p || "último mês"}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
       <div class="box">
         <table>
           <tr><th>Registros</th><td>${b.registros||0}</td></tr>
@@ -506,6 +795,7 @@
           <tr><th>Total faltas</th><td><b>${b.total_faltas||0}</b></td></tr>
         </table>
       </div>
+      <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
     </body></html>`;
     abrirJanelaPDF(html);
   }
@@ -514,18 +804,18 @@
     const p = periodoAtual();
     const url = p ? `/api/balanco/escolas?periodo=${encodeURIComponent(p)}` : `/api/balanco/escolas`;
     const r = await fetch(url);
+    if(!r.ok){ alert("Falha no balanço por escola."); return; }
     const data = await r.json();
-    const periodoTxt = p || "Todos";
 
     const rows = (data.escolas||[]).map(e=>{
-      const tot = toNum(e.falta_atestado)+toNum(e.falta_sem_atestado);
+      const total = toNum(e.falta_atestado)+toNum(e.falta_sem_atestado);
       return `<tr>
         <td>${escapeHtml(e.escola||"(sem escola)")}</td>
         <td>${toNum(e.registros)}</td>
         <td>${toNum(e.horas)}</td>
         <td>${toNum(e.falta_atestado)}</td>
         <td>${toNum(e.falta_sem_atestado)}</td>
-        <td><b>${tot}</b></td>
+        <td><b>${total}</b></td>
       </tr>`;
     }).join("");
 
@@ -533,7 +823,7 @@
     <html><head><meta charset="utf-8"/><title>Balanço por Escola</title>${cssPDF()}</head>
     <body>
       <h1>Balanço por Escola</h1>
-      <div class="sub">Período: <span class="mono">${periodoTxt}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
+      <div class="sub">Período: <span class="mono">${p || "último mês"}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
       <div class="box">
         <table>
           <thead><tr>
@@ -542,6 +832,46 @@
           <tbody>${rows || `<tr><td colspan="6">Sem dados</td></tr>`}</tbody>
         </table>
       </div>
+      <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
+    </body></html>`;
+    abrirJanelaPDF(html);
+  }
+
+  function pdfRelatorioGeral(){
+    if(!relatorioGeralCache.length){ alert("Clique em Carregar primeiro."); return; }
+    const p = periodoAtual() || "último mês";
+
+    const rows = relatorioGeralCache.map(r=>`
+      <tr>
+        <td class="mono">${escapeHtml(r.matricula||"")}</td>
+        <td>${escapeHtml(r.nome||"")}</td>
+        <td>${escapeHtml(r.funcao||"")}</td>
+        <td>${escapeHtml(r.vinculo||"")}</td>
+        <td>${escapeHtml(r.carga||"")}</td>
+        <td>${escapeHtml(r.escolas||"")}</td>
+        <td>${toNum(r.horas_extras)}</td>
+        <td>${toNum(r.falta_atestado)}</td>
+        <td>${toNum(r.falta_sem_atestado)}</td>
+        <td>${toNum(r.envios)}</td>
+        <td>${escapeHtml(r.obs_consolidada||"")}</td>
+      </tr>
+    `).join("");
+
+    const html = `
+    <html><head><meta charset="utf-8"/><title>Relatório Geral</title>${cssPDF()}</head>
+    <body>
+      <h1>Relatório Geral – Funcionários (todas as escolas)</h1>
+      <div class="sub">Período: <span class="mono">${p}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
+      <div class="box">
+        <table>
+          <thead><tr>
+            <th>Matrícula</th><th>Nome</th><th>Função</th><th>Vínculo</th><th>Carga</th>
+            <th>Escolas</th><th>HE</th><th>Falta A</th><th>Falta S</th><th>Envios</th><th>Obs</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
     </body></html>`;
     abrirJanelaPDF(html);
   }
@@ -549,7 +879,7 @@
   function pdfResumoMatricula(){
     const mat = (document.getElementById("mat").value||"").trim();
     if(!mat || !resumoCache){ alert("Busque o resumo primeiro."); return; }
-    const p = periodoAtual() || "Todos";
+    const p = periodoAtual() || "último mês";
     const he = toNum(resumoCache.horas);
     const fa = toNum(resumoCache.falta_atestado);
     const fs = toNum(resumoCache.falta_sem_atestado);
@@ -571,130 +901,15 @@
           <tr><th>Total faltas</th><td><b>${fa+fs}</b></td></tr>
         </table>
       </div>
+      <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
     </body></html>`;
     abrirJanelaPDF(html);
   }
 
-  // auto-login simples
-  if(localStorage.getItem(TOKEN_KEY) === "1"){
+  // ====== BOOT ======
+  if(localStorage.getItem(TOKEN_FLAG) === "1" && admToken){
     abrirPainel();
   }
-  let relatorioGeralCache = [];
-
-function periodoAtual(){
-  const p = (document.getElementById("fPeriod").value||"").trim();
-  return p || null;
-}
-
-async function carregarRelatorioGeral(){
-  const p = periodoAtual();
-  const url = p ? `/api/relatorio/geral?periodo=${encodeURIComponent(p)}` : `/api/relatorio/geral`;
-  const resp = await fetch(url);
-  if(!resp.ok){ alert("Não foi possível obter o Relatório Geral."); return; }
-
-  const data = await resp.json();
-  relatorioGeralCache = data.rows || [];
-  renderRelatorioGeral();
-}
-
-function renderRelatorioGeral(){
-  const tbody = document.getElementById("tbodyRelGeral");
-  const rows = relatorioGeralCache.map(r=>{
-    const he = Number(r.horas_extras||0);
-    const fa = Number(r.falta_atestado||0);
-    const fs = Number(r.falta_sem_atestado||0);
-
-    return `
-      <tr>
-        <td class="mono">${escapeHtml(r.matricula||"")}</td>
-        <td>${escapeHtml(r.nome||"")}</td>
-        <td>${escapeHtml(r.funcao||"")}</td>
-        <td>${escapeHtml(r.vinculo||"")}</td>
-        <td>${escapeHtml(r.carga||"")}</td>
-        <td>${escapeHtml(r.escolas||"")}</td>
-        <td>${he}</td>
-        <td>${fa}</td>
-        <td>${fs}</td>
-        <td>${Number(r.envios||0)}</td>
-        <td>${escapeHtml(r.obs_consolidada||"").replace(/\n/g,"<br>")}</td>
-      </tr>
-    `;
-  }).join("");
-
-  tbody.innerHTML = rows || `<tr><td colspan="11" class="muted">Sem dados no período.</td></tr>`;
-  document.getElementById("countRelGeral").textContent = String(relatorioGeralCache.length);
-}
-
-// CSV do Relatório Geral
-function csvRelatorioGeral(){
-  if(!relatorioGeralCache.length){ alert("Carregue o Relatório Geral primeiro."); return; }
-
-  let csv = "matricula;nome;funcao;vinculo;carga;escolas;horas_extras;falta_atestado;falta_sem_atestado;envios;obs\n";
-  relatorioGeralCache.forEach(r=>{
-    const obs = String(r.obs_consolidada||"").replace(/\n/g," ").replaceAll(";", ",");
-    csv += `${r.matricula||""};${r.nome||""};${r.funcao||""};${r.vinculo||""};${r.carga||""};${(r.escolas||"").replaceAll(";",",")};${r.horas_extras||0};${r.falta_atestado||0};${r.falta_sem_atestado||0};${r.envios||0};${obs}\n`;
-  });
-
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "relatorio_geral_semec.csv";
-  a.click();
-}
-
-// PDF do Relatório Geral (usa impressão)
-function pdfRelatorioGeral(){
-  if(!relatorioGeralCache.length){ alert("Carregue o Relatório Geral primeiro."); return; }
-
-  const p = periodoAtual() || "Último mês (filtro)";
-  const rows = relatorioGeralCache.map(r=>`
-    <tr>
-      <td class="mono">${escapeHtml(r.matricula||"")}</td>
-      <td>${escapeHtml(r.nome||"")}</td>
-      <td>${escapeHtml(r.funcao||"")}</td>
-      <td>${escapeHtml(r.vinculo||"")}</td>
-      <td>${escapeHtml(r.carga||"")}</td>
-      <td>${escapeHtml(r.escolas||"")}</td>
-      <td>${Number(r.horas_extras||0)}</td>
-      <td>${Number(r.falta_atestado||0)}</td>
-      <td>${Number(r.falta_sem_atestado||0)}</td>
-      <td>${Number(r.envios||0)}</td>
-      <td>${escapeHtml(r.obs_consolidada||"")}</td>
-    </tr>
-  `).join("");
-
-  const html = `
-  <html><head><meta charset="utf-8"/>
-    <title>Relatório Geral</title>
-    ${cssPDF()}
-    <style>
-      th,td{font-size:10px}
-      table{table-layout:fixed}
-      td{word-wrap:break-word}
-    </style>
-  </head>
-  <body>
-    <h1>Relatório Geral – Funcionários (todas as escolas juntas)</h1>
-    <div class="sub">Período: <span class="mono">${p}</span> • Gerado em: <span class="mono">${nowBR()}</span></div>
-    <div class="box">
-      <table>
-        <thead>
-          <tr>
-            <th>Matrícula</th><th>Nome</th><th>Função</th><th>Vínculo</th><th>Carga</th>
-            <th>Escolas</th><th>HE</th><th>Falta A</th><th>Falta S</th><th>Envios</th><th>Obs</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-    <div class="muted">Use “Salvar como PDF” na janela de impressão.</div>
-  </body></html>`;
-
-  abrirJanelaPDF(html);
-}
-
 </script>
 </body>
 </html>
-
-
