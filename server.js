@@ -309,10 +309,64 @@ app.get("/api/relatorio/geral", async (req, res) => {
   }
 });
 
+// ===== EDITAR REGISTRO =====
+app.put("/api/registros/:id", async (req,res)=>{
+  try{
+    const id = req.params.id;
+    const r = req.body;
+
+    await pool.query(`
+      UPDATE registros SET
+      escola=$1,
+      matricula=$2,
+      nome=$3,
+      funcao=$4,
+      vinculo=$5,
+      carga=$6,
+      periodo=$7,
+      horas=$8,
+      falta_atestado=$9,
+      falta_sem_atestado=$10,
+      obs=$11
+      WHERE id=$12
+    `,[
+      r.escola,
+      r.matricula,
+      r.nome,
+      r.funcao,
+      r.vinculo,
+      r.carga,
+      r.periodo,
+      r.horas,
+      r.falta_atestado,
+      r.falta_sem_atestado,
+      r.obs,
+      id
+    ]);
+
+    res.json({ok:true});
+  }catch(e){
+    res.status(500).json({erro:"erro editar"});
+  }
+});
+
+
+// ===== APAGAR REGISTRO =====
+app.delete("/api/registros/:id", async (req,res)=>{
+  try{
+    const id = req.params.id;
+    await pool.query("DELETE FROM registros WHERE id=$1",[id]);
+    res.json({ok:true});
+  }catch(e){
+    res.status(500).json({erro:"erro deletar"});
+  }
+});
+
 
 // ===== START =====
 const PORT = process.env.PORT || 10000;
 ensureSchema().then(() => {
   app.listen(PORT, () => console.log("Servidor rodando na porta", PORT));
 });
+
 
