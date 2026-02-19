@@ -382,6 +382,60 @@ app.post("/api/login", (req, res) => {
   return res.json({ ok: true, token });
 });
 
+// ===== EDITAR REGISTRO (somente ADM) =====
+app.put("/api/registros/:id", adminAuth, async (req,res)=>{
+  try{
+    const id = req.params.id;
+    const r = req.body || {};
+
+    await pool.query(`
+      UPDATE registros SET
+        escola=$1,
+        matricula=$2,
+        nome=$3,
+        funcao=$4,
+        vinculo=$5,
+        carga=$6,
+        periodo=$7,
+        horas=$8,
+        falta_atestado=$9,
+        falta_sem_atestado=$10,
+        obs=$11
+      WHERE id=$12
+    `,[
+      r.escola ?? null,
+      r.matricula ?? null,
+      r.nome ?? null,
+      r.funcao ?? null,
+      r.vinculo ?? null,
+      r.carga ?? null,
+      r.periodo ?? null,
+      Number(r.horas ?? 0) || 0,
+      Number(r.falta_atestado ?? 0) || 0,
+      Number(r.falta_sem_atestado ?? 0) || 0,
+      r.obs ?? null,
+      id
+    ]);
+
+    res.json({ok:true});
+  }catch(e){
+    console.log(e);
+    res.status(500).json({ok:false, erro:"erro editar"});
+  }
+});
+
+// ===== APAGAR REGISTRO (somente ADM) =====
+app.delete("/api/registros/:id", adminAuth, async (req,res)=>{
+  try{
+    const id = req.params.id;
+    await pool.query("DELETE FROM registros WHERE id=$1",[id]);
+    res.json({ok:true});
+  }catch(e){
+    console.log(e);
+    res.status(500).json({ok:false, erro:"erro deletar"});
+  }
+});
+
 
 
 // ===== START =====
@@ -389,6 +443,7 @@ const PORT = process.env.PORT || 10000;
 ensureSchema().then(() => {
   app.listen(PORT, () => console.log("Servidor rodando na porta", PORT));
 });
+
 
 
 
