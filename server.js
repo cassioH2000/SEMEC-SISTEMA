@@ -32,10 +32,29 @@ app.get("/health", async (req, res) => {
 });
 
 // ===== LOGIN ADM =====
+// Guarda tokens válidos em memória (reinicia quando o Render reinicia)
+const adminTokens = new Set();
+
+function adminAuth(req, res, next){
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  if(!token || !adminTokens.has(token)) {
+    return res.status(401).json({ ok:false, error:"unauthorized" });
+  }
+  next();
+}
+
+// LOGIN ADM (agora retorna token)
 app.post("/api/login", (req, res) => {
   const { senha } = req.body || {};
-  if (senha === process.env.ADMIN_PASSWORD) return res.json({ ok: true });
-  return res.status(401).json({ ok: false });
+  if (senha !== process.env.ADMIN_PASSWORD) return res.status(401).json({ ok: false });
+
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  adminTokens.add(token);
+
+  return res.json({ ok: true, token });
+});
+
 });
 
 // ===== GARANTE COLUNAS (seguro) =====
@@ -443,6 +462,7 @@ const PORT = process.env.PORT || 10000;
 ensureSchema().then(() => {
   app.listen(PORT, () => console.log("Servidor rodando na porta", PORT));
 });
+
 
 
 
