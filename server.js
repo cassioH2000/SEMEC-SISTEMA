@@ -361,6 +361,27 @@ app.delete("/api/registros/:id", async (req,res)=>{
     res.status(500).json({erro:"erro deletar"});
   }
 });
+// Guarda em memória tokens válidos (reinicia quando o serviço reinicia)
+const adminTokens = new Set();
+
+function adminAuth(req, res, next){
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  if(!token || !adminTokens.has(token)) return res.status(401).json({ ok:false, error:"unauthorized" });
+  next();
+}
+
+// LOGIN ADM (substitua seu /api/login por este)
+app.post("/api/login", (req, res) => {
+  const { senha } = req.body || {};
+  if (senha !== process.env.ADMIN_PASSWORD) return res.status(401).json({ ok: false });
+
+  // token aleatório simples
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  adminTokens.add(token);
+  return res.json({ ok: true, token });
+});
+
 
 
 // ===== START =====
@@ -368,5 +389,6 @@ const PORT = process.env.PORT || 10000;
 ensureSchema().then(() => {
   app.listen(PORT, () => console.log("Servidor rodando na porta", PORT));
 });
+
 
 
