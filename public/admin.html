@@ -108,6 +108,45 @@
       </div>
     </div>
 
+    <hr class="sep" />
+
+<div class="top">
+  <div>
+    <div class="pill">Relatório Geral (todas as escolas juntas)</div>
+    <div class="sub">1 linha por funcionário (consolidado por matrícula)</div>
+  </div>
+  <div class="row">
+    <button class="btn-info" onclick="carregarRelatorioGeral()">Carregar</button>
+    <button class="btn-danger" onclick="pdfRelatorioGeral()">PDF Relatório Geral</button>
+    <button class="btn-info" onclick="csvRelatorioGeral()">CSV Relatório Geral</button>
+  </div>
+</div>
+
+<div style="overflow:auto;margin-top:10px">
+  <table>
+    <thead>
+      <tr>
+        <th>Matrícula</th>
+        <th>Nome</th>
+        <th>Função</th>
+        <th>Vínculo</th>
+        <th>Carga</th>
+        <th>Escolas</th>
+        <th>HE</th>
+        <th>Falta A</th>
+        <th>Falta S</th>
+        <th>Envios</th>
+        <th>Obs (consolidada)</th>
+      </tr>
+    </thead>
+    <tbody id="tbodyRelGeral"></tbody>
+  </table>
+</div>
+
+<div class="muted" style="margin-top:8px">
+  Funcionários no relatório: <span id="countRelGeral">0</span>
+</div>
+
     <!-- BALANÇO GERAL -->
     <div class="kpis">
       <div class="kpi"><div class="t">Registros</div><div class="v" id="kReg">0</div></div>
@@ -543,3 +582,4 @@
 </script>
 </body>
 </html>
+
