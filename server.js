@@ -257,9 +257,62 @@ app.get("/api/resumo/:mat", async (req, res) => {
     res.status(500).json({ error: "erro_resumo" });
   }
 });
+// ===== RELATÓRIO GERAL (todas as escolas juntas, consolidado por funcionário) =====
+// /api/relatorio/geral?periodo=YYYY-MM   (opcional)
+// Retorna 1 linha por matrícula (funcionário)
+app.get("/api/relatorio/geral", async (req, res) => {
+  try {
+    const periodo = req.query.periodo ? String(req.query.periodo) : null;
+
+    const sql = periodo
+      ? `
+        SELECT
+          matricula,
+          MAX(nome) AS nome,
+          MAX(funcao) AS funcao,
+          MAX(vinculo) AS vinculo,
+          MAX(carga) AS carga,
+          COALESCE(SUM(horas),0)::int AS horas_extras,
+          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
+          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado,
+          COUNT(*)::int AS envios,
+          STRING_AGG(DISTINCT COALESCE(escola,'(sem escola)'), ', ' ORDER BY COALESCE(escola,'(sem escola)')) AS escolas,
+          STRING_AGG(DISTINCT NULLIF(TRIM(COALESCE(obs,'')),''), ' | ') AS obs_consolidada
+        FROM registros
+        WHERE periodo = $1
+        GROUP BY matricula
+        ORDER BY nome ASC NULLS LAST
+      `
+      : `
+        SELECT
+          matricula,
+          MAX(nome) AS nome,
+          MAX(funcao) AS funcao,
+          MAX(vinculo) AS vinculo,
+          MAX(carga) AS carga,
+          COALESCE(SUM(horas),0)::int AS horas_extras,
+          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
+          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado,
+          COUNT(*)::int AS envios,
+          STRING_AGG(DISTINCT COALESCE(escola,'(sem escola)'), ', ' ORDER BY COALESCE(escola,'(sem escola)')) AS escolas,
+          STRING_AGG(DISTINCT NULLIF(TRIM(COALESCE(obs,'')),''), ' | ') AS obs_consolidada
+        FROM registros
+        GROUP BY matricula
+        ORDER BY nome ASC NULLS LAST
+      `;
+
+    const r = periodo ? await pool.query(sql, [periodo]) : await pool.query(sql);
+    res.json({ periodo: periodo || null, rows: r.rows });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ error: "erro_relatorio_geral" });
+  }
+});
+
 
 // ===== START =====
 const PORT = process.env.PORT || 10000;
 ensureSchema().then(() => {
   app.listen(PORT, () => console.log("Servidor rodando na porta", PORT));
 });
+
