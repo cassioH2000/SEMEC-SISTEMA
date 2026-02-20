@@ -1,415 +1,492 @@
+/**
+ * server.js — SEMEC SISTEMA (Render + Supabase)
+ * Requisitos:
+ * - Node 18+ (Render)
+ * - Variáveis no Render:
+ *   DATABASE_URL = postgresql://...pooler.supabase.com:6543/postgres?sslmode=require
+ *   ADMIN_PASSWORD = semec2026   (ou sua senha)
+ *   JWT_SECRET = uma_string_grande_aleatoria
+ *
+ * Estrutura esperada:
+ * /public
+ *   index.html
+ *   folha.html
+ *   admin.html
+ *   logo.png (opcional)
+ */
+
 import express from "express";
-import cors from "cors";
-import pkg from "pg";
+import pg from "pg";
+import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const { Pool } = pkg;
+const { Pool } = pg;
 
 const app = express();
-app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
 
-// ===== SERVIR PASTA public =====
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use(express.static(path.join(__dirname, "public")));
+// ========= Config =========
+const PORT = process.env.PORT || 10000;
+const DATABASE_URL = process.env.DATABASE_URL || "";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 
-// ===== BANCO (SUPABASE) =====
-if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL não definida nas Environment Variables do Render.");
-}
+if (!DATABASE_URL) console.warn("⚠️ DATABASE_URL não configurado no Render.");
+if (!ADMIN_PASSWORD) console.warn("⚠️ ADMIN_PASSWORD não configurado no Render.");
+if (!JWT_SECRET) console.warn("⚠️ JWT_SECRET não configurado no Render.");
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  connectionString: DATABASE_URL,
+  // Supabase costuma exigir SSL em produção
+  ssl: { rejectUnauthorized: false },
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 15000,
 });
 
-// ===== FUNÇÕES ÚTEIS =====
-function nInt(v) {
-  const x = Number(v);
-  return Number.isFinite(x) ? Math.trunc(x) : 0;
+// ====== (Opcional) proteção contra PREPARE no pooler ======
+// O "transaction pooler" não gosta de queries com "name" (prepared statements).
+// Aqui removemos "name" se alguém acidentalmente passar query config.
+pool.on("connect", (client) => {
+  const origQuery = client.query.bind(client);
+  client.query = (text, params, cb) => {
+    if (typeof text === "object" && text !== null) {
+      const { name, ...rest } = text; // remove prepared name
+      return origQuery(rest, params, cb);
+    }
+    return origQuery(text, params, cb);
+  };
+});
+
+// ========= Static (public) =========
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PUBLIC_DIR = path.join(__dirname, "public");
+app.use(express.static(PUBLIC_DIR));
+
+// ========= Helpers =========
+function ok(res, payload = {}) {
+  res.json({ ok: true, ...payload });
 }
-function t(v) {
-  return String(v ?? "").trim();
+function bad(res, message = "Erro", status = 400, extra = {}) {
+  res.status(status).json({ ok: false, message, ...extra });
 }
 
-// ===== CRIAR/ATUALIZAR TABELA =====
+function normalizePeriodo(p) {
+  // Aceita "2026-02"
+  if (!p) return null;
+  const s = String(p).trim();
+  if (!/^\d{4}-\d{2}$/.test(s)) return null;
+  return s;
+}
+
+function toInt(n, def = 0) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return def;
+  return Math.trunc(v);
+}
+
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return bad(res, "Sem token.", 401);
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.admin = decoded;
+    next();
+  } catch (e) {
+    return bad(res, "Token inválido.", 401);
+  }
+}
+
+// ========= Schema =========
 async function ensureSchema() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS public.registros (
-      id BIGSERIAL PRIMARY KEY,
-      escola TEXT,
-      matricula TEXT,
-      nome TEXT,
-      funcao TEXT,
-      vinculo TEXT,
-      carga TEXT,
-      periodo TEXT,
-      horas INTEGER DEFAULT 0,
-      falta_atestado INTEGER DEFAULT 0,
-      falta_sem_atestado INTEGER DEFAULT 0,
-      obs TEXT,
-      created_at TIMESTAMPTZ DEFAULT now()
-    );
-  `);
+  // Tabelas:
+  // funcionarios: cadastro mestre (matricula, nome, funcao, vinculo, carga)
+  // registros: envios por escola/mês/funcionário (upsert por periodo+escola+matricula)
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS funcionarios (
+        matricula TEXT PRIMARY KEY,
+        nome TEXT NOT NULL DEFAULT '',
+        funcao TEXT NOT NULL DEFAULT '',
+        vinculo TEXT NOT NULL DEFAULT '',
+        carga TEXT NOT NULL DEFAULT ''
+      );
+    `);
 
-  // garante colunas caso a tabela já exista
-  await pool.query(`ALTER TABLE public.registros ADD COLUMN IF NOT EXISTS escola TEXT;`);
-  await pool.query(`ALTER TABLE public.registros ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS registros (
+        id BIGSERIAL PRIMARY KEY,
+        escola TEXT NOT NULL DEFAULT '',
+        periodo TEXT NOT NULL, -- YYYY-MM
+        matricula TEXT NOT NULL REFERENCES funcionarios(matricula) ON DELETE CASCADE,
+        nome TEXT NOT NULL DEFAULT '',
+        horas INTEGER NOT NULL DEFAULT 0,
+        falta_atestado INTEGER NOT NULL DEFAULT 0,
+        falta_sem_atestado INTEGER NOT NULL DEFAULT 0,
+        obs TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
 
-  // índices para performance
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_registros_periodo ON public.registros (periodo);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_registros_escola ON public.registros (escola);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_registros_matricula ON public.registros (matricula);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_registros_created_at ON public.registros (created_at);`);
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'registros_unique_periodo_escola_matricula'
+        ) THEN
+          ALTER TABLE registros
+          ADD CONSTRAINT registros_unique_periodo_escola_matricula
+          UNIQUE (periodo, escola, matricula);
+        END IF;
+      END$$;
+    `);
+
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_periodo ON registros(periodo);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_matricula ON registros(matricula);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_registros_escola ON registros(escola);`);
+  } finally {
+    client.release();
+  }
 }
 
-// ===== HEALTH =====
+// ========= Rotas =========
+
+// Health check
 app.get("/health", async (req, res) => {
   try {
-    await pool.query("SELECT 1");
-    res.json({ ok: true });
+    await pool.query("SELECT 1 as ok");
+    ok(res, { db: true });
   } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
+    bad(res, "Banco indisponível.", 500, { error: e?.message });
   }
 });
 
-// ===== AUTH ADM (TOKEN) =====
-const adminTokens = new Set();
+// Login admin
+app.post("/api/login", async (req, res) => {
+  const senha = String(req.body?.senha || "");
+  if (!ADMIN_PASSWORD) return bad(res, "ADMIN_PASSWORD não configurado.", 500);
+  if (!JWT_SECRET) return bad(res, "JWT_SECRET não configurado.", 500);
 
-function adminAuth(req, res, next) {
-  const h = req.headers.authorization || "";
-  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
-  if (!token || !adminTokens.has(token)) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-  next();
-}
+  if (senha !== ADMIN_PASSWORD) return bad(res, "Senha inválida.", 401);
 
-// ===== LOGIN ADM (retorna token) =====
-app.post("/api/login", (req, res) => {
-  const { senha } = req.body || {};
-  if (!process.env.ADMIN_PASSWORD) {
-    return res.status(500).json({ ok: false, error: "ADMIN_PASSWORD_not_set" });
-  }
-  if (senha !== process.env.ADMIN_PASSWORD) return res.status(401).json({ ok: false });
-
-  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  adminTokens.add(token);
-
-  res.json({ ok: true, token });
+  const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
+  ok(res, { token });
 });
 
-// ===== RECEBER RELATÓRIO (NOVO - recomendado) =====
-// Body: { source: "Escola X", records: [...] }
-app.post("/api/reports", async (req, res) => {
+// ===== Funcionários (leitura) =====
+app.get("/api/funcionarios", async (req, res) => {
+  const q = String(req.query.q || "").trim().toLowerCase();
+  const limit = Math.min(Math.max(toInt(req.query.limit, 30), 1), 200);
+
   try {
-    const { source, records } = req.body || {};
-    if (!source || !Array.isArray(records)) {
-      return res.status(400).json({ ok: false, error: "bad_payload" });
+    if (!q) {
+      const r = await pool.query(
+        `SELECT matricula, nome, funcao, vinculo, carga
+         FROM funcionarios
+         ORDER BY nome ASC
+         LIMIT $1`,
+        [limit]
+      );
+      return ok(res, { rows: r.rows });
     }
 
-    const escola = t(source) || "(sem escola)";
+    const r = await pool.query(
+      `SELECT matricula, nome, funcao, vinculo, carga
+       FROM funcionarios
+       WHERE LOWER(nome) LIKE $1 OR matricula LIKE $2
+       ORDER BY nome ASC
+       LIMIT $3`,
+      [`${q}%`, `${q}%`, limit]
+    );
+    ok(res, { rows: r.rows });
+  } catch (e) {
+    bad(res, "Erro ao listar funcionários.", 500, { error: e?.message });
+  }
+});
 
-    const ins = `
-      INSERT INTO public.registros
-      (escola, matricula, nome, funcao, vinculo, carga, periodo, horas, falta_atestado, falta_sem_atestado, obs)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-    `;
+// ===== Importar/atualizar cadastro mestre (opcional / protegido) =====
+// Você pode usar isso para "subir" todos os funcionários no banco 1 vez.
+// Não é para o usuário comum. Só admin.
+app.post("/api/admin/funcionarios/import", requireAdmin, async (req, res) => {
+  const list = req.body?.funcionarios;
+  if (!Array.isArray(list)) return bad(res, "Envie { funcionarios: [...] }");
 
-    for (const r of records) {
-      await pool.query(ins, [
-        escola,
-        t(r.matricula),
-        t(r.nome),
-        t(r.funcao),
-        t(r.vinculo),
-        t(r.carga),
-        t(r.period ?? r.periodo),
-        nInt(r.horas_extras ?? r.horas),
-        nInt(r.falta_atestado ?? r.faltaA),
-        nInt(r.falta_sem_atestado ?? r.faltaS),
-        t(r.obs)
-      ]);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const f of list) {
+      const matricula = String(f?.matricula || "").trim();
+      if (!matricula) continue;
+
+      const nome = String(f?.nome || "");
+      const funcao = String(f?.funcao || "");
+      const vinculo = String(f?.vinculo || "");
+      const carga = String(f?.carga || "");
+
+      await client.query(
+        `INSERT INTO funcionarios (matricula, nome, funcao, vinculo, carga)
+         VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (matricula) DO UPDATE SET
+           nome=EXCLUDED.nome,
+           funcao=EXCLUDED.funcao,
+           vinculo=EXCLUDED.vinculo,
+           carga=EXCLUDED.carga`,
+        [matricula, nome, funcao, vinculo, carga]
+      );
+    }
+    await client.query("COMMIT");
+    ok(res, { message: "Importação concluída." });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    bad(res, "Erro ao importar funcionários.", 500, { error: e?.message });
+  } finally {
+    client.release();
+  }
+});
+
+// ===== Envio da folha (pela página folha.html) =====
+// Espera algo como:
+// {
+//   escola: "ESCOLA X",
+//   periodo: "2026-02",
+//   itens: [
+//     { matricula:"396", nome:"...", horas:2, falta_atestado:0, falta_sem_atestado:1, obs:"..." },
+//     ...
+//   ]
+// }
+app.post("/api/folha/enviar", async (req, res) => {
+  const escola = String(req.body?.escola || "").trim();
+  const periodo = normalizePeriodo(req.body?.periodo);
+
+  if (!escola) return bad(res, "Informe a escola.");
+  if (!periodo) return bad(res, "Período inválido. Use YYYY-MM.");
+
+  const itens = req.body?.itens;
+  if (!Array.isArray(itens) || itens.length === 0) return bad(res, "Nenhum item enviado.");
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    for (const it of itens) {
+      const matricula = String(it?.matricula || "").trim();
+      if (!matricula) continue;
+
+      const nome = String(it?.nome || "");
+      const horas = Math.max(0, toInt(it?.horas, 0));
+      const fa = Math.min(15, Math.max(0, toInt(it?.falta_atestado, 0)));
+      const fs = Math.min(15, Math.max(0, toInt(it?.falta_sem_atestado, 0)));
+      const obs = String(it?.obs || "");
+
+      // garante que o funcionário exista no cadastro mestre
+      await client.query(
+        `INSERT INTO funcionarios (matricula, nome)
+         VALUES ($1,$2)
+         ON CONFLICT (matricula) DO UPDATE SET nome = COALESCE(NULLIF(EXCLUDED.nome,''), funcionarios.nome)`,
+        [matricula, nome]
+      );
+
+      // upsert do registro (por mês+escola+matricula)
+      await client.query(
+        `INSERT INTO registros (escola, periodo, matricula, nome, horas, falta_atestado, falta_sem_atestado, obs)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (periodo, escola, matricula) DO UPDATE SET
+           nome = EXCLUDED.nome,
+           horas = EXCLUDED.horas,
+           falta_atestado = EXCLUDED.falta_atestado,
+           falta_sem_atestado = EXCLUDED.falta_sem_atestado,
+           obs = EXCLUDED.obs,
+           updated_at = NOW()`,
+        [escola, periodo, matricula, nome, horas, fa, fs, obs]
+      );
     }
 
-    res.json({ ok: true });
+    await client.query("COMMIT");
+    ok(res, { message: "Folha enviada e atualizada no admin." });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "db_error", detail: String(e?.message || e) });
+    await client.query("ROLLBACK");
+    bad(res, "Erro ao salvar folha.", 500, { error: e?.message });
+  } finally {
+    client.release();
   }
 });
 
-// ===== COMPATÍVEL COM O ANTIGO =====
-// Body: array de registros (sem escola) -> salva "(sem escola)"
-app.post("/api/enviar", async (req, res) => {
+// ===== ADMIN: Resumo do mês (todos funcionários + soma de envios) =====
+// Retorna TODOS os funcionários do cadastro mestre, mesmo sem envio (0)
+app.get("/api/admin/mes", async (req, res) => {
+  const periodo = normalizePeriodo(req.query.periodo);
+  if (!periodo) return bad(res, "Período inválido. Use YYYY-MM.");
+
   try {
-    const dados = req.body;
-    if (!Array.isArray(dados)) return res.status(400).json({ ok: false, error: "bad_payload" });
-
-    const ins = `
-      INSERT INTO public.registros
-      (escola, matricula, nome, funcao, vinculo, carga, periodo, horas, falta_atestado, falta_sem_atestado, obs)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-    `;
-
-    for (const r of dados) {
-      await pool.query(ins, [
-        "(sem escola)",
-        t(r.matricula),
-        t(r.nome),
-        t(r.funcao),
-        t(r.vinculo),
-        t(r.carga),
-        t(r.periodo),
-        nInt(r.horas),
-        nInt(r.faltaA),
-        nInt(r.faltaS),
-        t(r.obs)
-      ]);
-    }
-
-    res.json({ ok: true });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_ao_salvar" });
-  }
-});
-
-// ===== LISTAR REGISTROS =====
-app.get("/api/registros", async (req, res) => {
-  try {
-    const periodo = req.query.periodo ? t(req.query.periodo) : null;
-    const escola = req.query.escola ? t(req.query.escola) : null;
-
-    const where = [];
-    const params = [];
-    if (periodo) { params.push(periodo); where.push(`periodo = $${params.length}`); }
-    if (escola)  { params.push(escola);  where.push(`escola = $${params.length}`); }
-
-    const sql = `
-      SELECT * FROM public.registros
-      ${where.length ? "WHERE " + where.join(" AND ") : ""}
-      ORDER BY id DESC
-    `;
-    const r = await pool.query(sql, params);
-    res.json(r.rows);
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_banco" });
-  }
-});
-
-// ===== BALANÇO GERAL =====
-app.get("/api/balanco/geral", async (req, res) => {
-  try {
-    const periodo = req.query.periodo ? t(req.query.periodo) : null;
-
-    const sql = periodo
-      ? `
-        SELECT
-          COUNT(*)::int AS registros,
-          COALESCE(SUM(horas),0)::int AS horas,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado
-        FROM public.registros
-        WHERE periodo = $1
+    const r = await pool.query(
       `
-      : `
-        SELECT
-          COUNT(*)::int AS registros,
-          COALESCE(SUM(horas),0)::int AS horas,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado
-        FROM public.registros
-      `;
-
-    const r = periodo ? await pool.query(sql, [periodo]) : await pool.query(sql);
-    const row = r.rows[0] || { registros: 0, horas: 0, falta_atestado: 0, falta_sem_atestado: 0 };
-    res.json({ ...row, total_faltas: row.falta_atestado + row.falta_sem_atestado });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_balanco" });
-  }
-});
-
-// ===== BALANÇO POR ESCOLA =====
-app.get("/api/balanco/escolas", async (req, res) => {
-  try {
-    const periodo = req.query.periodo ? t(req.query.periodo) : null;
-
-    const sql = periodo
-      ? `
-        SELECT
-          COALESCE(escola,'(sem escola)') AS escola,
-          COUNT(*)::int AS registros,
-          COALESCE(SUM(horas),0)::int AS horas,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado
-        FROM public.registros
-        WHERE periodo = $1
-        GROUP BY COALESCE(escola,'(sem escola)')
-        ORDER BY escola ASC
-      `
-      : `
-        SELECT
-          COALESCE(escola,'(sem escola)') AS escola,
-          COUNT(*)::int AS registros,
-          COALESCE(SUM(horas),0)::int AS horas,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado
-        FROM public.registros
-        GROUP BY COALESCE(escola,'(sem escola)')
-        ORDER BY escola ASC
-      `;
-
-    const r = periodo ? await pool.query(sql, [periodo]) : await pool.query(sql);
-    res.json({ escolas: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_escolas" });
-  }
-});
-
-// ===== RELATÓRIO GERAL (CONSOLIDADO POR FUNCIONÁRIO) =====
-app.get("/api/relatorio/geral", async (req, res) => {
-  try {
-    const periodo = req.query.periodo ? t(req.query.periodo) : null;
-
-    const sql = periodo
-      ? `
+      WITH agg AS (
         SELECT
           matricula,
-          MAX(nome) AS nome,
-          MAX(funcao) AS funcao,
-          MAX(vinculo) AS vinculo,
-          MAX(carga) AS carga,
-          COALESCE(SUM(horas),0)::int AS horas_extras,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado,
-          COUNT(*)::int AS envios,
-          STRING_AGG(DISTINCT COALESCE(escola,'(sem escola)'), ', ' ORDER BY COALESCE(escola,'(sem escola)')) AS escolas,
-          STRING_AGG(DISTINCT NULLIF(TRIM(COALESCE(obs,'')),''), ' | ') AS obs_consolidada
-        FROM public.registros
+          SUM(horas) AS horas,
+          SUM(falta_atestado) AS falta_atestado,
+          SUM(falta_sem_atestado) AS falta_sem_atestado,
+          STRING_AGG(DISTINCT escola, ', ' ORDER BY escola) AS escolas,
+          STRING_AGG(DISTINCT NULLIF(TRIM(obs),''), ' | ') AS obs
+        FROM registros
         WHERE periodo = $1
         GROUP BY matricula
-        ORDER BY nome ASC NULLS LAST
-      `
-      : `
-        SELECT
-          matricula,
-          MAX(nome) AS nome,
-          MAX(funcao) AS funcao,
-          MAX(vinculo) AS vinculo,
-          MAX(carga) AS carga,
-          COALESCE(SUM(horas),0)::int AS horas_extras,
-          COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
-          COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado,
-          COUNT(*)::int AS envios,
-          STRING_AGG(DISTINCT COALESCE(escola,'(sem escola)'), ', ' ORDER BY COALESCE(escola,'(sem escola)')) AS escolas,
-          STRING_AGG(DISTINCT NULLIF(TRIM(COALESCE(obs,'')),''), ' | ') AS obs_consolidada
-        FROM public.registros
-        GROUP BY matricula
-        ORDER BY nome ASC NULLS LAST
-      `;
-
-    const r = periodo ? await pool.query(sql, [periodo]) : await pool.query(sql);
-    res.json({ periodo: periodo || null, rows: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_relatorio_geral" });
-  }
-});
-
-// ===== RESUMO POR MATRÍCULA =====
-app.get("/api/resumo/:mat", async (req, res) => {
-  try {
-    const mat = t(req.params.mat);
-
-    const r = await pool.query(`
+      )
       SELECT
-        MAX(nome) AS nome,
-        MAX(funcao) AS funcao,
-        MAX(vinculo) AS vinculo,
-        MAX(carga) AS carga,
+        f.matricula,
+        f.nome,
+        f.funcao,
+        f.vinculo,
+        f.carga,
+        COALESCE(a.horas,0)::int AS horas,
+        COALESCE(a.falta_atestado,0)::int AS falta_atestado,
+        COALESCE(a.falta_sem_atestado,0)::int AS falta_sem_atestado,
+        COALESCE(a.escolas,'') AS escolas,
+        COALESCE(a.obs,'') AS obs
+      FROM funcionarios f
+      LEFT JOIN agg a ON a.matricula = f.matricula
+      ORDER BY f.nome ASC
+      `,
+      [periodo]
+    );
+
+    ok(res, { rows: r.rows });
+  } catch (e) {
+    bad(res, "Erro ao gerar resumo do mês.", 500, { error: e?.message });
+  }
+});
+
+// ===== ADMIN: Balanço geral do mês =====
+app.get("/api/admin/balanco", async (req, res) => {
+  const periodo = normalizePeriodo(req.query.periodo);
+  if (!periodo) return bad(res, "Período inválido. Use YYYY-MM.");
+
+  try {
+    const r = await pool.query(
+      `
+      SELECT
+        COUNT(*)::int AS registros,
         COALESCE(SUM(horas),0)::int AS horas,
         COALESCE(SUM(falta_atestado),0)::int AS falta_atestado,
         COALESCE(SUM(falta_sem_atestado),0)::int AS falta_sem_atestado
-      FROM public.registros
-      WHERE matricula = $1
-    `, [mat]);
+      FROM registros
+      WHERE periodo = $1
+      `,
+      [periodo]
+    );
 
-    res.json(r.rows[0] || {});
+    ok(res, r.rows[0] || { registros: 0, horas: 0, falta_atestado: 0, falta_sem_atestado: 0 });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_resumo" });
+    bad(res, "Erro ao gerar balanço.", 500, { error: e?.message });
   }
 });
 
-// ===== EDITAR REGISTRO (SOMENTE ADM) =====
-app.put("/api/registros/:id", adminAuth, async (req, res) => {
+// ===== ADMIN: Registros detalhados (para editar/apagar) =====
+app.get("/api/admin/registros", async (req, res) => {
+  const periodo = normalizePeriodo(req.query.periodo);
+  if (!periodo) return bad(res, "Período inválido. Use YYYY-MM.");
+
+  const escola = String(req.query.escola || "").trim();
+
   try {
-    const id = req.params.id;
-    const r = req.body || {};
+    let q = `
+      SELECT
+        id, escola, periodo, matricula, nome, horas, falta_atestado, falta_sem_atestado, obs,
+        TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
+      FROM registros
+      WHERE periodo = $1
+    `;
+    const params = [periodo];
 
-    await pool.query(`
-      UPDATE public.registros SET
-        escola=$1,
-        matricula=$2,
-        nome=$3,
-        funcao=$4,
-        vinculo=$5,
-        carga=$6,
-        periodo=$7,
-        horas=$8,
-        falta_atestado=$9,
-        falta_sem_atestado=$10,
-        obs=$11
-      WHERE id=$12
-    `, [
-      t(r.escola) || null,
-      t(r.matricula) || null,
-      t(r.nome) || null,
-      t(r.funcao) || null,
-      t(r.vinculo) || null,
-      t(r.carga) || null,
-      t(r.periodo) || null,
-      nInt(r.horas),
-      nInt(r.falta_atestado),
-      nInt(r.falta_sem_atestado),
-      t(r.obs) || null,
-      id
-    ]);
+    if (escola) {
+      q += " AND escola = $2";
+      params.push(escola);
+    }
 
-    res.json({ ok: true });
+    q += " ORDER BY escola ASC, nome ASC";
+
+    const r = await pool.query(q, params);
+    ok(res, { rows: r.rows });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_editar" });
+    bad(res, "Erro ao listar registros.", 500, { error: e?.message });
   }
 });
 
-// ===== APAGAR REGISTRO (SOMENTE ADM) =====
-app.delete("/api/registros/:id", adminAuth, async (req, res) => {
+// ===== ADMIN: Editar registro (A) =====
+app.put("/api/registros/:id", requireAdmin, async (req, res) => {
+  const id = String(req.params.id || "").trim();
+  if (!id) return bad(res, "ID inválido.");
+
+  const escola = String(req.body?.escola || "").trim();
+  const periodo = normalizePeriodo(req.body?.periodo);
+  const horas = Math.max(0, toInt(req.body?.horas, 0));
+  const fa = Math.min(15, Math.max(0, toInt(req.body?.falta_atestado, 0)));
+  const fs = Math.min(15, Math.max(0, toInt(req.body?.falta_sem_atestado, 0)));
+  const obs = String(req.body?.obs || "");
+
+  if (!periodo) return bad(res, "Período inválido. Use YYYY-MM.");
+  if (!escola) return bad(res, "Escola é obrigatória.");
+
   try {
-    const id = req.params.id;
-    await pool.query(`DELETE FROM public.registros WHERE id=$1`, [id]);
-    res.json({ ok: true });
+    const r = await pool.query(
+      `
+      UPDATE registros
+      SET escola=$1, periodo=$2, horas=$3, falta_atestado=$4, falta_sem_atestado=$5, obs=$6, updated_at=NOW()
+      WHERE id=$7
+      RETURNING id
+      `,
+      [escola, periodo, horas, fa, fs, obs, id]
+    );
+
+    if (r.rowCount === 0) return bad(res, "Registro não encontrado.", 404);
+    ok(res, { id });
   } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "erro_deletar" });
+    // pode dar conflito de UNIQUE(periodo, escola, matricula)
+    bad(res, "Erro ao editar registro.", 500, { error: e?.message });
   }
 });
 
-// ===== START =====
-const PORT = process.env.PORT || 10000;
+// ===== ADMIN: Apagar registro (B) =====
+app.delete("/api/registros/:id", requireAdmin, async (req, res) => {
+  const id = String(req.params.id || "").trim();
+  if (!id) return bad(res, "ID inválido.");
 
+  try {
+    const r = await pool.query(`DELETE FROM registros WHERE id=$1 RETURNING id`, [id]);
+    if (r.rowCount === 0) return bad(res, "Registro não encontrado.", 404);
+    ok(res, { id });
+  } catch (e) {
+    bad(res, "Erro ao apagar registro.", 500, { error: e?.message });
+  }
+});
+
+// Fallback: se acessar "/" e não existir index.html
+app.get("/", (req, res) => {
+  // Se existir index.html em public, express.static já serve.
+  // Aqui é só uma segurança.
+  res.sendFile(path.join(PUBLIC_DIR, "index.html"), (err) => {
+    if (err) res.status(200).send("SEMEC-SISTEMA online ✅");
+  });
+});
+
+// ========= Start =========
 ensureSchema()
   .then(() => {
-    app.listen(PORT, () => console.log("✅ Servidor rodando na porta", PORT));
+    app.listen(PORT, () => {
+      console.log(`✅ Servidor rodando na porta ${PORT}`);
+    });
   })
   .catch((e) => {
-    console.error("❌ Falha ao preparar o banco (ensureSchema):", e);
+    console.error("❌ Falha ao preparar o banco:");
+    console.error("Mensagem:", e?.message);
+    console.error("Stack:", e?.stack);
+    console.error("Erro bruto:", e);
     process.exit(1);
   });
-
