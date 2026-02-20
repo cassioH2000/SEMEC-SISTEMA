@@ -412,3 +412,4 @@ ensureSchema()
     console.error("❌ Falha ao preparar o banco (ensureSchema):", e);
     process.exit(1);
   });
+
