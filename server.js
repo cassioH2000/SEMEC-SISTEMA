@@ -4,20 +4,17 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 
 const { Pool } = pkg;
-
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
-/* =============================
-   CONFIGURAÇÕES
-============================= */
-const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "123456";
+const PORT = process.env.PORT || 10000;
 
-/* =============================
-   CONEXÃO SUPABASE (CORRIGIDA)
-============================= */
+/* ===============================
+   CONEXÃO SUPABASE (CORRIGIDO SSL)
+================================ */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -25,186 +22,66 @@ const pool = new Pool({
   }
 });
 
-/* =============================
-   CRIAR TABELA AUTOMATICAMENTE
-============================= */
-async function ensureSchema() {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS registros (
-        id SERIAL PRIMARY KEY,
-        matricula TEXT,
-        nome TEXT,
-        escola TEXT,
-        funcao TEXT,
-        carga TEXT,
-        horasExtras TEXT,
-        faltas TEXT,
-        observacao TEXT,
-        mes TEXT,
-        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log("Banco conectado e pronto.");
-  } catch (err) {
-    console.log("Erro banco:", err);
-  }
-}
+/* ===============================
+   TESTE SERVIDOR
+================================ */
+app.get("/", (req, res) => {
+  res.send("SERVIDOR SEMEC ONLINE 🚀");
+});
 
-ensureSchema();
-
-/* =============================
+/* ===============================
    LOGIN ADMIN
-============================= */
+================================ */
 app.post("/api/login", (req, res) => {
   const { senha } = req.body;
 
-  if (senha !== ADMIN_PASSWORD) {
-    return res.status(401).json({ erro: "Senha inválida" });
+  if (senha === process.env.ADMIN_PASSWORD) {
+    const token = jwt.sign({ admin: true }, "semec123", { expiresIn: "8h" });
+    return res.json({ token });
   }
 
-  const token = jwt.sign({ admin: true }, "segredo", {
-    expiresIn: "8h",
-  });
-
-  res.json({ token });
+  res.status(401).json({ erro: "Senha inválida" });
 });
 
-/* =============================
-   MIDDLEWARE TOKEN
-============================= */
-function verificarToken(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth) return res.status(403).json({ erro: "Sem token" });
-
-  const token = auth.split(" ")[1];
-
-  try {
-    jwt.verify(token, "segredo");
-    next();
-  } catch {
-    res.status(403).json({ erro: "Token inválido" });
-  }
-}
-
-/* =============================
-   ENVIAR FOLHA
-============================= */
+/* ===============================
+   SALVAR REGISTRO
+================================ */
 app.post("/api/enviar", async (req, res) => {
   try {
-    const {
-      matricula,
-      nome,
-      escola,
-      funcao,
-      carga,
-      horasExtras,
-      faltas,
-      observacao,
-      mes,
-    } = req.body;
+    const { nome, escola, horas, data } = req.body;
 
-    await pool.query(
-      `
-      INSERT INTO registros
-      (matricula,nome,escola,funcao,carga,horasExtras,faltas,observacao,mes)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-      `,
-      [
-        matricula,
-        nome,
-        escola,
-        funcao,
-        carga,
-        horasExtras,
-        faltas,
-        observacao,
-        mes,
-      ]
-    );
+    await pool.query(`
+      INSERT INTO registros (nome, escola, horas, data)
+      VALUES ($1,$2,$3,$4)
+    `, [nome, escola, horas, data]);
 
     res.json({ ok: true });
   } catch (err) {
-    console.log(err);
+    console.log("Erro salvar:", err);
     res.status(500).json({ erro: "Erro ao salvar" });
   }
 });
 
-/* =============================
-   LISTAR REGISTROS (ADMIN)
-============================= */
-app.get("/api/registros", verificarToken, async (req, res) => {
+/* ===============================
+   BALANÇO GERAL
+================================ */
+app.get("/api/registros", async (req, res) => {
   try {
-    const { mes, escola } = req.query;
+    const result = await pool.query(`
+      SELECT * FROM registros
+      ORDER BY data DESC
+    `);
 
-    let query = "SELECT * FROM registros WHERE 1=1";
-    let valores = [];
-
-    if (mes) {
-      valores.push(mes);
-      query += ` AND mes=$${valores.length}`;
-    }
-
-    if (escola && escola !== "Todas") {
-      valores.push(escola);
-      query += ` AND escola=$${valores.length}`;
-    }
-
-    query += " ORDER BY nome";
-
-    const result = await pool.query(query, valores);
     res.json(result.rows);
   } catch (err) {
+    console.log("Erro buscar:", err);
     res.status(500).json({ erro: "Erro ao buscar" });
   }
 });
 
-/* =============================
-   EDITAR REGISTRO
-============================= */
-app.put("/api/editar/:id", verificarToken, async (req, res) => {
-  try {
-    const { horasExtras, faltas, observacao } = req.body;
-
-    await pool.query(
-      `
-      UPDATE registros SET
-      horasExtras=$1,
-      faltas=$2,
-      observacao=$3
-      WHERE id=$4
-      `,
-      [horasExtras, faltas, observacao, req.params.id]
-    );
-
-    res.json({ ok: true });
-  } catch {
-    res.status(500).json({ erro: "Erro ao editar" });
-  }
-});
-
-/* =============================
-   APAGAR REGISTRO
-============================= */
-app.delete("/api/apagar/:id", verificarToken, async (req, res) => {
-  try {
-    await pool.query("DELETE FROM registros WHERE id=$1", [req.params.id]);
-    res.json({ ok: true });
-  } catch {
-    res.status(500).json({ erro: "Erro ao apagar" });
-  }
-});
-
-/* =============================
-   TESTE SERVIDOR
-============================= */
-app.get("/", (req, res) => {
-  res.send("SEMEC SISTEMA ONLINE ✅");
-});
-
-/* =============================
-   INICIAR SERVIDOR
-============================= */
+/* ===============================
+   INICIAR
+================================ */
 app.listen(PORT, () => {
   console.log("Servidor rodando na porta", PORT);
 });
