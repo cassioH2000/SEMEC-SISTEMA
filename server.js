@@ -1,427 +1,358 @@
-// server.js (ESM) - SEMEC SISTEMA
+// server.js (ESM) - SEMEC Sistema
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
+import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
-import pkg from "pg";
-const { Pool } = pkg;
+
+// (opcional) dotenv local - no Render não precisa, mas ajuda no PC
+try {
+  const dotenv = await import("dotenv");
+  dotenv.default.config();
+} catch (_) {}
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
-// ====== CONFIG ======
+// ---------- Config ----------
 const PORT = process.env.PORT || 10000;
-const DATABASE_URL = process.env.DATABASE_URL || "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_NOW";
+const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || "").trim();
+const JWT_SECRET = (process.env.JWT_SECRET || "semec_jwt_secret_trocar").trim();
+const DATABASE_URL = (process.env.DATABASE_URL || "").trim();
 
-// ====== STATIC (public) ======
+// ---------- Static (public) ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PUBLIC_DIR = path.join(__dirname, "public");
-app.use(express.static(PUBLIC_DIR));
+const publicDir = path.join(__dirname, "public");
+app.use(express.static(publicDir));
 
-// ====== DB ======
-if (!DATABASE_URL) {
-  console.warn("⚠️ DATABASE_URL não configurada. Configure no Render.");
-}
-
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: DATABASE_URL ? { rejectUnauthorized: false } : false, // ✅ Corrige SSL do Supabase no Render
+// Rota raiz (evita "Cannot GET /" caso não tenha index)
+app.get("/", (req, res) => {
+  res.sendFile(path.join(publicDir, "index.html"));
 });
 
-// ====== HELPERS ======
-function monthToPeriod(ym) {
-  // aceita "YYYY-MM" ou "YYYY-MM-DD" -> retorna "YYYY-MM"
-  if (!ym) return null;
-  const s = String(ym).trim();
-  if (/^\d{4}-\d{2}$/.test(s)) return s;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s.slice(0, 7);
-  return null;
+// ---------- Banco (pg) ----------
+if (!DATABASE_URL) {
+  console.warn("⚠️ DATABASE_URL não configurada. Configure no Render (Environment).");
 }
 
-function requireAdmin(req, res, next) {
+const pool = new pg.Pool({
+  connectionString: DATABASE_URL,
+  // Corrige SELF_SIGNED_CERT_IN_CHAIN no ambiente do Render/Supabase
+  ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 20_000,
+});
+
+// helper de query SEM PREPARE (bom pro transaction pooler)
+async function q(text, values = []) {
+  return pool.query({ text, values, queryMode: "simple" });
+}
+
+// cria tabelas se não existirem
+async function ensureSchema() {
+  await q(`
+    CREATE TABLE IF NOT EXISTS employees (
+      matricula TEXT PRIMARY KEY,
+      nome TEXT DEFAULT '',
+      funcao TEXT DEFAULT '',
+      vinculo TEXT DEFAULT '',
+      carga TEXT DEFAULT '',
+      escola TEXT DEFAULT ''
+    );
+  `);
+
+  await q(`
+    CREATE TABLE IF NOT EXISTS submissions (
+      id BIGSERIAL PRIMARY KEY,
+      periodo DATE NOT NULL,                 -- usar sempre 1º dia do mês
+      matricula TEXT NOT NULL REFERENCES employees(matricula) ON DELETE CASCADE,
+      escola TEXT DEFAULT '',
+      dias_trabalhados INTEGER,
+      faltas INTEGER,
+      horas_extras NUMERIC(10,2),
+      observacoes TEXT,
+      payload JSONB,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (periodo, matricula)
+    );
+  `);
+}
+
+// conecta e prepara schema (não derruba o server se falhar)
+(async () => {
+  try {
+    await ensureSchema();
+    console.log("✅ Banco pronto (schema ok).");
+  } catch (err) {
+    console.error("❌ Falha ao preparar o banco (ensureSchema):", err?.message || err);
+  }
+})();
+
+// ---------- Auth ----------
+function authAdmin(req, res, next) {
   const auth = req.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token) return res.status(401).json({ ok: false, error: "Sem token" });
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return res.status(401).json({ error: "Sem token" });
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    if (!payload || payload.role !== "admin") {
-      return res.status(403).json({ ok: false, error: "Sem permissão" });
-    }
-    req.admin = payload;
+    const data = jwt.verify(token, JWT_SECRET);
+    if (data?.role !== "admin") return res.status(403).json({ error: "Sem permissão" });
+    req.user = data;
     next();
   } catch (e) {
-    return res.status(401).json({ ok: false, error: "Token inválido" });
+    return res.status(401).json({ error: "Token inválido" });
   }
 }
 
-async function dbOk() {
-  try {
-    const r = await pool.query("select 1 as ok");
-    return !!r?.rows?.[0]?.ok;
-  } catch {
-    return false;
-  }
-}
-
-// ====== SCHEMA ======
-async function ensureSchema() {
-  if (!DATABASE_URL) return;
-
-  // Tabelas:
-  // - funcionarios: cadastro único por matricula (sempre aparece no admin)
-  // - registros: envio mensal por funcionario + periodo + escola (upsert)
-  const sql = `
-  create table if not exists funcionarios (
-    matricula text primary key,
-    nome text default '',
-    funcao text default '',
-    vinculo text default '',
-    carga text default '',
-    created_at timestamptz default now(),
-    updated_at timestamptz default now()
-  );
-
-  create table if not exists registros (
-    id bigserial primary key,
-    periodo text not null,               -- "YYYY-MM"
-    escola text default '',
-    matricula text not null references funcionarios(matricula) on delete cascade,
-
-    faltas integer default 0,
-    horas_extras numeric default 0,
-    observacao text default '',
-
-    payload jsonb default '{}'::jsonb,   -- guarda campos extras se você quiser
-    updated_at timestamptz default now(),
-    created_at timestamptz default now(),
-
-    unique (periodo, matricula, escola)
-  );
-
-  create index if not exists idx_registros_periodo on registros(periodo);
-  create index if not exists idx_registros_escola on registros(escola);
-
-  -- trigger simples para updated_at (sem precisar extensão)
-  `;
-  await pool.query(sql);
-}
-
-async function ensureFuncionario(matricula, dados = {}) {
-  const m = String(matricula || "").trim();
-  if (!m) return;
-
-  const nome = (dados.nome ?? "").toString();
-  const funcao = (dados.funcao ?? "").toString();
-  const vinculo = (dados.vinculo ?? "").toString();
-  const carga = (dados.carga ?? "").toString();
-
-  await pool.query(
-    `
-    insert into funcionarios (matricula, nome, funcao, vinculo, carga, updated_at)
-    values ($1,$2,$3,$4,$5, now())
-    on conflict (matricula)
-    do update set
-      nome = coalesce(nullif(excluded.nome,''), funcionarios.nome),
-      funcao = coalesce(nullif(excluded.funcao,''), funcionarios.funcao),
-      vinculo = coalesce(nullif(excluded.vinculo,''), funcionarios.vinculo),
-      carga = coalesce(nullif(excluded.carga,''), funcionarios.carga),
-      updated_at = now()
-    `,
-    [m, nome, funcao, vinculo, carga]
-  );
-}
-
-async function upsertRegistro({ periodo, escola, matricula, faltas, horas_extras, observacao, payload }) {
-  const p = monthToPeriod(periodo);
-  if (!p) throw new Error("Período inválido (use YYYY-MM)");
-  const m = String(matricula || "").trim();
-  if (!m) throw new Error("Matrícula obrigatória");
-
-  const esc = (escola ?? "").toString().trim(); // pode ser vazio
-  const f = Number.isFinite(Number(faltas)) ? Number(faltas) : 0;
-  const he = Number.isFinite(Number(horas_extras)) ? Number(horas_extras) : 0;
-  const obs = (observacao ?? "").toString();
-
-  const pay = payload && typeof payload === "object" ? payload : {};
-
-  const r = await pool.query(
-    `
-    insert into registros (periodo, escola, matricula, faltas, horas_extras, observacao, payload, updated_at)
-    values ($1,$2,$3,$4,$5,$6,$7::jsonb, now())
-    on conflict (periodo, matricula, escola)
-    do update set
-      faltas = excluded.faltas,
-      horas_extras = excluded.horas_extras,
-      observacao = excluded.observacao,
-      payload = excluded.payload,
-      updated_at = now()
-    returning *
-    `,
-    [p, esc, m, f, he, obs, JSON.stringify(pay)]
-  );
-
-  return r.rows[0];
-}
-
-// ====== ROUTES ======
-app.get("/", (req, res) => {
-  // se existir index.html em /public, abre
-  res.sendFile(path.join(PUBLIC_DIR, "index.html"));
-});
-
-app.get("/api/health", async (req, res) => {
-  const ok = await dbOk();
-  res.json({ ok: true, db: ok });
-});
-
-// LOGIN ADMIN
+// ---------- Login ----------
 app.post("/api/login", async (req, res) => {
   try {
-    const { password } = req.body || {};
+    const senha = String(req.body?.password ?? "").trim();
+
     if (!ADMIN_PASSWORD) {
-      return res.status(500).json({ ok: false, error: "ADMIN_PASSWORD não configurada no Render" });
+      return res.status(500).json({
+        error: "ADMIN_PASSWORD não configurado no Render.",
+      });
     }
-    if (!password || String(password) !== String(ADMIN_PASSWORD)) {
-      return res.status(401).json({ ok: false, error: "Senha inválida" });
+
+    if (senha !== ADMIN_PASSWORD) {
+      return res.status(401).json({ error: "Senha inválida" });
     }
 
     const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
-    return res.json({ ok: true, token });
+    return res.json({ token });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: "Erro no login" });
+    return res.status(500).json({ error: "Erro no login" });
   }
 });
 
-// FOLHA -> ENVIAR (UPSERT)
+// ---------- Folha: enviar/atualizar ----------
+/**
+ * Espera algo assim:
+ * {
+ *   "periodo": "2026-02",
+ *   "escola": "ESCOLA X",
+ *   "matricula": "396",
+ *   "nome": "...",
+ *   "funcao": "...",
+ *   "vinculo": "...",
+ *   "carga": "...",
+ *   "dias_trabalhados": 20,
+ *   "faltas": 1,
+ *   "horas_extras": 4.5,
+ *   "observacoes": "..."
+ * }
+ */
 app.post("/api/folha/enviar", async (req, res) => {
   try {
-    if (!DATABASE_URL) return res.status(500).json({ ok: false, error: "Sem DATABASE_URL" });
-
     const body = req.body || {};
-    const periodo = monthToPeriod(body.periodo);
-    const matricula = body.matricula;
-    const escola = body.escola ?? "";
-    const dadosFuncionario = body.funcionario || body.dadosFuncionario || {};
+    const matricula = String(body.matricula || "").trim();
+    const periodoStr = String(body.periodo || "").trim(); // "YYYY-MM"
+    const escola = String(body.escola || "").trim();
 
-    // garante funcionario no cadastro
-    await ensureFuncionario(matricula, dadosFuncionario);
+    if (!matricula) return res.status(400).json({ error: "matricula é obrigatória" });
+    if (!/^\d{4}-\d{2}$/.test(periodoStr)) {
+      return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
+    }
 
-    // cria/atualiza registro do mês
-    const registro = await upsertRegistro({
-      periodo,
-      escola,
-      matricula,
-      faltas: body.faltas ?? 0,
-      horas_extras: body.horas_extras ?? 0,
-      observacao: body.observacao ?? "",
-      payload: body.payload ?? body, // guarda o body inteiro se quiser
-    });
+    const periodoDate = `${periodoStr}-01`;
 
-    return res.json({ ok: true, registro });
-  } catch (e) {
-    return res.status(400).json({ ok: false, error: e.message || "Erro ao enviar" });
+    // 1) garante funcionário existe e ATUALIZA dados quando vier algo da folha (upsert)
+    const nome = String(body.nome || "").trim();
+    const funcao = String(body.funcao || "").trim();
+    const vinculo = String(body.vinculo || "").trim();
+    const carga = String(body.carga || "").trim();
+
+    await q(
+      `
+      INSERT INTO employees (matricula, nome, funcao, vinculo, carga, escola)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (matricula) DO UPDATE SET
+        nome = COALESCE(NULLIF(EXCLUDED.nome,''), employees.nome),
+        funcao = COALESCE(NULLIF(EXCLUDED.funcao,''), employees.funcao),
+        vinculo = COALESCE(NULLIF(EXCLUDED.vinculo,''), employees.vinculo),
+        carga = COALESCE(NULLIF(EXCLUDED.carga,''), employees.carga),
+        escola = COALESCE(NULLIF(EXCLUDED.escola,''), employees.escola)
+      `,
+      [matricula, nome, funcao, vinculo, carga, escola]
+    );
+
+    // 2) salva/atualiza o registro do mês (1 por funcionário por mês)
+    const dias_trabalhados = body.dias_trabalhados ?? null;
+    const faltas = body.faltas ?? null;
+    const horas_extras = body.horas_extras ?? null;
+    const observacoes = body.observacoes ?? null;
+
+    await q(
+      `
+      INSERT INTO submissions (periodo, matricula, escola, dias_trabalhados, faltas, horas_extras, observacoes, payload)
+      VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8::jsonb)
+      ON CONFLICT (periodo, matricula) DO UPDATE SET
+        escola = COALESCE(NULLIF(EXCLUDED.escola,''), submissions.escola),
+        dias_trabalhados = EXCLUDED.dias_trabalhados,
+        faltas = EXCLUDED.faltas,
+        horas_extras = EXCLUDED.horas_extras,
+        observacoes = EXCLUDED.observacoes,
+        payload = EXCLUDED.payload
+      `,
+      [
+        periodoDate,
+        matricula,
+        escola,
+        dias_trabalhados,
+        faltas,
+        horas_extras,
+        observacoes,
+        JSON.stringify(body),
+      ]
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ /api/folha/enviar:", err?.message || err);
+    return res.status(500).json({ error: "Erro ao salvar envio" });
   }
 });
 
-// ADMIN -> LISTAR MÊS (sempre retorna TODOS os funcionários)
-// GET /api/admin/mes?periodo=2026-02&escola=EscolaX (opcional)
-app.get("/api/admin/mes", requireAdmin, async (req, res) => {
+// ---------- Admin: mês (TODOS os funcionários SEMPRE) ----------
+/**
+ * GET /api/admin/mes?periodo=2026-02&escola=...
+ * Retorna todos employees + dados do mês (se existir submissão)
+ */
+app.get("/api/admin/mes", authAdmin, async (req, res) => {
   try {
-    if (!DATABASE_URL) return res.status(500).json({ ok: false, error: "Sem DATABASE_URL" });
+    const periodoStr = String(req.query.periodo || "").trim();
+    const escola = String(req.query.escola || "").trim();
 
-    const periodo = monthToPeriod(req.query.periodo);
-    if (!periodo) return res.status(400).json({ ok: false, error: "Informe periodo=YYYY-MM" });
+    if (!/^\d{4}-\d{2}$/.test(periodoStr)) {
+      return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
+    }
 
-    const escola = (req.query.escola ?? "").toString().trim();
-    const filtraEscola = escola && escola.toLowerCase() !== "todas" && escola.toLowerCase() !== "todas as escolas";
+    const periodoDate = `${periodoStr}-01`;
 
-    // Quando filtra por escola, ainda assim queremos todos funcionários
-    // mas o registro do mês será daquele filtro de escola.
-    const params = filtraEscola ? [periodo, escola] : [periodo];
-
-    const query = filtraEscola
-      ? `
-        select
-          f.matricula, f.nome, f.funcao, f.vinculo, f.carga,
-          r.id as registro_id,
-          r.periodo, r.escola,
-          coalesce(r.faltas,0) as faltas,
-          coalesce(r.horas_extras,0) as horas_extras,
-          coalesce(r.observacao,'') as observacao,
-          r.payload,
-          r.updated_at
-        from funcionarios f
-        left join registros r
-          on r.matricula = f.matricula
-         and r.periodo = $1
-         and r.escola = $2
-        order by f.nome asc
+    // filtro por escola (opcional): usa escola do envio do mês ou do cadastro se não tiver envio
+    const rows = await q(
       `
-      : `
-        -- Sem filtro: pode haver múltiplas escolas por funcionário no mês.
-        -- Aqui vamos pegar SOMA por funcionário no mês (todas as escolas),
-        -- e também manter um "detalhe_escolas" para relatório.
-        with base as (
-          select
-            f.matricula, f.nome, f.funcao, f.vinculo, f.carga,
-            r.id, r.escola, r.periodo,
-            coalesce(r.faltas,0) as faltas,
-            coalesce(r.horas_extras,0) as horas_extras,
-            coalesce(r.observacao,'') as observacao,
-            r.payload,
-            r.updated_at
-          from funcionarios f
-          left join registros r
-            on r.matricula = f.matricula
-           and r.periodo = $1
-        )
-        select
-          matricula, nome, funcao, vinculo, carga,
-          -- soma do mês (todas escolas)
-          coalesce(sum(faltas),0)::int as faltas,
-          coalesce(sum(horas_extras),0) as horas_extras,
-          -- escolas em que tem registro
-          jsonb_agg(
-            case when escola is null then null else
-              jsonb_build_object(
-                'id', id,
-                'escola', escola,
-                'faltas', faltas,
-                'horas_extras', horas_extras,
-                'observacao', observacao,
-                'updated_at', updated_at,
-                'payload', payload
-              )
-            end
-          ) filter (where escola is not null) as detalhe_escolas
-        from base
-        group by matricula, nome, funcao, vinculo, carga
-        order by nome asc
-      `;
+      SELECT
+        e.matricula,
+        e.nome, e.funcao, e.vinculo, e.carga,
+        COALESCE(s.escola, e.escola, '') AS escola,
+        s.dias_trabalhados,
+        s.faltas,
+        s.horas_extras,
+        s.observacoes,
+        s.created_at
+      FROM employees e
+      LEFT JOIN submissions s
+        ON s.matricula = e.matricula
+       AND s.periodo = $1::date
+      WHERE
+        ($2 = '' OR COALESCE(s.escola, e.escola, '') = $2)
+      ORDER BY e.nome ASC
+      `,
+      [periodoDate, escola]
+    );
 
-    const r = await pool.query(query, params);
-
-    // KPIs / resumo
-    const rows = r.rows || [];
-    let totalFuncionarios = rows.length;
-
-    // total de "envios" = quantidade de registros existentes no mês
-    // (com filtro escola: 1 registro por funcionário no máximo)
-    const enviosQ = filtraEscola
-      ? `select count(*)::int as total from registros where periodo=$1 and escola=$2`
-      : `select count(*)::int as total from registros where periodo=$1`;
-
-    const enviosR = await pool.query(enviosQ, params);
-    const totalEnvios = enviosR.rows?.[0]?.total ?? 0;
-
-    // somas do mês
-    const somaQ = filtraEscola
-      ? `select coalesce(sum(faltas),0)::int as faltas, coalesce(sum(horas_extras),0) as horas_extras from registros where periodo=$1 and escola=$2`
-      : `select coalesce(sum(faltas),0)::int as faltas, coalesce(sum(horas_extras),0) as horas_extras from registros where periodo=$1`;
-
-    const somaR = await pool.query(somaQ, params);
-    const totais = somaR.rows?.[0] || { faltas: 0, horas_extras: 0 };
+    // KPIs do mês (com base nas submissões existentes)
+    const kpis = await q(
+      `
+      SELECT
+        COUNT(*)::int AS total_envios,
+        COALESCE(SUM(COALESCE(horas_extras,0)),0)::float AS horas_extras_soma
+      FROM submissions
+      WHERE periodo = $1::date
+        AND ($2 = '' OR escola = $2)
+      `,
+      [periodoDate, escola]
+    );
 
     return res.json({
-      ok: true,
-      periodo,
-      escola: filtraEscola ? escola : "Todas as escolas",
-      kpis: {
-        total_funcionarios: totalFuncionarios,
-        total_envios: totalEnvios,
-        faltas_total: Number(totais.faltas || 0),
-        horas_extras_total: Number(totais.horas_extras || 0),
-      },
-      funcionarios: rows,
+      periodo: periodoStr,
+      escola: escola || "Todas",
+      kpis: kpis.rows[0],
+      funcionarios: rows.rows,
     });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message || "Erro admin mes" });
+  } catch (err) {
+    console.error("❌ /api/admin/mes:", err?.message || err);
+    return res.status(500).json({ error: "Erro ao carregar mês" });
   }
 });
 
-// ADMIN -> EDITAR (UPSERT por matricula + periodo + escola)
-// PUT /api/admin/registro
-app.put("/api/admin/registro", requireAdmin, async (req, res) => {
+// ---------- Admin: editar registro do mês ----------
+app.put("/api/admin/registro", authAdmin, async (req, res) => {
   try {
-    const body = req.body || {};
-    const periodo = monthToPeriod(body.periodo);
-    const matricula = body.matricula;
-    const escola = body.escola ?? "";
+    const { periodo, matricula } = req.body || {};
+    const periodoStr = String(periodo || "").trim();
+    const m = String(matricula || "").trim();
+    if (!m) return res.status(400).json({ error: "matricula é obrigatória" });
+    if (!/^\d{4}-\d{2}$/.test(periodoStr)) return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
 
-    // garante funcionario no cadastro se vier dados
-    if (body.funcionario) await ensureFuncionario(matricula, body.funcionario);
+    const periodoDate = `${periodoStr}-01`;
 
-    const registro = await upsertRegistro({
-      periodo,
-      escola,
-      matricula,
-      faltas: body.faltas ?? 0,
-      horas_extras: body.horas_extras ?? 0,
-      observacao: body.observacao ?? "",
-      payload: body.payload ?? body,
-    });
+    const escola = String(req.body?.escola || "").trim();
+    const dias_trabalhados = req.body?.dias_trabalhados ?? null;
+    const faltas = req.body?.faltas ?? null;
+    const horas_extras = req.body?.horas_extras ?? null;
+    const observacoes = req.body?.observacoes ?? null;
 
-    return res.json({ ok: true, registro });
-  } catch (e) {
-    return res.status(400).json({ ok: false, error: e.message || "Erro ao editar" });
-  }
-});
-
-// ADMIN -> APAGAR POR ID
-// DELETE /api/admin/registro/:id
-app.delete("/api/admin/registro/:id", requireAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ ok: false, error: "ID inválido" });
-
-    const r = await pool.query("delete from registros where id=$1 returning id", [id]);
-    if (!r.rowCount) return res.status(404).json({ ok: false, error: "Registro não encontrado" });
-
-    return res.json({ ok: true, deleted: id });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message || "Erro ao apagar" });
-  }
-});
-
-// ADMIN -> LISTAR ESCOLAS DO MÊS (para preencher select)
-app.get("/api/admin/escolas", requireAdmin, async (req, res) => {
-  try {
-    const periodo = monthToPeriod(req.query.periodo);
-    if (!periodo) return res.status(400).json({ ok: false, error: "Informe periodo=YYYY-MM" });
-
-    const r = await pool.query(
-      `select distinct escola from registros where periodo=$1 and escola <> '' order by escola asc`,
-      [periodo]
+    // garante que existe submissão (upsert)
+    await q(
+      `
+      INSERT INTO submissions (periodo, matricula, escola, dias_trabalhados, faltas, horas_extras, observacoes, payload)
+      VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8::jsonb)
+      ON CONFLICT (periodo, matricula) DO UPDATE SET
+        escola = COALESCE(NULLIF(EXCLUDED.escola,''), submissions.escola),
+        dias_trabalhados = EXCLUDED.dias_trabalhados,
+        faltas = EXCLUDED.faltas,
+        horas_extras = EXCLUDED.horas_extras,
+        observacoes = EXCLUDED.observacoes,
+        payload = EXCLUDED.payload
+      `,
+      [
+        periodoDate,
+        m,
+        escola,
+        dias_trabalhados,
+        faltas,
+        horas_extras,
+        observacoes,
+        JSON.stringify(req.body || {}),
+      ]
     );
-    res.json({ ok: true, escolas: r.rows.map((x) => x.escola) });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || "Erro escolas" });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ /api/admin/registro PUT:", err?.message || err);
+    return res.status(500).json({ error: "Erro ao editar" });
   }
 });
 
-// ====== BOOT ======
-(async () => {
+// ---------- Admin: apagar registro do mês ----------
+app.delete("/api/admin/registro", authAdmin, async (req, res) => {
   try {
-    console.log("🟦 Iniciando servidor...");
-    console.log("📁 Public dir:", PUBLIC_DIR);
+    const periodoStr = String(req.query.periodo || "").trim();
+    const matricula = String(req.query.matricula || "").trim();
+    if (!matricula) return res.status(400).json({ error: "matricula é obrigatória" });
+    if (!/^\d{4}-\d{2}$/.test(periodoStr)) return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
 
-    if (DATABASE_URL) {
-      await ensureSchema();
-      console.log("✅ Schema OK");
-    } else {
-      console.log("⚠️ Sem DATABASE_URL, rodando sem banco.");
-    }
-  } catch (e) {
-    console.log("❌ Falha ao preparar schema:", e.message);
+    const periodoDate = `${periodoStr}-01`;
+    await q(`DELETE FROM submissions WHERE periodo = $1::date AND matricula = $2`, [periodoDate, matricula]);
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ /api/admin/registro DELETE:", err?.message || err);
+    return res.status(500).json({ error: "Erro ao apagar" });
   }
+});
 
-  app.listen(PORT, () => {
-    console.log("✅ Servidor rodando na porta", PORT);
-  });
-})();
+// Healthcheck simples
+app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+app.listen(PORT, () => {
+  console.log(`✅ Servidor rodando na porta ${PORT}`);
+  console.log(`📁 Public dir: ${publicDir}`);
+});
