@@ -2,194 +2,169 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Folha de Ponto - Usuário</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SEMEC • Folha de Ponto</title>
 
   <style>
     :root{
-      --bg:#0f172a;
-      --card:#0b1224;
-      --card2:#101b35;
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c162b;
       --text:#e5e7eb;
-      --muted:#94a3b8;
+      --muted:#93a4bd;
+      --line:rgba(255,255,255,0.08);
       --accent:#2563eb;
       --accent2:#1d4ed8;
-      --danger:#ef4444;
       --ok:#22c55e;
-      --border:rgba(255,255,255,0.08);
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --radius:18px;
       --shadow: 0 14px 40px rgba(0,0,0,0.35);
-      --radius: 18px;
     }
 
-    *{ box-sizing:border-box; }
+    *{box-sizing:border-box;}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 30% 0%, #1e293b 0%, var(--bg) 55%);
       color:var(--text);
+      background: radial-gradient(1100px 700px at 20% 0%, #1e2a45 0%, var(--bg) 55%);
       min-height:100vh;
     }
 
     header{
-      padding:18px 18px 8px;
+      padding:18px 16px 10px;
     }
 
     .topbar{
       max-width:1100px;
       margin:0 auto;
       background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border:1px solid var(--border);
+      border:1px solid var(--line);
       border-radius: var(--radius);
       padding:14px 16px;
+      box-shadow: var(--shadow);
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      box-shadow: var(--shadow);
+      flex-wrap:wrap;
     }
 
     .brand{
       display:flex;
-      align-items:center;
       gap:12px;
-      min-width:220px;
+      align-items:center;
+      min-width:240px;
     }
 
     .logo{
-      width:44px;
-      height:44px;
-      border-radius:12px;
-      background: linear-gradient(145deg, rgba(37,99,235,0.9), rgba(34,197,94,0.75));
-      display:grid;
-      place-items:center;
-      font-weight:800;
-      letter-spacing:0.5px;
-      box-shadow: 0 10px 28px rgba(37,99,235,0.25);
+      width:46px;height:46px;
+      border-radius:14px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.95), rgba(34,197,94,0.75));
+      display:grid;place-items:center;
+      font-weight:900;
+      letter-spacing:.5px;
+      box-shadow: 0 14px 28px rgba(37,99,235,0.25);
+      user-select:none;
     }
 
     .brand h1{
-      font-size:15px;
       margin:0;
-      line-height:1.15;
+      font-size:15px;
+      line-height:1.1;
     }
     .brand p{
-      margin:0;
-      font-size:12px;
+      margin:2px 0 0;
       color:var(--muted);
+      font-size:12px;
     }
 
     .status{
-      font-size:12px;
-      color:var(--muted);
       display:flex;
-      gap:10px;
       align-items:center;
-      justify-content:flex-end;
+      gap:10px;
       flex-wrap:wrap;
+      justify-content:flex-end;
     }
-
     .pill{
-      border:1px solid var(--border);
+      border:1px solid var(--line);
       background: rgba(255,255,255,0.04);
       padding:6px 10px;
-      border-radius: 999px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
       display:inline-flex;
-      gap:8px;
       align-items:center;
+      gap:8px;
       white-space:nowrap;
     }
-
     .dot{
-      width:8px;
-      height:8px;
-      border-radius:999px;
-      background: var(--ok);
-      box-shadow:0 0 0 4px rgba(34,197,94,0.15);
+      width:8px;height:8px;border-radius:999px;
+      background: var(--warn);
+      box-shadow:0 0 0 4px rgba(245,158,11,0.15);
     }
+    .dot.ok{ background: var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+    .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(239,68,68,0.15); }
 
-    main{
-      padding:14px 18px 40px;
-    }
+    main{ padding: 8px 16px 40px; }
 
     .wrap{
       max-width:1100px;
       margin:0 auto;
       display:grid;
-      grid-template-columns: 1.05fr 0.95fr;
+      grid-template-columns: 1.12fr 0.88fr;
       gap:14px;
     }
-
-    @media (max-width: 980px){
-      .wrap{ grid-template-columns:1fr; }
-    }
+    @media (max-width:980px){ .wrap{ grid-template-columns:1fr; } }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border:1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-
-    .card .head{
+    .head{
       padding:14px 16px;
-      border-bottom:1px solid var(--border);
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,0.10);
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      background: rgba(0,0,0,0.10);
+      flex-wrap:wrap;
     }
+    .head h2{ margin:0; font-size:14px; }
+    .head span{ color:var(--muted); font-size:12px; }
 
-    .card .head h2{
-      margin:0;
-      font-size:14px;
-      letter-spacing:0.2px;
-    }
+    .content{ padding:16px; }
 
-    .card .head span{
-      color:var(--muted);
+    label{
+      display:block;
       font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
     }
+    input, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input::placeholder, textarea::placeholder{ color: rgba(147,164,189,0.75); }
 
-    .content{
-      padding:16px;
-    }
+    textarea{ min-height:110px; resize:vertical; }
 
     .grid{
       display:grid;
       grid-template-columns: 1fr 1fr;
       gap:12px;
     }
-
-    @media (max-width: 700px){
-      .grid{ grid-template-columns:1fr; }
-    }
-
-    label{
-      font-size:12px;
-      color:var(--muted);
-      display:block;
-      margin:0 0 6px;
-    }
-
-    input, select, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background: rgba(0,0,0,0.20);
-      color:var(--text);
-      outline:none;
-      font-size:14px;
-    }
-
-    input::placeholder, textarea::placeholder{ color: rgba(148,163,184,0.7); }
-
-    textarea{
-      min-height:100px;
-      resize: vertical;
-    }
+    @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
 
     .row{
       display:flex;
@@ -202,103 +177,138 @@
       cursor:pointer;
       border:none;
       padding:12px 14px;
-      border-radius: 14px;
+      border-radius:14px;
       background: linear-gradient(180deg, var(--accent), var(--accent2));
       color:white;
-      font-weight:700;
-      letter-spacing:0.2px;
+      font-weight:800;
+      letter-spacing:.2px;
       box-shadow: 0 16px 34px rgba(37,99,235,0.25);
       display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:10px;
-      min-width: 160px;
+      min-width:170px;
     }
-
-    .btn:active{ transform: translateY(1px); }
-
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
     .btn.secondary{
       background: rgba(255,255,255,0.06);
-      border:1px solid var(--border);
+      border:1px solid var(--line);
       color:var(--text);
       box-shadow:none;
-      font-weight:600;
-      min-width: 160px;
+      font-weight:700;
     }
 
     .msg{
+      display:none;
       margin-top:12px;
       padding:12px 12px;
-      border-radius: 14px;
-      border:1px solid var(--border);
+      border-radius:14px;
+      border:1px solid var(--line);
       background: rgba(0,0,0,0.18);
       font-size:13px;
       color:var(--muted);
-      display:none;
+      white-space:pre-wrap;
     }
-    .msg.ok{ color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }
-    .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
+    .msg.ok{ display:block; color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); }
+    .msg.err{ display:block; color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
 
-    table{
-      width:100%;
-      border-collapse: collapse;
-      font-size:13px;
-      overflow:hidden;
-      border-radius: 14px;
-      border:1px solid var(--border);
-    }
-
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:top;
-    }
-
-    th{
-      background: rgba(255,255,255,0.04);
-      color:var(--muted);
-      font-weight:600;
-      font-size:12px;
-    }
-
-    tr:last-child td{ border-bottom:none; }
-
-    .small{
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .danger{
-      color:#fecaca;
-    }
-
+    .hint{ font-size:12px; color:var(--muted); }
     .kbd{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size:12px;
       background: rgba(255,255,255,0.06);
-      border:1px solid var(--border);
+      border:1px solid var(--line);
       padding:2px 8px;
-      border-radius: 999px;
+      border-radius:999px;
       color:var(--text);
     }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      font-size:13px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background: rgba(255,255,255,0.05);
+      color:var(--muted);
+      font-weight:700;
+      font-size:12px;
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    /* Modal senha */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.72);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modal{
+      width:min(520px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mhead{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+    }
+    .modal .mhead h3{ margin:0; font-size:14px; }
+    .modal .mbody{ padding:16px; }
+    .modal .mbody p{ margin:0 0 10px; color:var(--muted); font-size:13px; }
+    .modal .mrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .modal .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
   </style>
 </head>
 
 <body>
+  <!-- MODAL SENHA -->
+  <div class="overlay" id="lockOverlay">
+    <div class="modal">
+      <div class="mhead">
+        <h3>🔒 Acesso restrito</h3>
+      </div>
+      <div class="mbody">
+        <p>Digite a senha para acessar a Folha.</p>
+        <label for="senhaAcesso">Senha</label>
+        <input id="senhaAcesso" type="password" placeholder="Digite a senha..." />
+        <div class="mrow">
+          <button class="btn" id="btnEntrar" type="button">✅ Entrar</button>
+        </div>
+        <div class="merr" id="senhaErr">Senha inválida.</div>
+        <div class="hint" style="margin-top:10px;">Dica: a senha é definida pela SEMEC.</div>
+      </div>
+    </div>
+  </div>
+
   <header>
     <div class="topbar">
       <div class="brand">
         <div class="logo">SE</div>
         <div>
           <h1>SEMEC • Folha de Ponto</h1>
-          <p>Envio mensal para o Administrativo</p>
+          <p>Atualiza automaticamente o cadastro no Admin</p>
         </div>
       </div>
 
       <div class="status">
-        <div class="pill"><span class="dot"></span><span>Servidor: <span id="apiStatus">verificando...</span></span></div>
-        <div class="pill">Endpoint: <span class="kbd">/api/folha/enviar</span></div>
+        <div class="pill"><span class="dot" id="dotApi"></span><span>Servidor: <b id="apiStatus">verificando…</b></span></div>
+        <div class="pill">Enviar: <span class="kbd">POST /api/folha/enviar</span></div>
       </div>
     </div>
   </header>
@@ -306,40 +316,48 @@
   <main>
     <div class="wrap">
 
-      <!-- CARD 1: FORMULÁRIO -->
+      <!-- FORM -->
       <section class="card">
         <div class="head">
-          <h2>Preencher folha</h2>
-          <span>Envio individual por funcionário</span>
+          <h2>Preencher Folha</h2>
+          <span>Busque por matrícula ou nome</span>
         </div>
-
         <div class="content">
 
           <div class="grid">
             <div>
-              <label for="periodo">Mês/Ano do registro</label>
+              <label for="periodo">Mês/Ano</label>
               <input id="periodo" type="month" />
-              <div class="small" style="margin-top:6px;">Ex.: 2026-02</div>
+              <div class="hint" style="margin-top:6px;">Ex.: 2026-02</div>
             </div>
 
             <div>
-              <label for="escola">Escola (opcional)</label>
+              <label for="escola">Escola</label>
               <input id="escola" type="text" placeholder="Ex.: Escola X" />
             </div>
 
             <div>
-              <label for="matricula">Matrícula</label>
-              <input id="matricula" type="text" placeholder="Ex.: 101" />
+              <label for="busca">Buscar (matrícula ou nome)</label>
+              <input id="busca" type="text" placeholder="Digite matrícula ou 1ª letra do nome…" list="listaNomes" />
+              <datalist id="listaNomes"></datalist>
+              <div class="hint" style="margin-top:6px;">
+                Digite <span class="kbd">396</span> ou <span class="kbd">A</span> e selecione.
+              </div>
             </div>
 
             <div>
-              <label for="nome">Nome do funcionário</label>
-              <input id="nome" type="text" placeholder="Ex.: Maria Silva" />
+              <label for="matricula">Matrícula</label>
+              <input id="matricula" type="text" placeholder="Ex.: 396" />
+            </div>
+
+            <div>
+              <label for="nome">Nome</label>
+              <input id="nome" type="text" placeholder="Nome completo" />
             </div>
 
             <div>
               <label for="funcao">Função</label>
-              <input id="funcao" type="text" placeholder="Ex.: Professor(a)" />
+              <input id="funcao" type="text" placeholder="Ex.: Professor" />
             </div>
 
             <div>
@@ -348,57 +366,61 @@
             </div>
 
             <div>
-              <label for="carga">Carga horária</label>
-              <input id="carga" type="text" placeholder="Ex.: 40h" />
+              <label for="carga">Carga Horária</label>
+              <input id="carga" type="text" placeholder="Ex.: 20h / 40h" />
             </div>
 
             <div>
-              <label for="horas_extras">Horas Extras (soma)</label>
-              <input id="horas_extras" type="number" min="0" step="0.5" placeholder="0" />
+              <label for="horas_extras">Horas Extras</label>
+              <input id="horas_extras" type="number" min="0" step="1" placeholder="0" />
             </div>
 
             <div>
-              <label for="total_faltas">Total de faltas</label>
-              <input id="total_faltas" type="number" min="0" step="1" placeholder="0" />
+              <label for="falta_com_atestado">Falta com atestado (0–15)</label>
+              <input id="falta_com_atestado" type="number" min="0" max="15" step="1" placeholder="0" />
             </div>
 
             <div>
-              <label for="falta_sem_atestado">Falta sem atestado (0-15)</label>
+              <label for="falta_sem_atestado">Falta sem atestado (0–15)</label>
               <input id="falta_sem_atestado" type="number" min="0" max="15" step="1" placeholder="0" />
+            </div>
+
+            <div>
+              <label for="total_faltas">Total de faltas (auto)</label>
+              <input id="total_faltas" type="number" min="0" step="1" placeholder="0" disabled />
+              <div class="hint" style="margin-top:6px;">Total = com atestado + sem atestado</div>
             </div>
           </div>
 
           <div style="margin-top:12px;">
-            <label for="observacoes">Observações</label>
-            <textarea id="observacoes" placeholder="Digite observações do mês..."></textarea>
+            <label for="observacoes">Observações (separado)</label>
+            <textarea id="observacoes" placeholder="Digite observações do mês…"></textarea>
           </div>
 
           <div class="row" style="margin-top:14px;">
             <button class="btn" id="btnEnviar" type="button">📩 Enviar para ADM</button>
             <button class="btn secondary" id="btnLimpar" type="button">🧹 Limpar</button>
-            <span class="small">Dica: confira matrícula e mês antes de enviar.</span>
+            <span class="hint">Após enviar, o funcionário é atualizado no Admin.</span>
           </div>
 
           <div class="msg" id="msgBox"></div>
         </div>
       </section>
 
-      <!-- CARD 2: ÚLTIMOS ENVIOS (LOCAL) -->
+      <!-- HISTÓRICO LOCAL -->
       <section class="card">
         <div class="head">
-          <h2>Registros enviados (local)</h2>
-          <span>Histórico no seu navegador</span>
+          <h2>Últimos envios (neste aparelho)</h2>
+          <span>Histórico local</span>
         </div>
-
         <div class="content">
           <div class="row" style="margin-bottom:10px;">
-            <button class="btn secondary" id="btnAtualizarLista" type="button">🔄 Atualizar lista</button>
+            <button class="btn secondary" id="btnAtualizarLista" type="button">🔄 Atualizar</button>
             <button class="btn secondary" id="btnLimparHistorico" type="button">🗑️ Limpar histórico</button>
           </div>
 
-          <div class="small" style="margin-bottom:10px;">
-            Esse quadro é só pra você conferir o que foi enviado (salvo no navegador).  
-            O que vale é o que chega no servidor.
+          <div class="hint" style="margin-bottom:10px;">
+            Isto é só conferência local. O que vale é o que o servidor grava.
           </div>
 
           <div style="overflow:auto;">
@@ -413,7 +435,7 @@
                 </tr>
               </thead>
               <tbody id="listaEnvios">
-                <tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>
+                <tr><td colspan="5" class="hint">Nenhum envio ainda.</td></tr>
               </tbody>
             </table>
           </div>
@@ -425,76 +447,71 @@
     </div>
   </main>
   <script>
+    // ======= CONFIG =======
+    const SENHA_ACESSO = "semec2026";
+    const API_HEALTH = "/api/health";
+    const API_ENVIAR = "/api/folha/enviar";
+
+    // ======= DOM =======
     const $ = (id) => document.getElementById(id);
+
+    const lockOverlay = $("lockOverlay");
+    const senhaAcesso = $("senhaAcesso");
+    const btnEntrar = $("btnEntrar");
+    const senhaErr = $("senhaErr");
+
+    const dotApi = $("dotApi");
+    const apiStatus = $("apiStatus");
 
     const periodo = $("periodo");
     const escola = $("escola");
+    const busca = $("busca");
+    const listaNomes = $("listaNomes");
+
     const matricula = $("matricula");
     const nome = $("nome");
     const funcao = $("funcao");
     const vinculo = $("vinculo");
     const carga = $("carga");
+
     const horas_extras = $("horas_extras");
-    const total_faltas = $("total_faltas");
+    const falta_com_atestado = $("falta_com_atestado");
     const falta_sem_atestado = $("falta_sem_atestado");
+    const total_faltas = $("total_faltas");
     const observacoes = $("observacoes");
 
+    const btnEnviar = $("btnEnviar");
+    const btnLimpar = $("btnLimpar");
     const msgBox = $("msgBox");
+
+    const btnAtualizarLista = $("btnAtualizarLista");
+    const btnLimparHistorico = $("btnLimparHistorico");
+    const listaEnvios = $("listaEnvios");
     const msgList = $("msgList");
 
-    const API_SEND = "/api/folha/enviar";
+    // ======= FUNCIONÁRIOS (EXEMPLOS PARA TESTE) =======
+    // Você pode substituir depois pela lista completa.
+    // Formato: "matricula": {nome, funcao, vinculo, carga}
+    const FUNCIONARIOS = {
+      "396": { nome: "Ademilson Jose de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
+      "275": { nome: "Ademilton Xavier da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
+      "1659": { nome: "Adriana Almeida Nobre", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
+      "83": { nome: "Ailton Novaes dos Santos", funcao: "Motorista", vinculo: "", carga: "" },
+      "560": { nome: "Alessandra Lima Rodrigues", funcao: "Professor", vinculo: "", carga: "20h" },
+      "404": { nome: "Andre de Cassio Santos Araujo", funcao: "Professor", vinculo: "", carga: "20h" },
+      "2008": { nome: "Cassio Henrique Alvez de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
+      "328": { nome: "Claudia da Silva Novais", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
+      "1547": { nome: "Danilo Marinho Ramos", funcao: "Professor", vinculo: "", carga: "40h" },
+      "151": { nome: "Edilene Santana de Brito Maia", funcao: "Professor", vinculo: "", carga: "20h" },
+      "1550": { nome: "Emily Karoline Oliveira Pimentel Lima", funcao: "Professor", vinculo: "", carga: "40h" },
+      "535": { nome: "Fabio Almeida de Oliveira", funcao: "Motorista", vinculo: "", carga: "" },
+      "81": { nome: "Leila Soares Santana", funcao: "Diretor Pedagogico", vinculo: "", carga: "20h" },
+      "530": { nome: "Luzinete Morais Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" }
+    };
 
-    function showMsg(el, text, type){
-      el.className = "msg " + (type || "");
-      el.textContent = text;
-      el.style.display = "block";
-      setTimeout(() => { el.style.display = "none"; }, 6500);
-    }
-
-    function nowISO(){
-      return new Date().toISOString();
-    }
-
-    function getLocalHistory(){
-      try{
-        return JSON.parse(localStorage.getItem("semec_envios") || "[]");
-      }catch{
-        return [];
-      }
-    }
-
-    function setLocalHistory(arr){
-      localStorage.setItem("semec_envios", JSON.stringify(arr));
-    }
-
-    function addToHistory(item){
-      const arr = getLocalHistory();
-      arr.unshift(item);
-      setLocalHistory(arr.slice(0, 200));
-    }
-
-    function renderHistory(){
-      const tbody = $("listaEnvios");
-      const arr = getLocalHistory();
-
-      if(!arr.length){
-        tbody.innerHTML = `<tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = arr.map(it => `
-        <tr>
-          <td>${escapeHtml(it.periodo || "")}</td>
-          <td>${escapeHtml(it.matricula || "")}</td>
-          <td>${escapeHtml(it.nome || "")}</td>
-          <td>${Number(it.total_faltas ?? 0)}</td>
-          <td>${Number(it.horas_extras ?? 0)}</td>
-        </tr>
-      `).join("");
-    }
-
+    // ======= UTIL =======
     function escapeHtml(str){
-      return String(str)
+      return String(str ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
         .replaceAll(">","&gt;")
@@ -509,38 +526,202 @@
       return `${y}-${m}`;
     }
 
-    function validate(){
-      if(!periodo.value) periodo.value = defaultPeriodo();
-      if(!matricula.value.trim()) return "Informe a matrícula.";
-      if(!nome.value.trim()) return "Informe o nome do funcionário.";
-      return null;
+    function showMsg(el, text, type){
+      el.className = "msg " + (type || "");
+      el.textContent = text;
+      el.style.display = "block";
+      setTimeout(() => { el.style.display = "none"; }, 7000);
     }
 
-    async function pingServer(){
-      // ping simples: tenta bater no próprio endpoint com OPTIONS (não quebra se não existir CORS)
-      // Se der erro, apenas marca como "offline?"
-      try{
-        const res = await fetch("/", { method:"GET" });
-        $("apiStatus").textContent = res.ok ? "online" : "online?";
-      }catch{
-        $("apiStatus").textContent = "offline?";
+    // ======= HISTÓRICO LOCAL =======
+    function getHistory(){
+      try { return JSON.parse(localStorage.getItem("semec_envios") || "[]"); }
+      catch { return []; }
+    }
+    function setHistory(arr){
+      localStorage.setItem("semec_envios", JSON.stringify(arr));
+    }
+    function addHistory(item){
+      const arr = getHistory();
+      arr.unshift(item);
+      setHistory(arr.slice(0, 150));
+    }
+    function renderHistory(){
+      const arr = getHistory();
+      if(!arr.length){
+        listaEnvios.innerHTML = `<tr><td colspan="5" class="hint">Nenhum envio ainda.</td></tr>`;
+        return;
+      }
+      listaEnvios.innerHTML = arr.map(it => `
+        <tr>
+          <td>${escapeHtml(it.periodo)}</td>
+          <td>${escapeHtml(it.matricula)}</td>
+          <td>${escapeHtml(it.nome)}</td>
+          <td>${Number(it.faltas ?? 0)}</td>
+          <td>${Number(it.horas_extras ?? 0)}</td>
+        </tr>
+      `).join("");
+    }
+
+    // ======= SENHA DE ACESSO =======
+    function unlockIfOk(){
+      const v = String(senhaAcesso.value || "");
+      if(v === SENHA_ACESSO){
+        lockOverlay.style.display = "none";
+        localStorage.setItem("semec_folha_unlock", "1");
+      } else {
+        senhaErr.style.display = "block";
+        senhaAcesso.focus();
       }
     }
 
+    btnEntrar.addEventListener("click", unlockIfOk);
+    senhaAcesso.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") unlockIfOk();
+    });
+
+    // ======= CHECK API =======
+    async function checkApi(){
+      try{
+        const r = await fetch(API_HEALTH, { method:"GET" });
+        const j = await r.json().catch(() => ({}));
+        if(r.ok && j.ok){
+          apiStatus.textContent = j.db ? "online (db ok)" : "online (db off)";
+          dotApi.classList.remove("bad");
+          dotApi.classList.add("ok");
+        } else {
+          apiStatus.textContent = "online?";
+          dotApi.classList.remove("ok");
+          dotApi.classList.add("bad");
+        }
+      }catch{
+        apiStatus.textContent = "offline?";
+        dotApi.classList.remove("ok");
+        dotApi.classList.add("bad");
+      }
+    }
+
+    // ======= AUTOCOMPLETE (datalist) =======
+    function fillDatalist(prefix){
+      const p = String(prefix || "").trim().toLowerCase();
+      const opts = [];
+
+      for(const [mat, info] of Object.entries(FUNCIONARIOS)){
+        const n = (info.nome || "").toLowerCase();
+
+        // se digitou número (matrícula) ou letra (nome), filtra
+        if(!p || mat.startsWith(p) || n.startsWith(p)){
+          opts.push({ mat, nome: info.nome });
+        }
+      }
+
+      // limita pra não ficar gigante
+      const top = opts.slice(0, 25);
+
+      listaNomes.innerHTML = top.map(x => `
+        <option value="${escapeHtml(x.mat)} - ${escapeHtml(x.nome)}"></option>
+      `).join("");
+    }
+
+    function applyFuncionarioByMat(mat){
+      const info = FUNCIONARIOS[String(mat)];
+      if(!info) return false;
+
+      matricula.value = String(mat);
+      nome.value = info.nome || "";
+      funcao.value = info.funcao || "";
+      vinculo.value = info.vinculo || "";
+      carga.value = info.carga || "";
+      return true;
+    }
+
+    function tryApplyFromBusca(){
+      const v = String(busca.value || "").trim();
+      if(!v) return;
+
+      // formatos aceitos:
+      // "396" OU "396 - Nome" OU "Nome"
+      const maybeMat = v.split(" - ")[0].trim();
+
+      // se é número, tenta como matrícula
+      if(/^\d+$/.test(maybeMat)){
+        if(applyFuncionarioByMat(maybeMat)) return;
+      }
+
+      // se digitou nome, acha o primeiro que começa com isso
+      const n = v.toLowerCase();
+      for(const [mat, info] of Object.entries(FUNCIONARIOS)){
+        if((info.nome || "").toLowerCase().startsWith(n)){
+          applyFuncionarioByMat(mat);
+          return;
+        }
+      }
+    }
+
+    busca.addEventListener("input", () => {
+      fillDatalist(busca.value);
+    });
+    busca.addEventListener("change", () => {
+      tryApplyFromBusca();
+    });
+
+    // se digitar matrícula direto, preenche
+    matricula.addEventListener("input", () => {
+      const m = matricula.value.trim();
+      if(/^\d+$/.test(m) && FUNCIONARIOS[m]){
+        applyFuncionarioByMat(m);
+      }
+    });
+
+    // ======= FALTAS (AUTO) =======
+    function recalcFaltas(){
+      let comA = Number(falta_com_atestado.value || 0);
+      let semA = Number(falta_sem_atestado.value || 0);
+
+      // clamp 0-15
+      comA = Math.max(0, Math.min(15, comA));
+      semA = Math.max(0, Math.min(15, semA));
+
+      falta_com_atestado.value = String(comA);
+      falta_sem_atestado.value = String(semA);
+
+      total_faltas.value = String(comA + semA);
+    }
+    falta_com_atestado.addEventListener("input", recalcFaltas);
+    falta_sem_atestado.addEventListener("input", recalcFaltas);
+
+    // ======= LIMPAR =======
     function clearForm(){
-      // não limpa o período por padrão
       escola.value = "";
+      busca.value = "";
       matricula.value = "";
       nome.value = "";
       funcao.value = "";
       vinculo.value = "";
       carga.value = "";
-      horas_extras.value = "";
-      total_faltas.value = "";
-      falta_sem_atestado.value = "";
+      horas_extras.value = "0";
+      falta_com_atestado.value = "0";
+      falta_sem_atestado.value = "0";
+      total_faltas.value = "0";
       observacoes.value = "";
+      recalcFaltas();
     }
 
+    btnLimpar.addEventListener("click", () => {
+      clearForm();
+      showMsg(msgBox, "🧹 Campos limpos.", "");
+    });
+
+    // ======= VALIDAR =======
+    function validate(){
+      if(!periodo.value) periodo.value = defaultPeriodo();
+      if(!escola.value.trim()) return "Informe a escola.";
+      if(!matricula.value.trim()) return "Informe a matrícula (ou selecione no campo Buscar).";
+      if(!nome.value.trim()) return "Informe o nome do funcionário.";
+      return null;
+    }
+
+    // ======= ENVIAR =======
     async function enviar(){
       const err = validate();
       if(err){
@@ -548,92 +729,102 @@
         return;
       }
 
-      const payload = {
-        periodo: periodo.value, // "YYYY-MM"
-        funcionario: {
-          matricula: matricula.value.trim(),
-          nome: nome.value.trim(),
-          funcao: funcao.value.trim(),
-          vinculo: vinculo.value.trim(),
-          carga: carga.value.trim(),
-          escola: escola.value.trim()
-        },
-        folha: {
-          total_faltas: Number(total_faltas.value || 0),
-          falta_sem_atestado: Number(falta_sem_atestado.value || 0),
-          horas_extras: Number(horas_extras.value || 0),
-          observacoes: (observacoes.value || "").trim()
-        }
+      recalcFaltas();
+
+      const body = {
+        periodo: periodo.value,
+        matricula: matricula.value.trim(),
+
+        // dados do cadastro (atualiza no admin)
+        nome: nome.value.trim(),
+        funcao: funcao.value.trim(),
+        vinculo: vinculo.value.trim(),
+        carga: carga.value.trim(),
+        escola: escola.value.trim(),
+
+        // folha
+        faltas: Number(total_faltas.value || 0),
+        falta_sem_atestado: Number(falta_sem_atestado.value || 0),
+        horas_extras: Number(horas_extras.value || 0),
+        observacoes: (observacoes.value || "").trim(),
       };
 
-      $("btnEnviar").disabled = true;
-      $("btnEnviar").textContent = "Enviando...";
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = "Enviando...";
 
       try{
-        const res = await fetch(API_SEND, {
+        const r = await fetch(API_ENVIAR, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(body),
         });
 
-        // ✅ Se der 404 aqui, é rota errada no server.js
-        if(res.status === 404){
-          showMsg(msgBox, "❌ Erro 404: rota não encontrada no servidor. Verifique se existe POST " + API_SEND, "err");
+        if(r.status === 404){
+          showMsg(msgBox, "❌ Erro 404: rota não encontrada. Confirme no servidor: POST " + API_ENVIAR, "err");
           return;
         }
 
-        const data = await res.json().catch(() => ({}));
-
-        if(!res.ok){
-          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
-          showMsg(msgBox, "❌ " + msg, "err");
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok){
+          showMsg(msgBox, "❌ " + (j.error || "Falha ao enviar."), "err");
           return;
         }
 
-        // sucesso
-        addToHistory({
-          quando: nowISO(),
-          periodo: payload.periodo,
-          matricula: payload.funcionario.matricula,
-          nome: payload.funcionario.nome,
-          total_faltas: payload.folha.total_faltas,
-          horas_extras: payload.folha.horas_extras
+        addHistory({
+          periodo: body.periodo,
+          matricula: body.matricula,
+          nome: body.nome,
+          faltas: body.faltas,
+          horas_extras: body.horas_extras,
+          quando: new Date().toISOString()
         });
 
         renderHistory();
-        showMsg(msgBox, "✅ Enviado com sucesso!", "ok");
+        showMsg(msgBox, "✅ Enviado com sucesso! Cadastro atualizado no Admin.", "ok");
         clearForm();
 
       }catch(e){
         showMsg(msgBox, "❌ Erro de conexão: " + (e?.message || "não foi possível enviar"), "err");
       }finally{
-        $("btnEnviar").disabled = false;
-        $("btnEnviar").textContent = "📩 Enviar para ADM";
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = "📩 Enviar para ADM";
       }
     }
 
-    // EVENTOS
-    $("btnEnviar").addEventListener("click", enviar);
-    $("btnLimpar").addEventListener("click", () => {
-      clearForm();
-      showMsg(msgBox, "🧹 Campos limpos.", "");
-    });
+    btnEnviar.addEventListener("click", enviar);
 
-    $("btnAtualizarLista").addEventListener("click", () => {
+    // ======= HISTÓRICO =======
+    btnAtualizarLista.addEventListener("click", () => {
       renderHistory();
       showMsg(msgList, "🔄 Lista atualizada.", "ok");
     });
 
-    $("btnLimparHistorico").addEventListener("click", () => {
-      setLocalHistory([]);
+    btnLimparHistorico.addEventListener("click", () => {
+      setHistory([]);
       renderHistory();
       showMsg(msgList, "🗑️ Histórico apagado.", "");
     });
 
-    // INIT
-    periodo.value = defaultPeriodo();
-    renderHistory();
-    pingServer();
+    // ======= INIT =======
+    (function init(){
+      // senha (lembrar no navegador)
+      if(localStorage.getItem("semec_folha_unlock") === "1"){
+        lockOverlay.style.display = "none";
+      } else {
+        senhaAcesso.focus();
+      }
+
+      periodo.value = defaultPeriodo();
+      horas_extras.value = "0";
+      falta_com_atestado.value = "0";
+      falta_sem_atestado.value = "0";
+      recalcFaltas();
+
+      fillDatalist("");
+      renderHistory();
+      checkApi();
+      setInterval(checkApi, 20000);
+    })();
   </script>
   </body>
 </html>
