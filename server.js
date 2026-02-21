@@ -1,240 +1,288 @@
-/**
- * server.js - SEMEC SISTEMA
- * Requisitos:
- *   npm i express cors dotenv @supabase/supabase-js
- *
- * Variáveis de ambiente (Render / .env):
- *   SUPABASE_URL=https://xxxxx.supabase.co
- *   SUPABASE_SERVICE_ROLE_KEY=xxxxx   (ou ANON se não precisar escrever)
- *   ADMIN_TOKEN=um_token_forte_aqui   (protege rotas /api/admin/*)
- *   PORT=10000
- */
+import express from "express";
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import pkg from "pg";
 
-require("dotenv").config();
-
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const dns = require("dns");
-const { createClient } = require("@supabase/supabase-js");
-
-// ✅ Força IPv4 (resolve problema de IPv6 no Render)
-try {
-  dns.setDefaultResultOrder("ipv4first");
-} catch (e) {
-  // versões antigas do node podem não ter isso
-}
+const { Pool } = pkg;
 
 const app = express();
-
-// ====== CONFIG ======
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-
-// Servir arquivos estáticos
-const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir));
-
-// ====== SUPABASE ======
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error("❌ Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ou SUPABASE_ANON_KEY) no ambiente.");
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ====== AUTH (ADMIN) ======
-function requireAdmin(req, res, next) {
-  const token = req.headers["x-admin-token"] || req.query.admin_token;
-  if (!process.env.ADMIN_TOKEN) {
-    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN não configurado no servidor." });
-  }
-  if (token !== process.env.ADMIN_TOKEN) {
-    return res.status(401).json({ ok: false, error: "Não autorizado (admin)." });
-  }
-  next();
-}
-
-// ====== HELPERS ======
-function onlyAllowed(obj, allowed) {
-  const out = {};
-  for (const k of allowed) {
-    if (obj[k] !== undefined) out[k] = obj[k];
-  }
-  return out;
-}
-
-function toIntOrNull(v) {
-  if (v === "" || v === null || v === undefined) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-// ====== ROUTES ======
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, service: "semec-sistema", time: new Date().toISOString() });
-});
+app.use(express.json({ limit: "5mb" }));
 
 /**
- * Funcionários
- * GET /api/funcionarios?escola=SEMEC
- */
-app.get("/api/funcionarios", async (req, res) => {
-  try {
-    const escola = (req.query.escola || "SEMEC").toString();
-
-    const { data, error } = await supabase
-      .from("funcionarios")
-      .select("matricula,nome,funcao,vinculo,carga,escola")
-      .eq("escola", escola)
-      .order("nome", { ascending: true });
-
-    if (error) return res.status(400).json({ ok: false, error: error.message });
-    return res.json({ ok: true, funcionarios: data || [] });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
-});
-
-/**
- * Folhas (para página da folha do mês)
- * GET /api/folhas?mes=2026-02&escola=SEMEC
- */
-app.get("/api/folhas", async (req, res) => {
-  try {
-    const mes = (req.query.mes || "").toString();      // "2026-02"
-    const escola = (req.query.escola || "SEMEC").toString();
-
-    if (!mes) return res.status(400).json({ ok: false, error: "Informe ?mes=YYYY-MM" });
-
-    const { data, error } = await supabase
-      .from("folhas")
-      .select("*")
-      .eq("mes", mes)
-      .eq("escola", escola)
-      .order("nome", { ascending: true });
-
-    if (error) return res.status(400).json({ ok: false, error: error.message });
-
-    return res.json({ ok: true, folhas: data || [] });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
-});
-
-/**
- * Criar/atualizar folha do mês (usuário na página "Folha de Ponto")
- * POST /api/folhas
- * body: { matricula, nome, funcao, vinculo, carga, escola, mes, faltas, horas_extras, obs }
+ * =========================
+ * CONFIG
+ * =========================
+ * Você precisa configurar essas variáveis no seu .env / hosting:
  *
- * -> Faz UPSERT por (matricula, mes, escola)
- * OBS: No Supabase, crie um UNIQUE em (matricula, mes, escola) pra garantir.
+ * DATABASE_URL = string do Postgres (Supabase/Render/Neon/etc)
+ * JWT_SECRET   = segredo do token (ex: "minha_chave_super_secreta_123")
+ * ADMIN_USER   = (opcional) usuario do admin (default "admin")
+ * ADMIN_PASSWORD = senha do admin (ex: "33362526Ca..")
  */
-app.post("/api/folhas", async (req, res) => {
+
+const PORT = process.env.PORT || 3000;
+
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"; // troque no ENV
+const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_NOW";
+
+if (!process.env.DATABASE_URL) {
+  console.warn("⚠️ ATENÇÃO: DATABASE_URL não está definida!");
+}
+
+// SSL para Supabase/host externo
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes("supabase.co")
+    ? { rejectUnauthorized: false }
+    : (process.env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : undefined),
+});
+
+/**
+ * =========================
+ * HELPERS
+ * =========================
+ */
+function signToken(payload) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+}
+
+function authAdmin(req, res, next) {
   try {
-    const body = req.body || {};
+    const auth = req.headers.authorization || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ ok: false, error: "Token ausente" });
 
-    const payload = {
-      matricula: body.matricula?.toString(),
-      nome: body.nome?.toString() || "",
-      funcao: body.funcao?.toString() || "",
-      vinculo: body.vinculo?.toString() || "",
-      carga: body.carga?.toString() || "",
-      escola: (body.escola?.toString() || "SEMEC"),
-      mes: body.mes?.toString(), // "2026-02"
-      faltas: toIntOrNull(body.faltas),
-      horas_extras: toIntOrNull(body.horas_extras),
-      obs: body.obs !== undefined ? String(body.obs) : null,
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded?.role || decoded.role !== "admin") {
+      return res.status(403).json({ ok: false, error: "Sem permissão" });
+    }
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ ok: false, error: "Token inválido/expirado" });
+  }
+}
 
-      // ✅ precisa ser timestamptz no banco (recomendado)
-      atualizado_em: new Date().toISOString(),
-    };
-
-    if (!payload.matricula) return res.status(400).json({ ok: false, error: "matricula é obrigatório" });
-    if (!payload.mes) return res.status(400).json({ ok: false, error: "mes é obrigatório (YYYY-MM)" });
-
-    // UPSERT
-    const { data, error } = await supabase
-      .from("folhas")
-      .upsert(payload, { onConflict: "matricula,mes,escola" })
-      .select()
-      .single();
-
-    if (error) return res.status(400).json({ ok: false, error: error.message });
-
-    return res.json({ ok: true, folha: data });
+/**
+ * =========================
+ * TEST DB
+ * =========================
+ */
+app.get("/api/health", async (req, res) => {
+  try {
+    const r = await pool.query("SELECT NOW() as now");
+    res.json({ ok: true, db: true, now: r.rows[0].now });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
+    res.status(500).json({ ok: false, db: false, error: e.message });
   }
 });
 
 /**
- * ADMIN: listar folhas (admin.html)
- * GET /api/admin/folhas?mes=2026-02&escola=SEMEC
+ * =========================
+ * AUTH
+ * =========================
  */
-app.get("/api/admin/folhas", requireAdmin, async (req, res) => {
+app.post("/api/login", (req, res) => {
+  const { usuario, senha } = req.body || {};
+
+  if (usuario === ADMIN_USER && senha === ADMIN_PASSWORD) {
+    const token = signToken({ role: "admin", usuario });
+    return res.json({ ok: true, role: "admin", token });
+  }
+
+  return res.status(401).json({ ok: false, error: "Usuário ou senha inválidos" });
+});
+
+/**
+ * =========================
+ * FUNCIONÁRIOS
+ * Tabela esperada: funcionarios
+ * Colunas recomendadas:
+ * - matricula (PK ou UNIQUE)
+ * - nome, funcao, vinculo, carga, escola
+ * - faltas (INTEGER), horas_extras (INTEGER), obs (TEXT)
+ * =========================
+ */
+
+/**
+ * Listar funcionários (admin)
+ * Query params opcionais:
+ * - q: busca por nome/matricula
+ */
+app.get("/api/funcionarios", authAdmin, async (req, res) => {
   try {
-    const mes = (req.query.mes || "").toString();
-    const escola = (req.query.escola || "SEMEC").toString();
-    if (!mes) return res.status(400).json({ ok: false, error: "Informe ?mes=YYYY-MM" });
+    const q = (req.query.q || "").toString().trim();
 
-    const { data, error } = await supabase
-      .from("folhas")
-      .select("*")
-      .eq("mes", mes)
-      .eq("escola", escola)
-      .order("nome", { ascending: true });
+    if (q) {
+      const result = await pool.query(
+        `
+        SELECT matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs
+        FROM funcionarios
+        WHERE
+          CAST(matricula AS TEXT) ILIKE $1
+          OR nome ILIKE $1
+        ORDER BY nome ASC
+        `,
+        [`%${q}%`]
+      );
+      return res.json({ ok: true, funcionarios: result.rows });
+    }
 
-    if (error) return res.status(400).json({ ok: false, error: error.message });
+    const result = await pool.query(
+      `
+      SELECT matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs
+      FROM funcionarios
+      ORDER BY nome ASC
+      `
+    );
 
-    return res.json({ ok: true, folhas: data || [] });
+    res.json({ ok: true, funcionarios: result.rows });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
 /**
- * ADMIN: editar faltas, horas extras e obs
- * PUT /api/admin/folhas/:id
- * header: x-admin-token: SEU_ADMIN_TOKEN
- * body: { faltas, horas_extras, obs }
+ * Criar/Atualizar funcionário por matrícula (admin)
+ * - Se já existir matrícula, atualiza (UPSERT)
  */
-app.put("/api/admin/folhas/:id", requireAdmin, async (req, res) => {
+app.post("/api/funcionarios", authAdmin, async (req, res) => {
   try {
-    const { id } = req.params;
+    const {
+      matricula,
+      nome = "",
+      funcao = "",
+      vinculo = "",
+      carga = "",
+      escola = "SEMEC",
+      faltas = 0,
+      horas_extras = 0,
+      obs = "",
+    } = req.body || {};
 
-    const body = req.body || {};
-    const allowed = onlyAllowed(body, ["faltas", "horas_extras", "obs"]);
+    if (!matricula) {
+      return res.status(400).json({ ok: false, error: "matricula é obrigatória" });
+    }
 
-    const payload = {};
-    if (allowed.faltas !== undefined) payload.faltas = toIntOrNull(allowed.faltas);
-    if (allowed.horas_extras !== undefined) payload.horas_extras = toIntOrNull(allowed.horas_extras);
-    if (allowed.obs !== undefined) payload.obs = allowed.obs === "" ? null : String(allowed.obs);
+    const result = await pool.query(
+      `
+      INSERT INTO funcionarios (matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      ON CONFLICT (matricula)
+      DO UPDATE SET
+        nome = EXCLUDED.nome,
+        funcao = EXCLUDED.funcao,
+        vinculo = EXCLUDED.vinculo,
+        carga = EXCLUDED.carga,
+        escola = EXCLUDED.escola,
+        faltas = EXCLUDED.faltas,
+        horas_extras = EXCLUDED.horas_extras,
+        obs = EXCLUDED.obs
+      RETURNING matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs
+      `,
+      [matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs]
+    );
 
-    payload.atualizado_em = new Date().toISOString();
-
-    const { data, error } = await supabase
-      .from("folhas")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) return res.status(400).json({ ok: false, error: error.message });
-    return res.json({ ok: true, folha: data });
+    res.json({ ok: true, funcionario: result.rows[0] });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: String(e.message || e) });
+    // se sua tabela não tiver UNIQUE/PK em matricula, vai falhar no ON CONFLICT
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
-// Fallback: abrir index.html se rota não existir (SPA simples)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+/**
+ * Atualizar SOMENTE faltas/horas_extras/obs (admin)
+ */
+app.put("/api/funcionarios/:matricula/ponto", authAdmin, async (req, res) => {
+  try {
+    const { matricula } = req.params;
+    const { faltas, horas_extras, obs } = req.body || {};
+
+    const result = await pool.query(
+      `
+      UPDATE funcionarios
+      SET
+        faltas = COALESCE($2, faltas),
+        horas_extras = COALESCE($3, horas_extras),
+        obs = COALESCE($4, obs)
+      WHERE matricula = $1
+      RETURNING matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs
+      `,
+      [matricula, faltas ?? null, horas_extras ?? null, obs ?? null]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
+    }
+
+    res.json({ ok: true, funcionario: result.rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
-// ====== START ======
-const PORT = Number(process.env.PORT || 10000);
+/**
+ * Atualizar dados gerais do funcionário (admin)
+ */
+app.put("/api/funcionarios/:matricula", authAdmin, async (req, res) => {
+  try {
+    const { matricula } = req.params;
+    const {
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      escola,
+      faltas,
+      horas_extras,
+      obs,
+    } = req.body || {};
+
+    const result = await pool.query(
+      `
+      UPDATE funcionarios
+      SET
+        nome = COALESCE($2, nome),
+        funcao = COALESCE($3, funcao),
+        vinculo = COALESCE($4, vinculo),
+        carga = COALESCE($5, carga),
+        escola = COALESCE($6, escola),
+        faltas = COALESCE($7, faltas),
+        horas_extras = COALESCE($8, horas_extras),
+        obs = COALESCE($9, obs)
+      WHERE matricula = $1
+      RETURNING matricula, nome, funcao, vinculo, carga, escola, faltas, horas_extras, obs
+      `,
+      [
+        matricula,
+        nome ?? null,
+        funcao ?? null,
+        vinculo ?? null,
+        carga ?? null,
+        escola ?? null,
+        faltas ?? null,
+        horas_extras ?? null,
+        obs ?? null,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
+    }
+
+    res.json({ ok: true, funcionario: result.rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/**
+ * =========================
+ * START
+ * =========================
+ */
 app.listen(PORT, () => {
-  console.log(`✅ Servidor rodando na porta ${PORT}`);
+  console.log(`✅ API rodando na porta ${PORT}`);
 });
