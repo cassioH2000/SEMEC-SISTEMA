@@ -1,1322 +1,639 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Folha de Ponto - Usuário</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Folha de Ponto - Usuário</title>
 
-<style>
-  :root{
-    --primary:#1f2d3d;
-    --info:#2980b9;
-    --success:#27ae60;
-    --danger:#e74c3c;
-    --warning:#f39c12;
-    --bg:#f4f7f6;
-    --border:#e6eaee;
-    --muted:#6b7a80;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Segoe UI,system-ui,Arial;background:var(--bg);color:#122}
-  .wrap{max-width:1200px;margin:18px auto;padding:0 14px}
-  .card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-  .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-  h1{margin:0;color:var(--primary);font-size:18px}
-  .sub{margin-top:6px;color:var(--muted);font-weight:800;font-size:12px}
-  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;margin-top:14px}
-  @media (max-width: 980px){.grid{grid-template-columns:1fr}}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
-  label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase}
-  input, textarea{
-    width:100%;
-    padding:10px;
-    border:1px solid #dfe6ee;
-    border-radius:10px;
-    font-size:14px;
-    outline:none;
-    background:#fff;
-  }
-  input:focus, textarea:focus{border-color:var(--info)}
-  textarea{min-height:86px;resize:vertical}
-  button{
-    border:none;border-radius:10px;padding:10px 12px;font-weight:900;
-    cursor:pointer;color:#fff
-  }
-  .btn-info{background:var(--info)}
-  .btn-success{background:var(--success)}
-  .btn-danger{background:var(--danger)}
-  .btn-warn{background:var(--warning)}
-  .btn-ghost{background:#eef2f6;color:#223;border:1px solid var(--border)}
-  .muted{color:var(--muted);font-weight:800;font-size:12px}
-  .helper{font-size:11px;font-weight:900;color:var(--muted);margin-top:6px;min-height:14px}
-  .hidden{display:none !important;}
-  table{width:100%;border-collapse:collapse}
-  th{background:var(--primary);color:#fff;text-align:left;padding:10px;font-size:12px;white-space:nowrap}
-  td{padding:9px;border-bottom:1px solid #edf0f3;font-size:13px;vertical-align:top}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-  .actions button{padding:7px 10px;font-size:11px;border-radius:8px}
-  .badge{
-    display:inline-block;padding:3px 9px;border-radius:999px;
-    font-size:11px;font-weight:1000;border:1px solid var(--border);
-    background:#f6f8fa;color:#334
-  }
-  .badge.red{background:#ffe9e8;border-color:#ffd0cc;color:#a11}
-  .badge.orange{background:#fff3e1;border-color:#ffe2b6;color:#8a4b00}
-  .badge.green{background:#e8ffef;border-color:#c8f6d7;color:#0b6a2d}
-  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width: 700px){.split{grid-template-columns:1fr}}
-</style>
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#0b1224;
+      --card2:#101b35;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --border:rgba(255,255,255,0.08);
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 30% 0%, #1e293b 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    header{
+      padding:18px 18px 8px;
+    }
+
+    .topbar{
+      max-width:1100px;
+      margin:0 auto;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:220px;
+    }
+
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.9), rgba(34,197,94,0.75));
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:0.5px;
+      box-shadow: 0 10px 28px rgba(37,99,235,0.25);
+    }
+
+    .brand h1{
+      font-size:15px;
+      margin:0;
+      line-height:1.15;
+    }
+    .brand p{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      padding:6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background: var(--ok);
+      box-shadow:0 0 0 4px rgba(34,197,94,0.15);
+    }
+
+    main{
+      padding:14px 18px 40px;
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap:14px;
+    }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card .head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(0,0,0,0.10);
+    }
+
+    .card .head h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:0.2px;
+    }
+
+    .card .head span{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .content{
+      padding:16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width: 700px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:block;
+      margin:0 0 6px;
+    }
+
+    input, select, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+
+    input::placeholder, textarea::placeholder{ color: rgba(148,163,184,0.7); }
+
+    textarea{
+      min-height:100px;
+      resize: vertical;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      cursor:pointer;
+      border:none;
+      padding:12px 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color:white;
+      font-weight:700;
+      letter-spacing:0.2px;
+      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-width: 160px;
+    }
+
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.secondary{
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+      font-weight:600;
+      min-width: 160px;
+    }
+
+    .msg{
+      margin-top:12px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      font-size:13px;
+      color:var(--muted);
+      display:none;
+    }
+    .msg.ok{ color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }
+    .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13px;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid var(--border);
+    }
+
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      background: rgba(255,255,255,0.04);
+      color:var(--muted);
+      font-weight:600;
+      font-size:12px;
+    }
+
+    tr:last-child td{ border-bottom:none; }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .danger{
+      color:#fecaca;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      padding:2px 8px;
+      border-radius: 999px;
+      color:var(--text);
+    }
+  </style>
 </head>
 
 <body>
-<div class="wrap">
-
-  <div class="card">
-    <div class="top">
-      <div>
-        <h1>Folha de Ponto – Usuário</h1>
-        <div class="sub">Funcionários fixos • Registro • Exportação • Envio para ADM</div>
-      </div>
-      <div class="muted">
-        <span class="badge">Dica</span> Digite a matrícula ou comece a digitar o nome.
-      </div>
-    </div>
-  </div>
-
-  <div class="grid">
-
-    <!-- ===== FORMULÁRIO ===== -->
-    <div class="card">
-      <h2 style="margin:0;color:var(--primary);font-size:14px;">Lançar Registro</h2>
-      <div class="muted">Os funcionários são pré-cadastrados (somente leitura).</div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-
-      <form id="formRegistro">
-        <input type="hidden" id="editIndexRegistro">
-
-        <div class="split">
-          <div>
-            <label>Matrícula</label>
-            <input id="matricula" class="mono" placeholder="Ex: 110" />
-            <div id="msgMatricula" class="helper"></div>
-          </div>
-
-          <div>
-            <label>Nome</label>
-            <input id="nome" list="listaNomes" placeholder="Ex: ju..." autocomplete="off" required />
-            <datalist id="listaNomes"></datalist>
-            <div id="msgNome" class="helper"></div>
-          </div>
-        </div>
-
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <label>Função</label>
-            <input id="funcao" placeholder="Preenchimento automático" readonly />
-          </div>
-          <div>
-            <label>Vínculo</label>
-            <input id="vinculo" placeholder="Preenchimento automático" readonly />
-          </div>
-        </div>
-
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <label>Carga</label>
-            <input id="carga" placeholder="Preenchimento automático" readonly />
-          </div>
-          <div>
-            <label>Mês/Ano do registro</label>
-            <input id="periodo" type="month" />
-          </div>
-        </div>
-
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <label>Horas extras</label>
-            <input id="horas" type="number" min="0" value="0" />
-          </div>
-          <div>
-            <label>Total de faltas</label>
-            <input id="totalFaltas" type="number" value="0" disabled />
-          </div>
-        </div>
-
-        <div class="split" style="margin-top:10px;">
-          <div>
-            <label>Falta com atestado (0-15)</label>
-            <input id="faltaA" type="number" min="0" max="15" value="0" />
-          </div>
-          <div>
-            <label>Falta sem atestado (0-15)</label>
-            <input id="faltaS" type="number" min="0" max="15" value="0" />
-          </div>
-        </div>
-
-        <div style="margin-top:10px;">
-          <label>Observações</label>
-          <textarea id="obs" placeholder="Ex: justificativa, afastamento, observações..."></textarea>
-        </div>
-
-        <div class="row" style="margin-top:12px;">
-          <button class="btn-success" type="submit" id="btnAddRegistro">Adicionar</button>
-          <button class="btn-warn hidden" type="button" id="btnSalvarRegistro" onclick="salvarEdicaoRegistro()">Salvar Alterações</button>
-          <button class="btn-info" type="button" onclick="exportarCSV()">Exportar CSV</button>
-          <button class="btn-info" type="button" onclick="enviarParaADM()">📤 Enviar para ADM</button>
-          <button class="btn-danger" type="button" onclick="limparRegistros()">Limpar registros</button>
-        </div>
-
-        <div class="muted" style="margin-top:10px;">
-          <span class="badge">Obs</span> Se a matrícula não existir na lista fixa, o sistema não preencherá os dados.
-        </div>
-      </form>
-    </div>
-
-    <!-- ===== TABELA ===== -->
-    <div class="card">
-      <h2 style="margin:0;color:var(--primary);font-size:14px;">Tabela de Registros</h2>
-      <div class="muted">Salvo automaticamente neste navegador.</div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-
-      <div class="row">
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">SE</div>
         <div>
-          <label>Filtrar por período</label><br/>
-          <input id="filtroPeriodo" type="month" />
-        </div>
-        <div>
-          <label>Buscar</label><br/>
-          <input id="buscaRegistro" placeholder="nome, matrícula..." />
+          <h1>SEMEC • Folha de Ponto</h1>
+          <p>Envio mensal para o Administrativo</p>
         </div>
       </div>
 
-      <div style="overflow:auto;margin-top:12px;">
-        <table>
-          <thead>
-            <tr>
-              <th>Período</th>
-              <th>Matrícula</th>
-              <th>Nome</th>
-              <th>HE</th>
-              <th>Falta A</th>
-              <th>Falta S</th>
-              <th>Total</th>
-              <th>Obs</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyRegistros"></tbody>
-        </table>
+      <div class="status">
+        <div class="pill"><span class="dot"></span><span>Servidor: <span id="apiStatus">verificando...</span></span></div>
+        <div class="pill">Endpoint: <span class="kbd">/api/folha/enviar</span></div>
       </div>
     </div>
+  </header>
 
-  </div>
-</div>
+  <main>
+    <div class="wrap">
 
-<script>
-/* =========================
-   1) FUNCIONÁRIOS FIXOS (SOMENTE LEITURA)
-   👉 Edite aqui a lista oficial
-========================= */
-const FUNCIONARIOS = {
- 
-  "396": { nome: "Ademilson Jose de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "275": { nome: "Ademilton Xavier da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1659": { nome: "Adriana Almeida Nobre", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "3044": { nome: "Aides de Souza", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "83": { nome: "Ailton Novaes dos Santos", funcao: "Motorista", vinculo: "", carga: "" },
-  "2048": { nome: "Alan Ribeiro da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2049": { nome: "Alan Rodrigo Matos Bispo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "560": { nome: "Alessandra Lima Rodrigues", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3045": { nome: "Alexandra Almeida Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3046": { nome: "Alice Mahiana Reis de Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2046": { nome: "Alien Ana de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3041": { nome: "Aline Alencar da Silva", funcao: "Fisioterapeuta", vinculo: "", carga: "" },
-  "3008": { nome: "Allison Heber Borges Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "220": { nome: "Amanda da Silva Oliveira Medrado", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3040": { nome: "Ana Carolina Alencar Fernandes da Silva", funcao: "Fisioterapeuta", vinculo: "", carga: "" },
-  "84": { nome: "Ana Claudia Brito dos Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "140": { nome: "Ana Cleide Alencar Fernandes", funcao: "Professor", vinculo: "", carga: "20h" },
-  "141": { nome: "Ana Cristina Santana Bispo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "478": { nome: "Ana Cristina Santana Bispo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "322": { nome: "Ana Julia Vitoria de Alencar", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2020": { nome: "Ana Lucia Ribeiro dos Santos Pires", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1841": { nome: "Ana Maria Lima dos Santos", funcao: "Professor", vinculo: "", carga: "" },
-  "3047": { nome: "Ana Paula Santos da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "142": { nome: "Ana Regina Novaes Oliveira Rodrigues", funcao: "Professor", vinculo: "", carga: "20h" },
-  "310": { nome: "Ana Rita Ferreira de Jesus", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "317": { nome: "Ana Rose Soares da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1988": { nome: "Ana Virginia de Jesus da Silva", funcao: "Coordenador Pedagogico", vinculo: "", carga: "" },
-  "404": { nome: "Andre de Cassio Santos Araujo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "305": { nome: "Angela Santos Santana", funcao: "Auxiliar Bibliotecaria", vinculo: "", carga: "" },
-  "3048": { nome: "Anne Lariza Cruz Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "335": { nome: "Antonia Alves de Lima Reis", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1888": { nome: "Antonio Carlos Leite Macedo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3009": { nome: "Antonio Marcos Martins de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1903": { nome: "Ariana de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3010": { nome: "Ayalla Azevedo Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3011": { nome: "Breno da Silva Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3089": { nome: "Carla Carolina Rosa de Jesus Araujo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "143": { nome: "Carla Celia Hora", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2002": { nome: "Carlos de Jesus Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2038": { nome: "Carlos Eduardo da Silva Batista", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2008": { nome: "Cassio Henrique Alvez de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "267": { nome: "Catia Regina Ferreira Alves", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1665": { nome: "Celita Oliveira de Almeida Neta", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3049": { nome: "Cintia Cruz de Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "409": { nome: "Clailde da Silva Novais", funcao: "Professor", vinculo: "", carga: "20h" },
-  "328": { nome: "Claudia da Silva Novais", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "3050": { nome: "Claudia Naiala Neves de Azevedo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2009": { nome: "Cleide Alves de Jesus Menezes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "144": { nome: "Cleide de Jesus Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2044": { nome: "Cleidiane Cruz da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2003": { nome: "Cleiton Alves Mendes Leite", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3101": { nome: "Cleiziane Maia de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3051": { nome: "Cleomaria de Jesus Pereira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2027": { nome: "Crispina Apostolo Bastos de Soares", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3007": { nome: "Cristiane Almeida dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3012": { nome: "Cristiane Anchieta da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "250": { nome: "Cristiane Rodrigues de Oliveira Bastos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1844": { nome: "Daiane Menezes de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1987": { nome: "Dalete Chaves Souza", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1547": { nome: "Danilo Marinho Ramos", funcao: "Professor", vinculo: "", carga: "40h" },
-  "3094": { nome: "Deila Coutinho Trindade", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3013": { nome: "Deise de Jesus Costa", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3084": { nome: "Deivid Prates dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "147": { nome: "Dejane Carneiro Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1662": { nome: "Denize Almeida de Oliveira", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3085": { nome: "Deyse Matos Pereira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3093": { nome: "Diana Santos Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "148": { nome: "Dicelia da Silva Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1705": { nome: "Dimona Ferreira Souza Costa", funcao: "Gerente Adm Prog. Educacionais", vinculo: "", carga: "" },
-  "150": { nome: "Dori Edson Morais Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "479": { nome: "Dori Edson Morais Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3014": { nome: "Edelvita Ribeiro dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3015": { nome: "Edgar Souza Araujo", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1905": { nome: "Edielson Oliveira do Nascimento", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2011": { nome: "Edilene Ferreira Vieira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "151": { nome: "Edilene Santana de Brito Maia", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3016": { nome: "Edileuza Rodrigues Pereira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1956": { nome: "Edinei Lima Jesus de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "259": { nome: "Edinilza Alves de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "407": { nome: "Edivaldo Alves Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "553": { nome: "Edivania Rocha de Novais Siqueira", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "1657": { nome: "Edivania Rodrigues de Sousa Santos", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "687": { nome: "Edma Jurema Alves de Jesus Gaspar", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "346": { nome: "Edmarize Ferreira Lemos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3042": { nome: "Edna Martins de Almeida", funcao: "Fonoaudiologa", vinculo: "", carga: "" },
-  "3052": { nome: "Ednalva Ferreira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1658": { nome: "Elenice Santana dos Santos", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "349": { nome: "Eleny Alves Almeida", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3097": { nome: "Eliana Boaventura Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "245": { nome: "Eliane Silva dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1747": { nome: "Elielson Lima Magalhaes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "334": { nome: "Eliene Moreira de Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "374": { nome: "Eliene Prazeres Matos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "153": { nome: "Eliete Boaventura Oliveira Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2045": { nome: "Eliete Rosa de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "222": { nome: "Elisaine Ferreira de Andrade Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3053": { nome: "Elizete Soares Santana", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "178": { nome: "Elizeu Fernandes da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "154": { nome: "Else Araujo Alves Martins", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2036": { nome: "Elton Alves Costa", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2035": { nome: "Elzeni Oliveira da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3017": { nome: "Emery Passos Goes Neta", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1550": { nome: "Emily Karoline Oliveira Pimentel Lima", funcao: "Professor", vinculo: "", carga: "40h" },
-  "253": { nome: "Eranice Celestina de Jesus", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2012": { nome: "Erenilda Nunes de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3038": { nome: "Erenilda Ribeiro Brandao", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "261": { nome: "Erica da Silva Fernandes", funcao: "Professor", vinculo: "", carga: "20h" },
-  "395": { nome: "Erica Garcia dos Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "297": { nome: "Eridalva Lima dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3088": { nome: "Eridan da Silva Lima Matos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "9": { nome: "Erisvaldo Gomes da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2013": { nome: "Eronilce Barbosa de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "226": { nome: "Esmar Oliveira de Jesus", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3018": { nome: "Estenio Silva Vieira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3086": { nome: "Ester Fernandes da Anunciacao", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1878": { nome: "Everildo Santos da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3006": { nome: "Evilania Vieira S Cerqueira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "403": { nome: "Fabiana Bispo dos Santos Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3019": { nome: "Fabiele Calixto dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "535": { nome: "Fabio Almeida de Oliveira", funcao: "Motorista", vinculo: "", carga: "" },
-  "475": { nome: "Fabio Souza Pires Alves", funcao: "Vigilante", vinculo: "", carga: "" },
-  "2014": { nome: "Fabricio Santos da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "391": { nome: "Fernando Almeida Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "533": { nome: "Flavio Santana dos Santos", funcao: "Motorista", vinculo: "", carga: "" },
-  "2015": { nome: "Gabriel Souza Lima", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3099": { nome: "Gabriela Liama dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2004": { nome: "Gabrielle Braga da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "402": { nome: "Gecivaldo Sousa Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "115": { nome: "Genierre Monteiro Ramos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "1982": { nome: "Gildionor Novais de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2034": { nome: "Gilmar de Vasconcelos de Souza Junior", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "289": { nome: "Gismalia Bispo dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3020": { nome: "Gleice Santos Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "156": { nome: "Guiomar Francisca de Assuncao da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3117": { nome: "Helenivalda Nunes Leon", funcao: "Psicopedagogo", vinculo: "", carga: "" },
-  "120": { nome: "Hilda Neta Andrade Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3054": { nome: "Hitana Alencar Ferreira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "537": { nome: "Iara Silva Freitas", funcao: "Professor", vinculo: "", carga: "20h" },
-  "704": { nome: "Idalice Novais Costa Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "196": { nome: "Ilka Santos Perazzo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "157": { nome: "Indaia Almeida da Silva Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3055": { nome: "Indiara Souza Macedo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3021": { nome: "Ingrid Dias Perazzo", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3022": { nome: "Ingrid Neves Carvalho", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3023": { nome: "Ioata Souza da Conceicao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "400": { nome: "Ionara Angela de Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3024": { nome: "Iralen Brandao do Nascimento", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2016": { nome: "Irany Mendes Brito", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "251": { nome: "Isabel Dionisio de Brito", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1753": { nome: "Italo dos Santos Melo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1760": { nome: "Ivanete Alves da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "66": { nome: "Ivone Martins de Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3056": { nome: "Ivonete Costa Andrade de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1663": { nome: "Izabela Matos Berbel", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1669": { nome: "Jaciene Nascimento Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2037": { nome: "Jacilene Silva dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "160": { nome: "Jacson Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "246": { nome: "Jacy Mendes de Oliveira", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1919": { nome: "Jadson de Lima Reis", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3098": { nome: "Jailma Maria de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3057": { nome: "Janaina Alves dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "295": { nome: "Janete Andrade dos Santos Silva", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1839": { nome: "Janete dos Santos Lima", funcao: "Professor", vinculo: "", carga: "" },
-  "3058": { nome: "Janete Gomes de Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "329": { nome: "Janete Rosa de Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "292": { nome: "Janice Fernandes dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "194": { nome: "Janice Santana da Silva Ferreira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "582": { nome: "Janiete Martins dos Santos Medrado", funcao: "Professor", vinculo: "", carga: "20h" },
-  "387": { nome: "Jaquelyne Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "559": { nome: "Jaquelyne Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "287": { nome: "Jerailde Batista de Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3025": { nome: "Jerlane Silva Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3026": { nome: "Jersica Alves de Andrade", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "191": { nome: "Jesany Santana Souza Nobre", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3083": { nome: "Jilvandete Batista de Souza Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1917": { nome: "Joao Carlos Ferreira Plinio", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1733": { nome: "Joao Neto de Souza Alcantara", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3027": { nome: "Jonas dos Santos Aragao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1735": { nome: "Jose Bispo Ramos Neto", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "394": { nome: "Jose Lucio de Araujo Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "703": { nome: "Jose Nilton Souza Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1736": { nome: "Jose Ribeiro dos Santos Junior", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "554": { nome: "Jose Roberio Andrade de Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "379": { nome: "Jose Santana dos Santos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "192": { nome: "Joseany Maia Souza da Silva", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "285": { nome: "Joselita Pereira dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "277": { nome: "Juarez Jose dos Santos", funcao: "Assistente Administrativo", vinculo: "", carga: "" },
-  "3059": { nome: "Jucara Batista de Souza Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2042": { nome: "Jucelane Ferreira da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3060": { nome: "Juliana dos Santos Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3090": { nome: "Juliana Macedo Rodrigues", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2021": { nome: "Jussara Conceicao dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "412": { nome: "Karina Oliveira Goes Matos", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "2052": { nome: "Karla da Silva Novais", funcao: "Tecnico de Enfermagem", vinculo: "", carga: "" },
-  "3005": { nome: "Kassia de Souza Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2026": { nome: "Kassia Pereira Magalhaes", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "3061": { nome: "Kauenne Nascimento da Cunha", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2022": { nome: "Kessilly Vitoria de Alencar Souza", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3062": { nome: "Laiane Morais da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3096": { nome: "Lais Boaventura Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2017": { nome: "Leandro Modesto de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "337": { nome: "Lediana Lima Barauna", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3063": { nome: "Leila Nascimento Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "81": { nome: "Leila Soares Santana", funcao: "Diretor Pedagogico", vinculo: "", carga: "20h" },
-  "364": { nome: "Leiliane Leite Lima", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "163": { nome: "Lenilda Barbosa da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "480": { nome: "Lenilda Barbosa da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "707": { nome: "Leovan Cipriano de Lima", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "89": { nome: "Lidinei Costa de Santana", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "323": { nome: "Lindinalva Souza Queiroz Sobrinha", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1668": { nome: "Livia Rosane de Souza e Sousa", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "164": { nome: "Lucas Fernandes da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "686": { nome: "Lucelia Marinho da Silva Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3064": { nome: "Luciana Alves Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2025": { nome: "Lucimara Xavier da Silva", funcao: "Assistente Social", vinculo: "", carga: "" },
-  "1548": { nome: "Luis Henrique Couto Paixao", funcao: "Professor", vinculo: "", carga: "40h" },
-  "530": { nome: "Luzinete Morais Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1804": { nome: "Maicon de Lima Reis", funcao: "Assistente de Almoxarifado e Patrimônio", vinculo: "", carga: "" },
-  "3100": { nome: "Maiza Soares Santana", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "543": { nome: "Manoel Martins da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3065": { nome: "Marcela Alves Costa", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "534": { nome: "Marcelo Ferreira Pires", funcao: "Motorista", vinculo: "", carga: "" },
-  "3066": { nome: "Marcia Ferreira dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "94": { nome: "Marcia Macedo de Franca", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1661": { nome: "Marcia Mendes Silva", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "418": { nome: "Marcos Custodio dos Santos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "1973": { nome: "Marcos Guimaraes de Araujo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3067": { nome: "Maria Aparecida Jesus dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "294": { nome: "Maria Aparecida Ribeiro Lima", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1666": { nome: "Maria da Gloria Santos Sena", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3028": { nome: "Maria da Paz Oliveira dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2041": { nome: "Maria dos Reis Nogueira dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3068": { nome: "Maria Gorete Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3102": { nome: "Maria Izabel Barbosa de Carvalho Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1542": { nome: "Maria Jamile da Silva Pires", funcao: "Professor", vinculo: "", carga: "40h" },
-  "167": { nome: "Maria Jose de Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "85": { nome: "Marialva Souza de Araujo", funcao: "Merendeira", vinculo: "", carga: "" },
-  "350": { nome: "Mariana Coutinho de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3069": { nome: "Marilsa Alves Ramos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2053": { nome: "Marine Souza Santana Costa", funcao: "Tecnico de Enfermagem", vinculo: "", carga: "" },
-  "688": { nome: "Marisete Farias da Silva Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3103": { nome: "Marizete dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "195": { nome: "Marlei Pires de Almeida Andrade", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3092": { nome: "Marlene Souza Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "271": { nome: "Marli de Oliveira Barros", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3070": { nome: "Mauricia Silva Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "584": { nome: "Mauricio Souza Santana Costa", funcao: "Vigilante", vinculo: "", carga: "" },
-  "17": { nome: "Meire de Jesus Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2018": { nome: "Michel Mendes de Araujo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2047": { nome: "Milena Fernandes dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3104": { nome: "Milena Santana da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3105": { nome: "Milene Bastos da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3071": { nome: "Milene Pires Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2005": { nome: "Mirailton Lima de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3072": { nome: "Mirian Alves de Jesus", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "578": { nome: "Moises Macedo de Franca", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2040": { nome: "Monise Matos da Invencao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1664": { nome: "Monize Rodrigues Maximo", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1660": { nome: "Monyse Bastos Matos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "" },
-  "3106": { nome: "Naete de Aquino Correia", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "319": { nome: "Naiara Nize Alexandre Alves Silva Passos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3107": { nome: "Nailza Pires dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1555": { nome: "Neidineia Sena dos Santos", funcao: "Professor", vinculo: "", carga: "40h" },
-  "3073": { nome: "Neilda Sena dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3108": { nome: "Neilma Caje de Carvalho", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "333": { nome: "Neizia Ferreira da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1959": { nome: "Nicassio Mendes Nobre", funcao: "Coordenador de Transportes Escolar", vinculo: "", carga: "" },
-  "299": { nome: "Niel da Cruz Ramos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "67": { nome: "Nildete Guimaraes Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1737": { nome: "Nilson Novais de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "301": { nome: "Nobelia Alberta dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2028": { nome: "Noelia Francisca dos Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "397": { nome: "Normanda Torres Sena", funcao: "Professor", vinculo: "", carga: "20h" },
-  "26": { nome: "Normeide Souza Luis", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1655": { nome: "Nubia de Jesus da Silva", funcao: "Coordenador de Apoio Adminitrativo", vinculo: "", carga: "" },
-  "3109": { nome: "Nubia Sateles Nascimento", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3110": { nome: "Oldair Sampaio Souza", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3074": { nome: "Patricia Coutinho dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1667": { nome: "Patricia Lima de Oliveira", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "398": { nome: "Patricia Nunes Ferreira Fernandes Marques", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "3111": { nome: "Paula Prates dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1696": { nome: "Perola Luz de Almeida", funcao: "Nutricionista", vinculo: "", carga: "" },
-  "696": { nome: "Queli Diane Galdina de Jesus", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3075": { nome: "Rafaela Ribeiro dos Santos Goes", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "372": { nome: "Raimunda Santana de Vasconcelos Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3004": { nome: "Raniele Oliveira Santos Ramos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3076": { nome: "Raquel Apostolo Bastos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "174": { nome: "Raquel Araujo Mota Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "173": { nome: "Raymunda Ribeiro Santos", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "3077": { nome: "Regina dos Santos Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3078": { nome: "Reginalva Ferreira de Jesus Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3002": { nome: "Reijane Silva Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3079": { nome: "Rhaika Oliveira Rodrigues", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1803": { nome: "Rian Ferreira Souza", funcao: "Assistente de Almoxarifado e Patrimônio", vinculo: "", carga: "" },
-  "1612": { nome: "Ricardo Matos Berbel", funcao: "Secretario Municipal", vinculo: "", carga: "" },
-  "175": { nome: "Roberto Carlos Santana da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2019": { nome: "Rodrigo Nunes dos Anjos", funcao: "Chefe da Secao de Informática", vinculo: "", carga: "" },
-  "1880": { nome: "Rogerio Coutinho de Almeida", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2010": { nome: "Romario Silva Guimaraes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "314": { nome: "Rone Glecia Oliveira Miranda", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3112": { nome: "Rozane Oliveira Santos Carneiro", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3091": { nome: "Rute Moreira da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "176": { nome: "Sandia Azevedo Ribeiro Ferreira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3113": { nome: "Sandra de Oliveira Menezes", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "321": { nome: "Sandra Sateles Nascimento", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "2007": { nome: "Sandro Gonzaga Santos", funcao: "Gerente de Esportes", vinculo: "", carga: "" },
-  "2006": { nome: "Sandro Nunes Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "380": { nome: "Sandy Rosane Ferreira de Araujo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2039": { nome: "Sarah Lima Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "235": { nome: "Sergio Roberto de Barros Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2029": { nome: "Sergio Souza Gomes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2043": { nome: "Shirlei Martins dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "705": { nome: "Silvia Silva de Oliveira", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "577": { nome: "Simone Ferreira de Oliveira", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "3114": { nome: "Simone Leao Cardoso", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "243": { nome: "Sirlene Goncalves Silva", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3003": { nome: "Sirlene Oliveira Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3115": { nome: "Sofia Eler Andrade Martins", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1895": { nome: "Stela Damasceno Muniz", funcao: "Assistente Social", vinculo: "", carga: "" },
-  "109": { nome: "Sueli Andrade Gomes Santos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "3116": { nome: "Suzane Sa Teles da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3087": { nome: "Tania Oliveira de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3118": { nome: "Tatiane Olveira dos Santos Cerqueira", funcao: "Psicopedagogo", vinculo: "", carga: "" },
-  "731": { nome: "Terezinha Ferreira de Oliveira Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1712": { nome: "Thailane Lima Matos", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1954": { nome: "Uilian Rodrigues da Conceicao", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "290": { nome: "Valdecy Soares dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3080": { nome: "Valdenice Soares dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "273": { nome: "Valeria Maia Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "368": { nome: "Valquiria Sousa Homero", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1738": { nome: "Valteis Batista da Cruz", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3095": { nome: "Vania Pinheiro de Queiroz", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2031": { nome: "Vanilce Gomes Martins", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "256": { nome: "Vanilda Silva de Oliveira", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "410": { nome: "Vanuza Andrade Oliveira Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "100": { nome: "Vera Lucia Ferreira Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "247": { nome: "Verisse Oliveira Ferreira", funcao: "Merendeira", vinculo: "", carga: "" },
-  "2030": { nome: "Veron Soares de Almeida", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1620": { nome: "Vilma Oliveira dos Santos", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3082": { nome: "Yasmin dos Anjos Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "541": { nome: "Zilda Souza Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "193": { nome: "Zilma Oliveira de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-    "1973": { nome: "Marcos Guimaraes de Araujo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3067": { nome: "Maria Aparecida Jesus dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "294": { nome: "Maria Aparecida Ribeiro Lima", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1666": { nome: "Maria da Gloria Santos Sena", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3028": { nome: "Maria da Paz Oliveira dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2041": { nome: "Maria dos Reis Nogueira dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3068": { nome: "Maria Gorete Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3102": { nome: "Maria Izabel Barbosa de Carvalho Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1542": { nome: "Maria Jamile da Silva Pires", funcao: "Professor", vinculo: "", carga: "40h" },
-  "167": { nome: "Maria Jose de Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "85": { nome: "Marialva Souza de Araujo", funcao: "Merendeira", vinculo: "", carga: "" },
-  "350": { nome: "Mariana Coutinho de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3069": { nome: "Marilsa Alves Ramos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2053": { nome: "Marine Souza Santana Costa", funcao: "Tecnico de Enfermagem", vinculo: "", carga: "" },
-  "688": { nome: "Marisete Farias da Silva Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3103": { nome: "Marizete dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "195": { nome: "Marlei Pires de Almeida Andrade", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3092": { nome: "Marlene Souza Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "271": { nome: "Marli de Oliveira Barros", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3070": { nome: "Mauricia Silva Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "584": { nome: "Mauricio Souza Santana Costa", funcao: "Vigilante", vinculo: "", carga: "" },
-  "17": { nome: "Meire de Jesus Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2018": { nome: "Michel Mendes de Araujo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2047": { nome: "Milena Fernandes dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3104": { nome: "Milena Santana da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3105": { nome: "Milene Bastos da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3071": { nome: "Milene Pires Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2005": { nome: "Mirailton Lima de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3072": { nome: "Mirian Alves de Jesus", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "578": { nome: "Moises Macedo de Franca", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2040": { nome: "Monise Matos da Invencao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1664": { nome: "Monize Rodrigues Maximo", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1660": { nome: "Monyse Bastos Matos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "" },
-  "3106": { nome: "Naete de Aquino Correia", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "319": { nome: "Naiara Nize Alexandre Alves Silva Passos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3107": { nome: "Nailza Pires dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1555": { nome: "Neidineia Sena dos Santos", funcao: "Professor", vinculo: "", carga: "40h" },
-  "3073": { nome: "Neilda Sena dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3108": { nome: "Neilma Caje de Carvalho", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "333": { nome: "Neizia Ferreira da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1959": { nome: "Nicassio Mendes Nobre", funcao: "Coordenador de Transportes Escolar", vinculo: "", carga: "" },
-  "299": { nome: "Niel da Cruz Ramos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "67": { nome: "Nildete Guimaraes Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1737": { nome: "Nilson Novais de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "301": { nome: "Nobelia Alberta dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2028": { nome: "Noelia Francisca dos Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "397": { nome: "Normanda Torres Sena", funcao: "Professor", vinculo: "", carga: "20h" },
-  "26": { nome: "Normeide Souza Luis", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1655": { nome: "Nubia de Jesus da Silva", funcao: "Coordenador de Apoio Adminitrativo", vinculo: "", carga: "" },
-  "3109": { nome: "Nubia Sateles Nascimento", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3110": { nome: "Oldair Sampaio Souza", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3074": { nome: "Patricia Coutinho dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1667": { nome: "Patricia Lima de Oliveira", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "398": { nome: "Patricia Nunes Ferreira Fernandes Marques", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "3111": { nome: "Paula Prates dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1696": { nome: "Perola Luz de Almeida", funcao: "Nutricionista", vinculo: "", carga: "" },
-  "696": { nome: "Queli Diane Galdina de Jesus", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3075": { nome: "Rafaela Ribeiro dos Santos Goes", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "372": { nome: "Raimunda Santana de Vasconcelos Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3004": { nome: "Raniele Oliveira Santos Ramos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3076": { nome: "Raquel Apostolo Bastos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "174": { nome: "Raquel Araujo Mota Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "173": { nome: "Raymunda Ribeiro Santos", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "3077": { nome: "Regina dos Santos Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3078": { nome: "Reginalva Ferreira de Jesus Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3002": { nome: "Reijane Silva Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3079": { nome: "Rhaika Oliveira Rodrigues", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1803": { nome: "Rian Ferreira Souza", funcao: "Assistente de Almoxarifado e Patrimônio", vinculo: "", carga: "" },
-  "1612": { nome: "Ricardo Matos Berbel", funcao: "Secretario Municipal", vinculo: "", carga: "" },
-  "175": { nome: "Roberto Carlos Santana da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2019": { nome: "Rodrigo Nunes dos Anjos", funcao: "Chefe da Secao de Informática", vinculo: "", carga: "" },
-  "1880": { nome: "Rogerio Coutinho de Almeida", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2010": { nome: "Romario Silva Guimaraes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "314": { nome: "Rone Glecia Oliveira Miranda", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3112": { nome: "Rozane Oliveira Santos Carneiro", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3091": { nome: "Rute Moreira da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "176": { nome: "Sandia Azevedo Ribeiro Ferreira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3113": { nome: "Sandra de Oliveira Menezes", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "321": { nome: "Sandra Sateles Nascimento", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "2007": { nome: "Sandro Gonzaga Santos", funcao: "Gerente de Esportes", vinculo: "", carga: "" },
-  "2006": { nome: "Sandro Nunes Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "380": { nome: "Sandy Rosane Ferreira de Araujo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2039": { nome: "Sarah Lima Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "235": { nome: "Sergio Roberto de Barros Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2029": { nome: "Sergio Souza Gomes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2043": { nome: "Shirlei Martins dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "705": { nome: "Silvia Silva de Oliveira", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "577": { nome: "Simone Ferreira de Oliveira", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "3114": { nome: "Simone Leao Cardoso", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "243": { nome: "Sirlene Goncalves Silva", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3003": { nome: "Sirlene Oliveira Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3115": { nome: "Sofia Eler Andrade Martins", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1895": { nome: "Stela Damasceno Muniz", funcao: "Assistente Social", vinculo: "", carga: "" },
-  "109": { nome: "Sueli Andrade Gomes Santos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "3116": { nome: "Suzane Sa Teles da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3087": { nome: "Tania Oliveira de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3118": { nome: "Tatiane Olveira dos Santos Cerqueira", funcao: "Psicopedagogo", vinculo: "", carga: "" },
-  "731": { nome: "Terezinha Ferreira de Oliveira Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1712": { nome: "Thailane Lima Matos", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1954": { nome: "Uilian Rodrigues da Conceicao", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "290": { nome: "Valdecy Soares dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3080": { nome: "Valdenice Soares dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "273": { nome: "Valeria Maia Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "368": { nome: "Valquiria Sousa Homero", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1738": { nome: "Valteis Batista da Cruz", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3095": { nome: "Vania Pinheiro de Queiroz", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2031": { nome: "Vanilce Gomes Martins", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "256": { nome: "Vanilda Silva de Oliveira", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "410": { nome: "Vanuza Andrade Oliveira Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "100": { nome: "Vera Lucia Ferreira Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "247": { nome: "Verisse Oliveira Ferreira", funcao: "Merendeira", vinculo: "", carga: "" },
-  "2030": { nome: "Veron Soares de Almeida", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1620": { nome: "Vilma Oliveira dos Santos", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "358": { nome: "Adao Almeida da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "558": { nome: "Adao Almeida da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "396": { nome: "Ademilson Jose de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "275": { nome: "Ademilton Xavier da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1659": { nome: "Adriana Almeida Nobre", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "3044": { nome: "Aides de Souza", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "83": { nome: "Ailton Novaes dos Santos", funcao: "Motorista", vinculo: "", carga: "" },
-  "2048": { nome: "Alan Ribeiro da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2049": { nome: "Alan Rodrigo Matos Bispo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "560": { nome: "Alessandra Lima Rodrigues", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3045": { nome: "Alexandra Almeida Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3046": { nome: "Alice Mahiana Reis de Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2046": { nome: "Alien Ana de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3041": { nome: "Aline Alencar da Silva", funcao: "Fisioterapeuta", vinculo: "", carga: "" },
-  "3008": { nome: "Allison Heber Borges Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "220": { nome: "Amanda da Silva Oliveira Medrado", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3040": { nome: "Ana Carolina Alencar Fernandes da Silva", funcao: "Fisioterapeuta", vinculo: "", carga: "" },
-  "84": { nome: "Ana Claudia Brito dos Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "140": { nome: "Ana Cleide Alencar Fernandes", funcao: "Professor", vinculo: "", carga: "20h" },
-  "141": { nome: "Ana Cristina Santana Bispo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "478": { nome: "Ana Cristina Santana Bispo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "322": { nome: "Ana Julia Vitoria de Alencar", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2020": { nome: "Ana Lucia Ribeiro dos Santos Pires", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1841": { nome: "Ana Maria Lima dos Santos", funcao: "Professor", vinculo: "", carga: "" },
-  "3047": { nome: "Ana Paula Santos da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "142": { nome: "Ana Regina Novaes Oliveira Rodrigues", funcao: "Professor", vinculo: "", carga: "20h" },
-  "310": { nome: "Ana Rita Ferreira de Jesus", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "317": { nome: "Ana Rose Soares da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1988": { nome: "Ana Virginia de Jesus da Silva", funcao: "Coordenador Pedagogico", vinculo: "", carga: "" },
-  "404": { nome: "Andre de Cassio Santos Araujo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "305": { nome: "Angela Santos Santana", funcao: "Auxiliar Bibliotecaria", vinculo: "", carga: "" },
-  "3048": { nome: "Anne Lariza Cruz Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "335": { nome: "Antonia Alves de Lima Reis", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1888": { nome: "Antonio Carlos Leite Macedo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3009": { nome: "Antonio Marcos Martins de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1903": { nome: "Ariana de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3010": { nome: "Ayalla Azevedo Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3011": { nome: "Breno da Silva Oliveira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3089": { nome: "Carla Carolina Rosa de Jesus Araujo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "143": { nome: "Carla Celia Hora", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2002": { nome: "Carlos de Jesus Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2038": { nome: "Carlos Eduardo da Silva Batista", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2008": { nome: "Cassio Henrique Alvez de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "267": { nome: "Catia Regina Ferreira Alves", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1665": { nome: "Celita Oliveira de Almeida Neta", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3049": { nome: "Cintia Cruz de Lima", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "409": { nome: "Clailde da Silva Novais", funcao: "Professor", vinculo: "", carga: "20h" },
-  "328": { nome: "Claudia da Silva Novais", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "3050": { nome: "Claudia Naiala Neves de Azevedo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2009": { nome: "Cleide Alves de Jesus Menezes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "144": { nome: "Cleide de Jesus Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2044": { nome: "Cleidiane Cruz da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2003": { nome: "Cleiton Alves Mendes Leite", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3101": { nome: "Cleiziane Maia de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3051": { nome: "Cleomaria de Jesus Pereira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2027": { nome: "Crispina Apostolo Bastos de Soares", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3007": { nome: "Cristiane Almeida dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3012": { nome: "Cristiane Anchieta da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "250": { nome: "Cristiane Rodrigues de Oliveira Bastos", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1844": { nome: "Daiane Menezes de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1987": { nome: "Dalete Chaves Souza", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1547": { nome: "Danilo Marinho Ramos", funcao: "Professor", vinculo: "", carga: "40h" },
-  "3094": { nome: "Deila Coutinho Trindade", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3013": { nome: "Deise de Jesus Costa", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3084": { nome: "Deivid Prates dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "147": { nome: "Dejane Carneiro Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1662": { nome: "Denize Almeida de Oliveira", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "3085": { nome: "Deyse Matos Pereira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3093": { nome: "Diana Santos Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "148": { nome: "Dicelia da Silva Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1705": { nome: "Dimona Ferreira Souza Costa", funcao: "Gerente Adm Prog. Educacionais", vinculo: "", carga: "" },
-  "150": { nome: "Dori Edson Morais Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "479": { nome: "Dori Edson Morais Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3014": { nome: "Edelvita Ribeiro dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3015": { nome: "Edgar Souza Araujo", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1905": { nome: "Edielson Oliveira do Nascimento", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2011": { nome: "Edilene Ferreira Vieira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "151": { nome: "Edilene Santana de Brito Maia", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3016": { nome: "Edileuza Rodrigues Pereira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1956": { nome: "Edinei Lima Jesus de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "259": { nome: "Edinilza Alves de Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "407": { nome: "Edivaldo Alves Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "553": { nome: "Edivania Rocha de Novais Siqueira", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "1657": { nome: "Edivania Rodrigues de Sousa Santos", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "687": { nome: "Edma Jurema Alves de Jesus Gaspar", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "346": { nome: "Edmarize Ferreira Lemos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3042": { nome: "Edna Martins de Almeida", funcao: "Fonoaudiologa", vinculo: "", carga: "" },
-  "3052": { nome: "Ednalva Ferreira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1658": { nome: "Elenice Santana dos Santos", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "349": { nome: "Eleny Alves Almeida", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3097": { nome: "Eliana Boaventura Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "245": { nome: "Eliane Silva dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "1747": { nome: "Elielson Lima Magalhaes", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "334": { nome: "Eliene Moreira de Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "374": { nome: "Eliene Prazeres Matos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "153": { nome: "Eliete Boaventura Oliveira Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2045": { nome: "Eliete Rosa de Jesus", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "222": { nome: "Elisaine Ferreira de Andrade Souza", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3053": { nome: "Elizete Soares Santana", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "178": { nome: "Elizeu Fernandes da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "154": { nome: "Else Araujo Alves Martins", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2036": { nome: "Elton Alves Costa", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2035": { nome: "Elzeni Oliveira da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3017": { nome: "Emery Passos Goes Neta", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1550": { nome: "Emily Karoline Oliveira Pimentel Lima", funcao: "Professor", vinculo: "", carga: "40h" },
-  "253": { nome: "Eranice Celestina de Jesus", funcao: "Professor", vinculo: "", carga: "20h" },
-  "2012": { nome: "Erenilda Nunes de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3038": { nome: "Erenilda Ribeiro Brandao", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "261": { nome: "Erica da Silva Fernandes", funcao: "Professor", vinculo: "", carga: "20h" },
-  "395": { nome: "Erica Garcia dos Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "297": { nome: "Eridalva Lima dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3088": { nome: "Eridan da Silva Lima Matos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "9": { nome: "Erisvaldo Gomes da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "2013": { nome: "Eronilce Barbosa de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "226": { nome: "Esmar Oliveira de Jesus", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3018": { nome: "Estenio Silva Vieira", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3086": { nome: "Ester Fernandes da Anunciacao", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1878": { nome: "Everildo Santos da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3006": { nome: "Evilania Vieira S Cerqueira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "403": { nome: "Fabiana Bispo dos Santos Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3019": { nome: "Fabiele Calixto dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "535": { nome: "Fabio Almeida de Oliveira", funcao: "Motorista", vinculo: "", carga: "" },
-  "475": { nome: "Fabio Souza Pires Alves", funcao: "Vigilante", vinculo: "", carga: "" },
-  "2014": { nome: "Fabricio Santos da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "391": { nome: "Fernando Almeida Cerqueira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "533": { nome: "Flavio Santana dos Santos", funcao: "Motorista", vinculo: "", carga: "" },
-  "2015": { nome: "Gabriel Souza Lima", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3099": { nome: "Gabriela Liama dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2004": { nome: "Gabrielle Braga da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "402": { nome: "Gecivaldo Sousa Santos", funcao: "Professor", vinculo: "", carga: "20h" },
-  "115": { nome: "Genierre Monteiro Ramos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "1982": { nome: "Gildionor Novais de Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2034": { nome: "Gilmar de Vasconcelos de Souza Junior", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "289": { nome: "Gismalia Bispo dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3020": { nome: "Gleice Santos Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "156": { nome: "Guiomar Francisca de Assuncao da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3117": { nome: "Helenivalda Nunes Leon", funcao: "Psicopedagogo", vinculo: "", carga: "" },
-  "120": { nome: "Hilda Neta Andrade Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3054": { nome: "Hitana Alencar Ferreira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "537": { nome: "Iara Silva Freitas", funcao: "Professor", vinculo: "", carga: "20h" },
-  "704": { nome: "Idalice Novais Costa Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "196": { nome: "Ilka Santos Perazzo", funcao: "Professor", vinculo: "", carga: "20h" },
-  "157": { nome: "Indaia Almeida da Silva Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3055": { nome: "Indiara Souza Macedo", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3021": { nome: "Ingrid Dias Perazzo", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3022": { nome: "Ingrid Neves Carvalho", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3023": { nome: "Ioata Souza da Conceicao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "400": { nome: "Ionara Angela de Santana", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3024": { nome: "Iralen Brandao do Nascimento", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "2016": { nome: "Irany Mendes Brito", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "251": { nome: "Isabel Dionisio de Brito", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1753": { nome: "Italo dos Santos Melo", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1760": { nome: "Ivanete Alves da Silva", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "66": { nome: "Ivone Martins de Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3056": { nome: "Ivonete Costa Andrade de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1663": { nome: "Izabela Matos Berbel", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "1669": { nome: "Jaciene Nascimento Oliveira", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "2037": { nome: "Jacilene Silva dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "160": { nome: "Jacson Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1919": { nome: "Jadson de Lima Reis", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3098": { nome: "Jailma Maria de Souza", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3057": { nome: "Janaina Alves dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1839": { nome: "Janete dos Santos Lima", funcao: "Professor", vinculo: "", carga: "" },
-  "3058": { nome: "Janete Gomes de Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "329": { nome: "Janete Rosa de Souza", funcao: "Merendeira", vinculo: "", carga: "" },
-  "292": { nome: "Janice Fernandes dos Santos", funcao: "Merendeira", vinculo: "", carga: "" },
-  "194": { nome: "Janice Santana da Silva Ferreira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "582": { nome: "Janiete Martins dos Santos Medrado", funcao: "Professor", vinculo: "", carga: "20h" },
-  "387": { nome: "Jaquelyne Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "559": { nome: "Jaquelyne Ferreira Carneiro", funcao: "Professor", vinculo: "", carga: "20h" },
-  "287": { nome: "Jerailde Batista de Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3025": { nome: "Jerlane Silva Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3026": { nome: "Jersica Alves de Andrade", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "191": { nome: "Jesany Santana Souza Nobre", funcao: "Professor", vinculo: "", carga: "20h" },
-  "3083": { nome: "Jilvandete Batista de Souza Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "1917": { nome: "Joao Carlos Ferreira Plinio", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1733": { nome: "Joao Neto de Souza Alcantara", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "3027": { nome: "Jonas dos Santos Aragao", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "1735": { nome: "Jose Bispo Ramos Neto", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "394": { nome: "Jose Lucio de Araujo Carvalho", funcao: "Professor", vinculo: "", carga: "20h" },
-  "703": { nome: "Jose Nilton Souza Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "1736": { nome: "Jose Ribeiro dos Santos Junior", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "554": { nome: "Jose Roberio Andrade de Oliveira", funcao: "Professor", vinculo: "", carga: "20h" },
-  "379": { nome: "Jose Santana dos Santos", funcao: "Vigilante", vinculo: "", carga: "" },
-  "192": { nome: "Joseany Maia Souza da Silva", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "285": { nome: "Joselita Pereira dos Santos", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "277": { nome: "Juarez Jose dos Santos", funcao: "Assistente Administrativo", vinculo: "", carga: "" },
-  "3059": { nome: "Jucara Batista de Souza Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2042": { nome: "Jucelane Ferreira da Silva", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3060": { nome: "Juliana dos Santos Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3090": { nome: "Juliana Macedo Rodrigues", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2021": { nome: "Jussara Conceicao dos Santos", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "412": { nome: "Karina Oliveira Goes Matos", funcao: "Supervisor Pedagogico", vinculo: "", carga: "20h" },
-  "2052": { nome: "Karla da Silva Novais", funcao: "Tecnico de Enfermagem", vinculo: "", carga: "" },
-  "3005": { nome: "Kassia de Souza Oliveira", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2026": { nome: "Kassia Pereira Magalhaes", funcao: "Vice - Diretor Escolar", vinculo: "", carga: "" },
-  "3061": { nome: "Kauenne Nascimento da Cunha", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2022": { nome: "Kessilly Vitoria de Alencar Souza", funcao: "Monitor Escolar", vinculo: "", carga: "" },
-  "3062": { nome: "Laiane Morais da Silva", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "3096": { nome: "Lais Boaventura Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2017": { nome: "Leandro Modesto de Souza", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "337": { nome: "Lediana Lima Barauna", funcao: "Merendeira", vinculo: "", carga: "" },
-  "3063": { nome: "Leila Nascimento Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "81": { nome: "Leila Soares Santana", funcao: "Diretor Pedagogico", vinculo: "", carga: "20h" },
-  "364": { nome: "Leiliane Leite Lima", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "163": { nome: "Lenilda Barbosa da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "480": { nome: "Lenilda Barbosa da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "707": { nome: "Leovan Cipriano de Lima", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "89": { nome: "Lidinei Costa de Santana", funcao: "Diretor Escolar", vinculo: "", carga: "20h" },
-  "323": { nome: "Lindinalva Souza Queiroz Sobrinha", funcao: "Professor", vinculo: "", carga: "20h" },
-  "1668": { nome: "Livia Rosane de Souza e Sousa", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "164": { nome: "Lucas Fernandes da Silva", funcao: "Professor", vinculo: "", carga: "20h" },
-  "686": { nome: "Lucelia Marinho da Silva Souza", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3064": { nome: "Luciana Alves Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "2025": { nome: "Lucimara Xavier da Silva", funcao: "Assistente Social", vinculo: "", carga: "" },
-  "1548": { nome: "Luis Henrique Couto Paixao", funcao: "Professor", vinculo: "", carga: "40h" },
-  "530": { nome: "Luzinete Morais Santos", funcao: "Assistente de Manutenção", vinculo: "", carga: "" },
-  "1804": { nome: "Maicon de Lima Reis", funcao: "Assistente de Almoxarifado e Patrimônio", vinculo: "", carga: "" },
-  "3100": { nome: "Maiza Soares Santana", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "543": { nome: "Manoel Martins da Silva", funcao: "Auxiliar de Servicos Gerais", vinculo: "", carga: "" },
-  "3065": { nome: "Marcela Alves Costa", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "534": { nome: "Marcelo Ferreira Pires", funcao: "Motorista", vinculo: "", carga: "" },
-  "3066": { nome: "Marcia Ferreira dos Santos", funcao: "Auxiliar de Classe", vinculo: "", carga: "" },
-  "94": { nome: "Marcia Macedo de Franca", funcao: "Coordenador Pedagogico", vinculo: "", carga: "20h" },
-  "1661": { nome: "Marcia Mendes Silva", funcao: "Secretaria Escolar", vinculo: "", carga: "" },
-  "418": { nome: "Marcos Custodio dos Santos", funcao: "Vigilante", vinculo: "", carga: "" },
-};
+      <!-- CARD 1: FORMULÁRIO -->
+      <section class="card">
+        <div class="head">
+          <h2>Preencher folha</h2>
+          <span>Envio individual por funcionário</span>
+        </div>
 
+        <div class="content">
 
+          <div class="grid">
+            <div>
+              <label for="periodo">Mês/Ano do registro</label>
+              <input id="periodo" type="month" />
+              <div class="small" style="margin-top:6px;">Ex.: 2026-02</div>
+            </div>
 
-/* =========================
-   2) REGISTROS (salvos no navegador)
-========================= */
-const KEY_REG  = "SEMEC_REGISTROS_V1";
-let registros = [];
+            <div>
+              <label for="escola">Escola (opcional)</label>
+              <input id="escola" type="text" placeholder="Ex.: Escola X" />
+            </div>
 
-/* =========================
-   HELPERS
-========================= */
-function toNum(n){
-  const x = Number(n);
-  return Number.isFinite(x) ? x : 0;
-}
-function clamp015(n){
-  n = toNum(n);
-  return Math.max(0, Math.min(15, n));
-}
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-}
-function periodoHoje(){
-  const d = new Date();
-  const mm = String(d.getMonth()+1).padStart(2,"0");
-  return `${d.getFullYear()}-${mm}`;
-}
-function badgeTotal(total){
-  if (total >= 10) return `<span class="badge red">${total}</span>`;
-  if (total >= 5)  return `<span class="badge orange">${total}</span>`;
-  return `<span class="badge green">${total}</span>`;
-}
-function setMsg(el, text, color){
-  el.textContent = text || "";
-  if (color) el.style.color = color;
-}
+            <div>
+              <label for="matricula">Matrícula</label>
+              <input id="matricula" type="text" placeholder="Ex.: 101" />
+            </div>
 
-/* =========================
-   ELEMENTOS
-========================= */
-const formRegistro = document.getElementById("formRegistro");
-const editIndexRegistro = document.getElementById("editIndexRegistro");
-const btnAddRegistro = document.getElementById("btnAddRegistro");
-const btnSalvarRegistro = document.getElementById("btnSalvarRegistro");
+            <div>
+              <label for="nome">Nome do funcionário</label>
+              <input id="nome" type="text" placeholder="Ex.: Maria Silva" />
+            </div>
 
-const matricula = document.getElementById("matricula");
-const nome = document.getElementById("nome");
-const funcao = document.getElementById("funcao");
-const vinculo = document.getElementById("vinculo");
-const carga = document.getElementById("carga");
-const periodo = document.getElementById("periodo");
-const horas = document.getElementById("horas");
-const faltaA = document.getElementById("faltaA");
-const faltaS = document.getElementById("faltaS");
-const totalFaltas = document.getElementById("totalFaltas");
-const obs = document.getElementById("obs");
+            <div>
+              <label for="funcao">Função</label>
+              <input id="funcao" type="text" placeholder="Ex.: Professor(a)" />
+            </div>
 
-const msgMatricula = document.getElementById("msgMatricula");
-const msgNome = document.getElementById("msgNome");
+            <div>
+              <label for="vinculo">Vínculo</label>
+              <input id="vinculo" type="text" placeholder="Ex.: Efetivo / Contrato" />
+            </div>
 
-const filtroPeriodo = document.getElementById("filtroPeriodo");
-const buscaRegistro = document.getElementById("buscaRegistro");
-const tbodyReg = document.getElementById("tbodyRegistros");
+            <div>
+              <label for="carga">Carga horária</label>
+              <input id="carga" type="text" placeholder="Ex.: 40h" />
+            </div>
 
-/* =========================
-   AUTOCOMPLETE (datalist)
-========================= */
-function montarListaNomes(){
-  const dl = document.getElementById("listaNomes");
-  dl.innerHTML = "";
-  Object.entries(FUNCIONARIOS)
-    .map(([mat, f]) => ({ mat, ...f }))
-    .sort((a,b)=> (a.nome||"").localeCompare(b.nome||"","pt-BR"))
-    .forEach(f=>{
-      const opt = document.createElement("option");
-      opt.value = f.nome;
-      dl.appendChild(opt);
-    });
-}
+            <div>
+              <label for="horas_extras">Horas Extras (soma)</label>
+              <input id="horas_extras" type="number" min="0" step="0.5" placeholder="0" />
+            </div>
 
-function acharMatriculaPorNome(nm){
-  const alvo = (nm||"").trim().toLowerCase();
-  for (const m in FUNCIONARIOS){
-    if ((FUNCIONARIOS[m].nome||"").trim().toLowerCase() === alvo) return m;
-  }
-  return null;
-}
+            <div>
+              <label for="total_faltas">Total de faltas</label>
+              <input id="total_faltas" type="number" min="0" step="1" placeholder="0" />
+            </div>
 
-function preencherPorMatricula(m){
-  const f = FUNCIONARIOS[m];
-  if (!f) return false;
-  nome.value = f.nome || "";
-  funcao.value = f.funcao || "";
-  vinculo.value = f.vinculo || "";
-  carga.value = f.carga || "";
-  return true;
-}
+            <div>
+              <label for="falta_sem_atestado">Falta sem atestado (0-15)</label>
+              <input id="falta_sem_atestado" type="number" min="0" max="15" step="1" placeholder="0" />
+            </div>
+          </div>
 
-/* =========================
-   Total faltas
-========================= */
-function calcTotalFaltas(){
-  const a = clamp015(faltaA.value);
-  const s = clamp015(faltaS.value);
-  totalFaltas.value = String(a + s);
-}
-faltaA.addEventListener("input", ()=>{ faltaA.value = clamp015(faltaA.value); calcTotalFaltas(); });
-faltaS.addEventListener("input", ()=>{ faltaS.value = clamp015(faltaS.value); calcTotalFaltas(); });
+          <div style="margin-top:12px;">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" placeholder="Digite observações do mês..."></textarea>
+          </div>
 
-/* =========================
-   Auto-fill matrícula / nome
-========================= */
-matricula.addEventListener("input", ()=>{
-  setMsg(msgMatricula,"");
-  setMsg(msgNome,"");
+          <div class="row" style="margin-top:14px;">
+            <button class="btn" id="btnEnviar" type="button">📩 Enviar para ADM</button>
+            <button class="btn secondary" id="btnLimpar" type="button">🧹 Limpar</button>
+            <span class="small">Dica: confira matrícula e mês antes de enviar.</span>
+          </div>
 
-  const m = (matricula.value||"").trim();
-  if (!m) return;
+          <div class="msg" id="msgBox"></div>
+        </div>
+      </section>
 
-  if (preencherPorMatricula(m)){
-    setMsg(msgMatricula, "Funcionário encontrado.", "var(--success)");
-  } else {
-    // limpa campos automáticos se matrícula inválida
-    funcao.value = "";
-    vinculo.value = "";
-    carga.value = "";
-    setMsg(msgMatricula, "Matrícula não cadastrada na lista fixa.", "var(--danger)");
-  }
-});
+      <!-- CARD 2: ÚLTIMOS ENVIOS (LOCAL) -->
+      <section class="card">
+        <div class="head">
+          <h2>Registros enviados (local)</h2>
+          <span>Histórico no seu navegador</span>
+        </div>
 
-nome.addEventListener("change", ()=>{
-  setMsg(msgMatricula,"");
-  setMsg(msgNome,"");
+        <div class="content">
+          <div class="row" style="margin-bottom:10px;">
+            <button class="btn secondary" id="btnAtualizarLista" type="button">🔄 Atualizar lista</button>
+            <button class="btn secondary" id="btnLimparHistorico" type="button">🗑️ Limpar histórico</button>
+          </div>
 
-  const m = acharMatriculaPorNome(nome.value);
-  if (m){
-    matricula.value = m;
-    preencherPorMatricula(m);
-    setMsg(msgNome, "Nome encontrado.", "var(--success)");
-  }
-});
+          <div class="small" style="margin-bottom:10px;">
+            Esse quadro é só pra você conferir o que foi enviado (salvo no navegador).  
+            O que vale é o que chega no servidor.
+          </div>
 
-/* =========================
-   STORAGE registros
-========================= */
-function loadRegistros(){
-  try{
-    const raw = localStorage.getItem(KEY_REG);
-    registros = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(registros)) registros = [];
-  }catch{ registros = []; }
-}
-function saveRegistros(){
-  localStorage.setItem(KEY_REG, JSON.stringify(registros));
-}
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Matrícula</th>
+                  <th>Nome</th>
+                  <th>Faltas</th>
+                  <th>HE</th>
+                </tr>
+              </thead>
+              <tbody id="listaEnvios">
+                <tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>
+              </tbody>
+            </table>
+          </div>
 
-/* =========================
-   FILTRO/RENDER
-========================= */
-function getRegistrosFiltrados(){
-  const p = (filtroPeriodo.value||"").trim();
-  const q = (buscaRegistro.value||"").trim().toLowerCase();
+          <div class="msg" id="msgList"></div>
+        </div>
+      </section>
 
-  return registros.filter(r=>{
-    const okP = !p || (r.periodo||"") === p;
-    const hay = `${r.periodo} ${r.matricula} ${r.nome} ${r.obs}`.toLowerCase();
-    const okQ = !q || hay.includes(q);
-    return okP && okQ;
-  });
-}
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
 
-function renderRegistros(){
-  const lista = getRegistrosFiltrados();
-  tbodyReg.innerHTML = lista.map((r)=>{
-    const idx = registros.findIndex(x=>x.id === r.id);
-    const total = toNum(r.faltaA) + toNum(r.faltaS);
-    return `
-      <tr>
-        <td class="mono">${escapeHtml(r.periodo||"")}</td>
-        <td class="mono">${escapeHtml(r.matricula||"")}</td>
-        <td>${escapeHtml(r.nome||"")}</td>
-        <td>${toNum(r.horas)}</td>
-        <td>${toNum(r.faltaA)}</td>
-        <td>${toNum(r.faltaS)}</td>
-        <td>${badgeTotal(total)}</td>
-        <td>${escapeHtml(r.obs||"").replace(/\n/g,"<br>")}</td>
-        <td class="actions">
-          <button class="btn-warn" type="button" onclick="editarRegistro(${idx})">Editar</button>
-          <button class="btn-danger" type="button" onclick="apagarRegistro(${idx})">Apagar</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+    const periodo = $("periodo");
+    const escola = $("escola");
+    const matricula = $("matricula");
+    const nome = $("nome");
+    const funcao = $("funcao");
+    const vinculo = $("vinculo");
+    const carga = $("carga");
+    const horas_extras = $("horas_extras");
+    const total_faltas = $("total_faltas");
+    const falta_sem_atestado = $("falta_sem_atestado");
+    const observacoes = $("observacoes");
 
-  saveRegistros();
-}
+    const msgBox = $("msgBox");
+    const msgList = $("msgList");
 
-/* =========================
-   CRUD registros
-========================= */
-formRegistro.addEventListener("submit", (e)=>{
-  e.preventDefault();
+    const API_SEND = "/api/folha/enviar";
 
-  const m = (matricula.value||"").trim();
-  const n = (nome.value||"").trim();
-
-  if (!m || !FUNCIONARIOS[m]){
-    setMsg(msgMatricula, "Use uma matrícula válida da lista fixa.", "var(--danger)");
-    return;
-  }
-  if (!n){
-    setMsg(msgNome, "Informe o nome.", "var(--danger)");
-    return;
-  }
-
-  const r = {
-    id: Date.now(),
-    periodo: (periodo.value || periodoHoje()),
-    matricula: m,
-    nome: n,
-    funcao: funcao.value || "",
-    vinculo: vinculo.value || "",
-    carga: carga.value || "",
-    horas: Math.max(0, toNum(horas.value)),
-    faltaA: clamp015(faltaA.value),
-    faltaS: clamp015(faltaS.value),
-    obs: (obs.value||"").trim()
-  };
-
-  registros.push(r);
-
-  formRegistro.reset();
-  periodo.value = periodoHoje();
-  horas.value = 0;
-  faltaA.value = 0;
-  faltaS.value = 0;
-  calcTotalFaltas();
-
-  // mantém campos readonly limpos (serão preenchidos ao digitar matrícula)
-  funcao.value = "";
-  vinculo.value = "";
-  carga.value = "";
-
-  renderRegistros();
-});
-
-function editarRegistro(i){
-  const r = registros[i];
-  if (!r) return;
-
-  editIndexRegistro.value = String(i);
-
-  periodo.value = r.periodo || periodoHoje();
-  matricula.value = r.matricula || "";
-  preencherPorMatricula(matricula.value);
-  horas.value = toNum(r.horas);
-  faltaA.value = toNum(r.faltaA);
-  faltaS.value = toNum(r.faltaS);
-  obs.value = r.obs || "";
-  calcTotalFaltas();
-
-  btnAddRegistro.classList.add("hidden");
-  btnSalvarRegistro.classList.remove("hidden");
-  window.scrollTo({top:0, behavior:"smooth"});
-}
-
-function salvarEdicaoRegistro(){
-  const i = toNum(editIndexRegistro.value);
-  const old = registros[i];
-  if (!old) return;
-
-  const m = (matricula.value||"").trim();
-  if (!m || !FUNCIONARIOS[m]){
-    setMsg(msgMatricula, "Use uma matrícula válida da lista fixa.", "var(--danger)");
-    return;
-  }
-
-  registros[i] = {
-    ...old,
-    periodo: (periodo.value || periodoHoje()),
-    matricula: m,
-    nome: (nome.value||"").trim(),
-    funcao: funcao.value || "",
-    vinculo: vinculo.value || "",
-    carga: carga.value || "",
-    horas: Math.max(0, toNum(horas.value)),
-    faltaA: clamp015(faltaA.value),
-    faltaS: clamp015(faltaS.value),
-    obs: (obs.value||"").trim()
-  };
-
-  btnAddRegistro.classList.remove("hidden");
-  btnSalvarRegistro.classList.add("hidden");
-
-  formRegistro.reset();
-  periodo.value = periodoHoje();
-  horas.value = 0;
-  faltaA.value = 0;
-  faltaS.value = 0;
-  calcTotalFaltas();
-
-  funcao.value = "";
-  vinculo.value = "";
-  carga.value = "";
-
-  renderRegistros();
-}
-
-function apagarRegistro(i){
-  if (!confirm("Apagar este registro?")) return;
-  registros.splice(i,1);
-  renderRegistros();
-}
-
-function limparRegistros(){
-  if (!confirm("Apagar TODOS os registros?")) return;
-  registros = [];
-  saveRegistros();
-  renderRegistros();
-}
-
-filtroPeriodo.addEventListener("input", renderRegistros);
-buscaRegistro.addEventListener("input", renderRegistros);
-
-/* =========================
-   EXPORTAR CSV
-========================= */
-function exportarCSV(){
-  const lista = getRegistrosFiltrados();
-  if (lista.length === 0){
-    alert("Não há registros para exportar no filtro atual.");
-    return;
-  }
-
-  let csv = "Periodo;Matricula;Nome;Funcao;Vinculo;Carga;HorasExtras;FaltaAtestado;FaltaSemAtestado;Obs\n";
-  lista.forEach(r=>{
-    const obsClean = String(r.obs||"").replace(/\n/g," ").replaceAll(";", ",");
-    csv += `${r.periodo||""};${r.matricula||""};${r.nome||""};${r.funcao||""};${r.vinculo||""};${r.carga||""};${toNum(r.horas)};${toNum(r.faltaA)};${toNum(r.faltaS)};${obsClean}\n`;
-  });
-
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "relatorio_folha.csv";
-  a.click();
-}
-
-/* =========================
-   ENVIAR PARA ADM (SITE)
-========================= */
-async function enviarParaADM(){
-  if (!registros || registros.length === 0){
-    alert("Não há registros para enviar.");
-    return;
-  }
-
-  const source = prompt("Nome da escola ou setor:", "Escola");
-  if (source === null) return;
-
-  const payload = {
-    source: (source || "Escola").trim(),
-    records: registros.map(r => ({
-      period: r.periodo || "",
-      matricula: r.matricula || "",
-      nome: r.nome || "",
-      funcao: r.funcao || "",
-      vinculo: r.vinculo || "",
-      carga: r.carga || "",
-      horas_extras: Number(r.horas || 0),
-      falta_atestado: Number(r.faltaA || 0),
-      falta_sem_atestado: Number(r.faltaS || 0),
-      obs: r.obs || ""
-    }))
-  };
-
-  try{
-    const resp = await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!resp.ok){
-      const err = await resp.json().catch(()=>({}));
-      alert("Erro ao enviar: " + (err.error || resp.status));
-      return;
+    function showMsg(el, text, type){
+      el.className = "msg " + (type || "");
+      el.textContent = text;
+      el.style.display = "block";
+      setTimeout(() => { el.style.display = "none"; }, 6500);
     }
 
-    alert("Enviado para o ADM com sucesso!");
-  }catch(e){
-    alert("Não foi possível enviar. (Servidor ainda não está online ou sem internet)");
-  }
-}
+    function nowISO(){
+      return new Date().toISOString();
+    }
 
-/* =========================
-   INIT
-========================= */
-window.addEventListener("load", ()=>{
-  montarListaNomes();
-  loadRegistros();
-  periodo.value = periodoHoje();
-  calcTotalFaltas();
-  renderRegistros();
-});
+    function getLocalHistory(){
+      try{
+        return JSON.parse(localStorage.getItem("semec_envios") || "[]");
+      }catch{
+        return [];
+      }
+    }
 
-// expõe funções usadas em onclick
-window.editarRegistro = editarRegistro;
-window.apagarRegistro = apagarRegistro;
-window.salvarEdicaoRegistro = salvarEdicaoRegistro;
-window.exportarCSV = exportarCSV;
-window.enviarParaADM = enviarParaADM;
-window.limparRegistros = limparRegistros;
-</script>
+    function setLocalHistory(arr){
+      localStorage.setItem("semec_envios", JSON.stringify(arr));
+    }
 
-</body>
+    function addToHistory(item){
+      const arr = getLocalHistory();
+      arr.unshift(item);
+      setLocalHistory(arr.slice(0, 200));
+    }
+
+    function renderHistory(){
+      const tbody = $("listaEnvios");
+      const arr = getLocalHistory();
+
+      if(!arr.length){
+        tbody.innerHTML = `<tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = arr.map(it => `
+        <tr>
+          <td>${escapeHtml(it.periodo || "")}</td>
+          <td>${escapeHtml(it.matricula || "")}</td>
+          <td>${escapeHtml(it.nome || "")}</td>
+          <td>${Number(it.total_faltas ?? 0)}</td>
+          <td>${Number(it.horas_extras ?? 0)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function defaultPeriodo(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      return `${y}-${m}`;
+    }
+
+    function validate(){
+      if(!periodo.value) periodo.value = defaultPeriodo();
+      if(!matricula.value.trim()) return "Informe a matrícula.";
+      if(!nome.value.trim()) return "Informe o nome do funcionário.";
+      return null;
+    }
+
+    async function pingServer(){
+      // ping simples: tenta bater no próprio endpoint com OPTIONS (não quebra se não existir CORS)
+      // Se der erro, apenas marca como "offline?"
+      try{
+        const res = await fetch("/", { method:"GET" });
+        $("apiStatus").textContent = res.ok ? "online" : "online?";
+      }catch{
+        $("apiStatus").textContent = "offline?";
+      }
+    }
+
+    function clearForm(){
+      // não limpa o período por padrão
+      escola.value = "";
+      matricula.value = "";
+      nome.value = "";
+      funcao.value = "";
+      vinculo.value = "";
+      carga.value = "";
+      horas_extras.value = "";
+      total_faltas.value = "";
+      falta_sem_atestado.value = "";
+      observacoes.value = "";
+    }
+
+    async function enviar(){
+      const err = validate();
+      if(err){
+        showMsg(msgBox, "❌ " + err, "err");
+        return;
+      }
+
+      const payload = {
+        periodo: periodo.value, // "YYYY-MM"
+        funcionario: {
+          matricula: matricula.value.trim(),
+          nome: nome.value.trim(),
+          funcao: funcao.value.trim(),
+          vinculo: vinculo.value.trim(),
+          carga: carga.value.trim(),
+          escola: escola.value.trim()
+        },
+        folha: {
+          total_faltas: Number(total_faltas.value || 0),
+          falta_sem_atestado: Number(falta_sem_atestado.value || 0),
+          horas_extras: Number(horas_extras.value || 0),
+          observacoes: (observacoes.value || "").trim()
+        }
+      };
+
+      $("btnEnviar").disabled = true;
+      $("btnEnviar").textContent = "Enviando...";
+
+      try{
+        const res = await fetch(API_SEND, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        // ✅ Se der 404 aqui, é rota errada no server.js
+        if(res.status === 404){
+          showMsg(msgBox, "❌ Erro 404: rota não encontrada no servidor. Verifique se existe POST " + API_SEND, "err");
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if(!res.ok){
+          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
+          showMsg(msgBox, "❌ " + msg, "err");
+          return;
+        }
+
+        // sucesso
+        addToHistory({
+          quando: nowISO(),
+          periodo: payload.periodo,
+          matricula: payload.funcionario.matricula,
+          nome: payload.funcionario.nome,
+          total_faltas: payload.folha.total_faltas,
+          horas_extras: payload.folha.horas_extras
+        });
+
+        renderHistory();
+        showMsg(msgBox, "✅ Enviado com sucesso!", "ok");
+        clearForm();
+
+      }catch(e){
+        showMsg(msgBox, "❌ Erro de conexão: " + (e?.message || "não foi possível enviar"), "err");
+      }finally{
+        $("btnEnviar").disabled = false;
+        $("btnEnviar").textContent = "📩 Enviar para ADM";
+      }
+    }
+
+    // EVENTOS
+    $("btnEnviar").addEventListener("click", enviar);
+    $("btnLimpar").addEventListener("click", () => {
+      clearForm();
+      showMsg(msgBox, "🧹 Campos limpos.", "");
+    });
+
+    $("btnAtualizarLista").addEventListener("click", () => {
+      renderHistory();
+      showMsg(msgList, "🔄 Lista atualizada.", "ok");
+    });
+
+    $("btnLimparHistorico").addEventListener("click", () => {
+      setLocalHistory([]);
+      renderHistory();
+      showMsg(msgList, "🗑️ Histórico apagado.", "");
+    });
+
+    // INIT
+    periodo.value = defaultPeriodo();
+    renderHistory();
+    pingServer();
+  </script>
+  </body>
 </html>
