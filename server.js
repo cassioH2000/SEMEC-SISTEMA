@@ -9,24 +9,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ================================
-   🔐 SENHA ADMIN
-================================ */
+/* =============================
+   CONFIGURAÇÕES
+============================= */
+const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "123456";
 
-/* ================================
-   🗄️ CONEXÃO SUPABASE (CORRIGIDA)
-================================ */
+/* =============================
+   CONEXÃO SUPABASE (CORRIGIDA)
+============================= */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false,
-  },
+    rejectUnauthorized: false
+  }
 });
 
-/* ================================
-   🔧 CRIAR TABELA AUTOMÁTICA
-================================ */
+/* =============================
+   CRIAR TABELA AUTOMATICAMENTE
+============================= */
 async function ensureSchema() {
   try {
     await pool.query(`
@@ -44,16 +45,17 @@ async function ensureSchema() {
         criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("Banco pronto");
+    console.log("Banco conectado e pronto.");
   } catch (err) {
     console.log("Erro banco:", err);
   }
 }
+
 ensureSchema();
 
-/* ================================
-   🔐 LOGIN ADMIN
-================================ */
+/* =============================
+   LOGIN ADMIN
+============================= */
 app.post("/api/login", (req, res) => {
   const { senha } = req.body;
 
@@ -68,9 +70,9 @@ app.post("/api/login", (req, res) => {
   res.json({ token });
 });
 
-/* ================================
-   🔒 MIDDLEWARE TOKEN
-================================ */
+/* =============================
+   MIDDLEWARE TOKEN
+============================= */
 function verificarToken(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth) return res.status(403).json({ erro: "Sem token" });
@@ -85,9 +87,9 @@ function verificarToken(req, res, next) {
   }
 }
 
-/* ================================
-   📩 ENVIAR DA FOLHA
-================================ */
+/* =============================
+   ENVIAR FOLHA
+============================= */
 app.post("/api/enviar", async (req, res) => {
   try {
     const {
@@ -128,9 +130,9 @@ app.post("/api/enviar", async (req, res) => {
   }
 });
 
-/* ================================
-   📊 VER REGISTROS ADMIN
-================================ */
+/* =============================
+   LISTAR REGISTROS (ADMIN)
+============================= */
 app.get("/api/registros", verificarToken, async (req, res) => {
   try {
     const { mes, escola } = req.query;
@@ -157,21 +159,9 @@ app.get("/api/registros", verificarToken, async (req, res) => {
   }
 });
 
-/* ================================
-   🗑️ APAGAR REGISTRO
-================================ */
-app.delete("/api/apagar/:id", verificarToken, async (req, res) => {
-  try {
-    await pool.query("DELETE FROM registros WHERE id=$1", [req.params.id]);
-    res.json({ ok: true });
-  } catch {
-    res.status(500).json({ erro: "Erro ao apagar" });
-  }
-});
-
-/* ================================
-   ✏️ EDITAR REGISTRO
-================================ */
+/* =============================
+   EDITAR REGISTRO
+============================= */
 app.put("/api/editar/:id", verificarToken, async (req, res) => {
   try {
     const { horasExtras, faltas, observacao } = req.body;
@@ -193,8 +183,28 @@ app.put("/api/editar/:id", verificarToken, async (req, res) => {
   }
 });
 
-/* ================================
-   🚀 SERVIDOR
-================================ */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Servidor rodando"));
+/* =============================
+   APAGAR REGISTRO
+============================= */
+app.delete("/api/apagar/:id", verificarToken, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM registros WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ erro: "Erro ao apagar" });
+  }
+});
+
+/* =============================
+   TESTE SERVIDOR
+============================= */
+app.get("/", (req, res) => {
+  res.send("SEMEC SISTEMA ONLINE ✅");
+});
+
+/* =============================
+   INICIAR SERVIDOR
+============================= */
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta", PORT);
+});
