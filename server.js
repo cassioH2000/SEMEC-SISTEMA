@@ -1,4 +1,4 @@
-// server.js (ESM) - SEMEC Sistema
+// server.js (ESM) - SEMEC SISTEMA
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -6,353 +6,374 @@ import pg from "pg";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// (opcional) dotenv local - no Render não precisa, mas ajuda no PC
+// dotenv é opcional (no Render normalmente não precisa)
 try {
   const dotenv = await import("dotenv");
-  dotenv.default.config();
+  dotenv.config();
 } catch (_) {}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
-// ---------- Config ----------
+// ✅ Servir arquivos estáticos do /public
+app.use(express.static(path.join(__dirname, "public")));
+
 const PORT = process.env.PORT || 10000;
-const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || "").trim();
-const JWT_SECRET = (process.env.JWT_SECRET || "semec_jwt_secret_trocar").trim();
-const DATABASE_URL = (process.env.DATABASE_URL || "").trim();
 
-// ---------- Static (public) ----------
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir));
+// ======= ENV =======
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const JWT_SECRET = process.env.JWT_SECRET || "change_me_now";
+let DATABASE_URL = process.env.DATABASE_URL || "";
 
-// Rota raiz (evita "Cannot GET /" caso não tenha index)
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
-});
-
-// ---------- Banco (pg) ----------
-if (!DATABASE_URL) {
-  console.warn("⚠️ DATABASE_URL não configurada. Configure no Render (Environment).");
+// ======= Helpers =======
+function normalizePeriodo(periodo) {
+  // aceita "2026-02" ou "2026-02-01" e retorna "2026-02"
+  if (!periodo) return "";
+  const p = String(periodo).trim();
+  if (/^\d{4}-\d{2}$/.test(p)) return p;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(p)) return p.slice(0, 7);
+  return "";
 }
+
+function requireAuth(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) return res.status(401).json({ ok: false, error: "Sem token" });
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    return next();
+  } catch (e) {
+    return res.status(401).json({ ok: false, error: "Token inválido" });
+  }
+}
+
+function buildPgConnectionString(url) {
+  // ✅ Garantir sslmode=require (ajuda muito no Supabase)
+  if (!url) return "";
+  if (url.includes("sslmode=")) return url;
+  const hasQuery = url.includes("?");
+  return url + (hasQuery ? "&" : "?") + "sslmode=require";
+}
+
+// ======= PG Pool =======
+DATABASE_URL = buildPgConnectionString(DATABASE_URL);
 
 const pool = new pg.Pool({
   connectionString: DATABASE_URL,
-  // Corrige SELF_SIGNED_CERT_IN_CHAIN no ambiente do Render/Supabase
-  ssl: DATABASE_URL ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 20_000,
+  ssl: {
+    rejectUnauthorized: false, // ✅ resolve self-signed certificate
+  },
 });
 
-// helper de query SEM PREPARE (bom pro transaction pooler)
-async function q(text, values = []) {
-  return pool.query({ text, values, queryMode: "simple" });
-}
-
-// cria tabelas se não existirem
+// ======= Schema =======
 async function ensureSchema() {
-  await q(`
+  // Tabela de funcionários (cadastro base)
+  const sqlEmployees = `
     CREATE TABLE IF NOT EXISTS employees (
       matricula TEXT PRIMARY KEY,
       nome TEXT DEFAULT '',
       funcao TEXT DEFAULT '',
       vinculo TEXT DEFAULT '',
-      carga TEXT DEFAULT '',
-      escola TEXT DEFAULT ''
+      carga TEXT DEFAULT ''
     );
-  `);
+  `;
 
-  await q(`
-    CREATE TABLE IF NOT EXISTS submissions (
+  // Registros por mês (folha)
+  const sqlRegistros = `
+    CREATE TABLE IF NOT EXISTS folha_registros (
       id BIGSERIAL PRIMARY KEY,
-      periodo DATE NOT NULL,                 -- usar sempre 1º dia do mês
+      periodo TEXT NOT NULL,          -- "YYYY-MM"
+      escola TEXT NOT NULL,           -- nome da escola
       matricula TEXT NOT NULL REFERENCES employees(matricula) ON DELETE CASCADE,
-      escola TEXT DEFAULT '',
-      dias_trabalhados INTEGER,
-      faltas INTEGER,
-      horas_extras NUMERIC(10,2),
-      observacoes TEXT,
-      payload JSONB,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE (periodo, matricula)
+      horas_extras NUMERIC DEFAULT 0,
+      faltas NUMERIC DEFAULT 0,
+      observacao TEXT DEFAULT '',
+      atualizado_em TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (periodo, escola, matricula)
     );
-  `);
+  `;
+
+  await pool.query(sqlEmployees);
+  await pool.query(sqlRegistros);
 }
 
-// conecta e prepara schema (não derruba o server se falhar)
+// ======= Boot DB =======
 (async () => {
   try {
+    console.log("Iniciando servidor...");
+    console.log("Public dir:", path.join(__dirname, "public"));
     await ensureSchema();
-    console.log("✅ Banco pronto (schema ok).");
-  } catch (err) {
-    console.error("❌ Falha ao preparar o banco (ensureSchema):", err?.message || err);
+    console.log("✅ Schema OK");
+  } catch (e) {
+    console.log("❌ Falha ao preparar schema:", e?.message || e);
+    // Não derruba o servidor; o site continua online, mas endpoints de DB falham.
   }
 })();
 
-// ---------- Auth ----------
-function authAdmin(req, res, next) {
-  const auth = req.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) return res.status(401).json({ error: "Sem token" });
+// ======= ROTAS =======
 
+// Health
+app.get("/api/health", async (req, res) => {
   try {
-    const data = jwt.verify(token, JWT_SECRET);
-    if (data?.role !== "admin") return res.status(403).json({ error: "Sem permissão" });
-    req.user = data;
-    next();
+    await pool.query("SELECT 1 as ok");
+    res.json({ ok: true, db: true });
   } catch (e) {
-    return res.status(401).json({ error: "Token inválido" });
-  }
-}
-
-// ---------- Login ----------
-app.post("/api/login", async (req, res) => {
-  try {
-    const senha = String(req.body?.password ?? "").trim();
-
-    if (!ADMIN_PASSWORD) {
-      return res.status(500).json({
-        error: "ADMIN_PASSWORD não configurado no Render.",
-      });
-    }
-
-    if (senha !== ADMIN_PASSWORD) {
-      return res.status(401).json({ error: "Senha inválida" });
-    }
-
-    const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
-    return res.json({ token });
-  } catch (e) {
-    return res.status(500).json({ error: "Erro no login" });
+    res.json({ ok: true, db: false, error: e?.message || String(e) });
   }
 });
 
-// ---------- Folha: enviar/atualizar ----------
-/**
- * Espera algo assim:
- * {
- *   "periodo": "2026-02",
- *   "escola": "ESCOLA X",
- *   "matricula": "396",
- *   "nome": "...",
- *   "funcao": "...",
- *   "vinculo": "...",
- *   "carga": "...",
- *   "dias_trabalhados": 20,
- *   "faltas": 1,
- *   "horas_extras": 4.5,
- *   "observacoes": "..."
- * }
- */
+// ✅ LOGIN ADMIN
+app.post("/api/login", (req, res) => {
+  const { password } = req.body || {};
+  if (!ADMIN_PASSWORD) {
+    return res.status(500).json({
+      ok: false,
+      error: "ADMIN_PASSWORD não configurado no Render.",
+    });
+  }
+
+  if (!password || String(password) !== String(ADMIN_PASSWORD)) {
+    return res.status(401).json({ ok: false, error: "Senha inválida" });
+  }
+
+  const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "12h" });
+  return res.json({ ok: true, token });
+});
+
+// ✅ Folha envia/atualiza registro do funcionário citado (UPSERT)
 app.post("/api/folha/enviar", async (req, res) => {
   try {
     const body = req.body || {};
-    const matricula = String(body.matricula || "").trim();
-    const periodoStr = String(body.periodo || "").trim(); // "YYYY-MM"
+
+    const periodo = normalizePeriodo(body.periodo);
     const escola = String(body.escola || "").trim();
+    const matricula = String(body.matricula || "").trim();
 
-    if (!matricula) return res.status(400).json({ error: "matricula é obrigatória" });
-    if (!/^\d{4}-\d{2}$/.test(periodoStr)) {
-      return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
-    }
-
-    const periodoDate = `${periodoStr}-01`;
-
-    // 1) garante funcionário existe e ATUALIZA dados quando vier algo da folha (upsert)
     const nome = String(body.nome || "").trim();
     const funcao = String(body.funcao || "").trim();
     const vinculo = String(body.vinculo || "").trim();
     const carga = String(body.carga || "").trim();
 
-    await q(
+    const horas_extras = Number(body.horas_extras || 0) || 0;
+    const faltas = Number(body.faltas || 0) || 0;
+    const observacao = String(body.observacao || "").trim();
+
+    if (!periodo) return res.status(400).json({ ok: false, error: "Período inválido (use AAAA-MM)" });
+    if (!escola) return res.status(400).json({ ok: false, error: "Escola obrigatória" });
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
+
+    // 1) garante funcionário existe (ou atualiza os campos se vierem preenchidos)
+    await pool.query(
       `
-      INSERT INTO employees (matricula, nome, funcao, vinculo, carga, escola)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO employees (matricula, nome, funcao, vinculo, carga)
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (matricula) DO UPDATE SET
-        nome = COALESCE(NULLIF(EXCLUDED.nome,''), employees.nome),
-        funcao = COALESCE(NULLIF(EXCLUDED.funcao,''), employees.funcao),
-        vinculo = COALESCE(NULLIF(EXCLUDED.vinculo,''), employees.vinculo),
-        carga = COALESCE(NULLIF(EXCLUDED.carga,''), employees.carga),
-        escola = COALESCE(NULLIF(EXCLUDED.escola,''), employees.escola)
+        nome = CASE WHEN EXCLUDED.nome <> '' THEN EXCLUDED.nome ELSE employees.nome END,
+        funcao = CASE WHEN EXCLUDED.funcao <> '' THEN EXCLUDED.funcao ELSE employees.funcao END,
+        vinculo = CASE WHEN EXCLUDED.vinculo <> '' THEN EXCLUDED.vinculo ELSE employees.vinculo END,
+        carga = CASE WHEN EXCLUDED.carga <> '' THEN EXCLUDED.carga ELSE employees.carga END
       `,
-      [matricula, nome, funcao, vinculo, carga, escola]
+      [matricula, nome, funcao, vinculo, carga]
     );
 
-    // 2) salva/atualiza o registro do mês (1 por funcionário por mês)
-    const dias_trabalhados = body.dias_trabalhados ?? null;
-    const faltas = body.faltas ?? null;
-    const horas_extras = body.horas_extras ?? null;
-    const observacoes = body.observacoes ?? null;
-
-    await q(
+    // 2) registra/atualiza folha do mês
+    await pool.query(
       `
-      INSERT INTO submissions (periodo, matricula, escola, dias_trabalhados, faltas, horas_extras, observacoes, payload)
-      VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8::jsonb)
-      ON CONFLICT (periodo, matricula) DO UPDATE SET
-        escola = COALESCE(NULLIF(EXCLUDED.escola,''), submissions.escola),
-        dias_trabalhados = EXCLUDED.dias_trabalhados,
-        faltas = EXCLUDED.faltas,
+      INSERT INTO folha_registros (periodo, escola, matricula, horas_extras, faltas, observacao, atualizado_em)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      ON CONFLICT (periodo, escola, matricula) DO UPDATE SET
         horas_extras = EXCLUDED.horas_extras,
-        observacoes = EXCLUDED.observacoes,
-        payload = EXCLUDED.payload
+        faltas = EXCLUDED.faltas,
+        observacao = EXCLUDED.observacao,
+        atualizado_em = NOW()
       `,
-      [
-        periodoDate,
-        matricula,
-        escola,
-        dias_trabalhados,
-        faltas,
-        horas_extras,
-        observacoes,
-        JSON.stringify(body),
-      ]
+      [periodo, escola, matricula, horas_extras, faltas, observacao]
     );
 
     return res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ /api/folha/enviar:", err?.message || err);
-    return res.status(500).json({ error: "Erro ao salvar envio" });
+  } catch (e) {
+    console.log("❌ /api/folha/enviar erro:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
-// ---------- Admin: mês (TODOS os funcionários SEMPRE) ----------
-/**
- * GET /api/admin/mes?periodo=2026-02&escola=...
- * Retorna todos employees + dados do mês (se existir submissão)
- */
-app.get("/api/admin/mes", authAdmin, async (req, res) => {
+// ✅ ADMIN: Balanço geral do mês (todas as escolas) + lista por funcionário
+app.get("/api/admin/mes", requireAuth, async (req, res) => {
   try {
-    const periodoStr = String(req.query.periodo || "").trim();
-    const escola = String(req.query.escola || "").trim();
+    const periodo = normalizePeriodo(req.query.periodo);
+    if (!periodo) return res.status(400).json({ ok: false, error: "Período inválido (use AAAA-MM)" });
 
-    if (!/^\d{4}-\d{2}$/.test(periodoStr)) {
-      return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
-    }
-
-    const periodoDate = `${periodoStr}-01`;
-
-    // filtro por escola (opcional): usa escola do envio do mês ou do cadastro se não tiver envio
-    const rows = await q(
-      `
-      SELECT
-        e.matricula,
-        e.nome, e.funcao, e.vinculo, e.carga,
-        COALESCE(s.escola, e.escola, '') AS escola,
-        s.dias_trabalhados,
-        s.faltas,
-        s.horas_extras,
-        s.observacoes,
-        s.created_at
-      FROM employees e
-      LEFT JOIN submissions s
-        ON s.matricula = e.matricula
-       AND s.periodo = $1::date
-      WHERE
-        ($2 = '' OR COALESCE(s.escola, e.escola, '') = $2)
-      ORDER BY e.nome ASC
-      `,
-      [periodoDate, escola]
-    );
-
-    // KPIs do mês (com base nas submissões existentes)
-    const kpis = await q(
+    // Total de envios e soma de horas extras do mês (todas as escolas)
+    const tot = await pool.query(
       `
       SELECT
         COUNT(*)::int AS total_envios,
-        COALESCE(SUM(COALESCE(horas_extras,0)),0)::float AS horas_extras_soma
-      FROM submissions
-      WHERE periodo = $1::date
-        AND ($2 = '' OR escola = $2)
+        COALESCE(SUM(horas_extras), 0) AS horas_extras_soma
+      FROM folha_registros
+      WHERE periodo = $1
       `,
-      [periodoDate, escola]
+      [periodo]
+    );
+
+    // Lista geral: todos os funcionários + dados do mês (se tiver)
+    // (se funcionário não tiver registro no mês, aparece com 0 e escola vazia)
+    const lista = await pool.query(
+      `
+      SELECT
+        e.matricula,
+        e.nome,
+        e.funcao,
+        e.vinculo,
+        e.carga,
+        r.escola,
+        COALESCE(r.horas_extras, 0) AS horas_extras,
+        COALESCE(r.faltas, 0) AS faltas,
+        COALESCE(r.observacao, '') AS observacao,
+        r.atualizado_em
+      FROM employees e
+      LEFT JOIN folha_registros r
+        ON r.matricula = e.matricula AND r.periodo = $1
+      ORDER BY e.nome ASC
+      `,
+      [periodo]
+    );
+
+    // Escolas do mês (para dropdown)
+    const escolas = await pool.query(
+      `
+      SELECT DISTINCT escola
+      FROM folha_registros
+      WHERE periodo = $1
+      ORDER BY escola ASC
+      `,
+      [periodo]
     );
 
     return res.json({
-      periodo: periodoStr,
-      escola: escola || "Todas",
-      kpis: kpis.rows[0],
-      funcionarios: rows.rows,
+      ok: true,
+      periodo,
+      resumo: {
+        total_envios: tot.rows[0]?.total_envios || 0,
+        horas_extras_soma: Number(tot.rows[0]?.horas_extras_soma || 0),
+      },
+      escolas: escolas.rows.map((x) => x.escola),
+      funcionarios: lista.rows,
     });
-  } catch (err) {
-    console.error("❌ /api/admin/mes:", err?.message || err);
-    return res.status(500).json({ error: "Erro ao carregar mês" });
+  } catch (e) {
+    console.log("❌ /api/admin/mes erro:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
-// ---------- Admin: editar registro do mês ----------
-app.put("/api/admin/registro", authAdmin, async (req, res) => {
+// ✅ ADMIN: registros detalhados (por escola opcional)
+app.get("/api/admin/registros", requireAuth, async (req, res) => {
   try {
-    const { periodo, matricula } = req.body || {};
-    const periodoStr = String(periodo || "").trim();
-    const m = String(matricula || "").trim();
-    if (!m) return res.status(400).json({ error: "matricula é obrigatória" });
-    if (!/^\d{4}-\d{2}$/.test(periodoStr)) return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
+    const periodo = normalizePeriodo(req.query.periodo);
+    const escola = String(req.query.escola || "").trim(); // opcional
 
-    const periodoDate = `${periodoStr}-01`;
+    if (!periodo) return res.status(400).json({ ok: false, error: "Período inválido (use AAAA-MM)" });
 
-    const escola = String(req.body?.escola || "").trim();
-    const dias_trabalhados = req.body?.dias_trabalhados ?? null;
-    const faltas = req.body?.faltas ?? null;
-    const horas_extras = req.body?.horas_extras ?? null;
-    const observacoes = req.body?.observacoes ?? null;
+    const params = [periodo];
+    let where = "WHERE r.periodo = $1";
+    if (escola && escola.toLowerCase() !== "todas" && escola.toLowerCase() !== "todas as escolas") {
+      params.push(escola);
+      where += ` AND r.escola = $${params.length}`;
+    }
 
-    // garante que existe submissão (upsert)
-    await q(
+    const q = await pool.query(
       `
-      INSERT INTO submissions (periodo, matricula, escola, dias_trabalhados, faltas, horas_extras, observacoes, payload)
-      VALUES ($1::date, $2, $3, $4, $5, $6, $7, $8::jsonb)
-      ON CONFLICT (periodo, matricula) DO UPDATE SET
-        escola = COALESCE(NULLIF(EXCLUDED.escola,''), submissions.escola),
-        dias_trabalhados = EXCLUDED.dias_trabalhados,
-        faltas = EXCLUDED.faltas,
-        horas_extras = EXCLUDED.horas_extras,
-        observacoes = EXCLUDED.observacoes,
-        payload = EXCLUDED.payload
+      SELECT
+        r.periodo,
+        r.escola,
+        e.matricula,
+        e.nome,
+        e.funcao,
+        e.vinculo,
+        e.carga,
+        r.horas_extras,
+        r.faltas,
+        r.observacao,
+        r.atualizado_em
+      FROM folha_registros r
+      JOIN employees e ON e.matricula = r.matricula
+      ${where}
+      ORDER BY r.escola ASC, e.nome ASC
       `,
-      [
-        periodoDate,
-        m,
-        escola,
-        dias_trabalhados,
-        faltas,
-        horas_extras,
-        observacoes,
-        JSON.stringify(req.body || {}),
-      ]
+      params
+    );
+
+    return res.json({ ok: true, periodo, escola: escola || "Todas as escolas", registros: q.rows });
+  } catch (e) {
+    console.log("❌ /api/admin/registros erro:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+// ✅ ADMIN: editar funcionário (cadastro)
+app.put("/api/admin/funcionario/:matricula", requireAuth, async (req, res) => {
+  try {
+    const matricula = String(req.params.matricula || "").trim();
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula inválida" });
+
+    const nome = String(req.body?.nome || "").trim();
+    const funcao = String(req.body?.funcao || "").trim();
+    const vinculo = String(req.body?.vinculo || "").trim();
+    const carga = String(req.body?.carga || "").trim();
+
+    await pool.query(
+      `
+      INSERT INTO employees (matricula, nome, funcao, vinculo, carga)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (matricula) DO UPDATE SET
+        nome = EXCLUDED.nome,
+        funcao = EXCLUDED.funcao,
+        vinculo = EXCLUDED.vinculo,
+        carga = EXCLUDED.carga
+      `,
+      [matricula, nome, funcao, vinculo, carga]
     );
 
     return res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ /api/admin/registro PUT:", err?.message || err);
-    return res.status(500).json({ error: "Erro ao editar" });
+  } catch (e) {
+    console.log("❌ /api/admin/funcionario/:matricula erro:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
-// ---------- Admin: apagar registro do mês ----------
-app.delete("/api/admin/registro", authAdmin, async (req, res) => {
+// ✅ ADMIN: apagar registro do mês de um funcionário (apagar folha daquele mês/escola)
+app.delete("/api/admin/registro", requireAuth, async (req, res) => {
   try {
-    const periodoStr = String(req.query.periodo || "").trim();
+    const periodo = normalizePeriodo(req.query.periodo);
+    const escola = String(req.query.escola || "").trim();
     const matricula = String(req.query.matricula || "").trim();
-    if (!matricula) return res.status(400).json({ error: "matricula é obrigatória" });
-    if (!/^\d{4}-\d{2}$/.test(periodoStr)) return res.status(400).json({ error: "periodo deve ser YYYY-MM" });
 
-    const periodoDate = `${periodoStr}-01`;
-    await q(`DELETE FROM submissions WHERE periodo = $1::date AND matricula = $2`, [periodoDate, matricula]);
+    if (!periodo) return res.status(400).json({ ok: false, error: "Período inválido" });
+    if (!escola) return res.status(400).json({ ok: false, error: "Escola obrigatória" });
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
+
+    await pool.query(
+      `DELETE FROM folha_registros WHERE periodo=$1 AND escola=$2 AND matricula=$3`,
+      [periodo, escola, matricula]
+    );
 
     return res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ /api/admin/registro DELETE:", err?.message || err);
-    return res.status(500).json({ error: "Erro ao apagar" });
+  } catch (e) {
+    console.log("❌ /api/admin/registro DELETE erro:", e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });
 
-// Healthcheck simples
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+// Fallback: se bater em rota não existente na API
+app.use("/api", (req, res) => {
+  res.status(404).json({ ok: false, error: "Rota não encontrada" });
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Servidor rodando na porta ${PORT}`);
-  console.log(`📁 Public dir: ${publicDir}`);
 });
