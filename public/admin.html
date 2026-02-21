@@ -1,711 +1,973 @@
-<!doctype html>
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SEMEC • Admin</title>
 
   <style>
     :root{
-      --bg:#f4f6f9;
-      --card:#ffffff;
-      --text:#1f2d3d;
-      --muted:#6b7280;
-      --primary:#0d3b66;
-      --ok:#27ae60;
-      --warn:#d35400;
-      --danger:#c0392b;
-      --border:#e5e7eb;
-      --shadow: 0 10px 30px rgba(0,0,0,.08);
-      --radius: 14px;
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c162b;
+      --text:#e5e7eb;
+      --muted:#93a4bd;
+      --line:rgba(255,255,255,0.08);
+      --accent:#2563eb;
+      --accent2:#1d4ed8;
+      --ok:#22c55e;
+      --bad:#ef4444;
+      --warn:#f59e0b;
+      --radius:18px;
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
     }
-    *{box-sizing:border-box}
-    body{ margin:0; background:var(--bg); color:var(--text); font-family:Arial,Helvetica,sans-serif; }
+
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1100px 700px at 20% 0%, #1e2a45 0%, var(--bg) 55%);
+      min-height:100vh;
+    }
+
+    header{ padding:18px 16px 10px; }
+
     .topbar{
-      background:var(--primary); color:#fff;
-      padding:16px 10px; box-shadow:0 6px 18px rgba(0,0,0,.15);
+      max-width:1200px;
+      margin:0 auto;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 16px;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
     }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width:260px;
+    }
+
+    .logo{
+      width:46px;height:46px;
+      border-radius:14px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.95), rgba(34,197,94,0.75));
+      display:grid;place-items:center;
+      font-weight:900;
+      letter-spacing:.5px;
+      box-shadow: 0 14px 28px rgba(37,99,235,0.25);
+      user-select:none;
+    }
+
+    .brand h1{ margin:0; font-size:15px; line-height:1.1; }
+    .brand p{ margin:2px 0 0; color:var(--muted); font-size:12px; }
+
+    .status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;
+      background: var(--warn);
+      box-shadow:0 0 0 4px rgba(245,158,11,0.15);
+    }
+    .dot.ok{ background: var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
+    .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(239,68,68,0.15); }
+
+    main{ padding: 8px 16px 40px; }
+
     .wrap{
-      max-width:1200px; margin:0 auto;
-      display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+      max-width:1200px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
     }
-    .brand{display:flex; align-items:center; gap:12px}
-    .brand img{height:44px; background:#fff; border-radius:10px; padding:6px}
-    .brand b{display:block; font-size:16px}
-    .brand span{display:block; font-size:12px; opacity:.9}
-    .container{ max-width:1200px; margin:18px auto; padding:0 12px 50px; }
-    .grid{ display:grid; grid-template-columns: 1fr; gap:14px; }
+
     .card{
-      background:var(--card); border:1px solid var(--border);
-      border-radius:var(--radius); box-shadow:var(--shadow);
-      padding:16px;
-    }
-    h2{ margin:0 0 10px; font-size:16px; color:var(--primary); }
-    label{ font-size:12px; color:var(--muted); font-weight:bold; display:block; margin-bottom:6px; }
-    input, select, textarea{ width:100%; border:1px solid var(--border); border-radius:12px; padding:11px 12px; outline:none; }
-    input:focus, select:focus, textarea:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px rgba(59,130,246,.15); }
-    textarea{ min-height:90px; resize:vertical; }
-
-    .row{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px; }
-    @media(max-width:1000px){ .row{grid-template-columns:1fr 1fr} }
-    @media(max-width:620px){ .row{grid-template-columns:1fr} }
-
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .btn{
-      border:none; border-radius:12px;
-      padding:11px 14px; font-weight:bold; cursor:pointer;
-      color:#fff; transition:.15s transform; display:inline-flex; align-items:center; gap:8px;
-    }
-    .btn:active{ transform:scale(.99) }
-    .btn.primary{ background:var(--primary) }
-    .btn.ok{ background:var(--ok) }
-    .btn.warn{ background:var(--warn) }
-    .btn.danger{ background:var(--danger) }
-    .btn.gray{ background:#4b5563 }
-
-    .msg{ margin-top:12px; padding:12px; border-radius:12px; border:1px solid var(--border); background:#f8fafc; font-size:13px; }
-    .msg.ok{ border-color:#86efac; background:#f0fdf4 }
-    .msg.err{ border-color:#fecaca; background:#fef2f2 }
-
-    table{
-      width:100%; border-collapse:separate; border-spacing:0;
-      border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#fff;
-    }
-    th, td{ font-size:12px; padding:10px; border-bottom:1px solid var(--border); vertical-align:top; }
-    th{ text-align:left; background:#f8fafc; color:#111827; }
-    tr:last-child td{ border-bottom:none; }
-    .muted{ color:var(--muted) }
-
-    .pill{ display:inline-block; padding:4px 8px; border-radius:999px; font-size:11px; background:#eef2ff; color:#3730a3; font-weight:bold; }
-
-    .flex{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .right{ display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
-
-    /* Modal */
-    .modal-backdrop{
-      position:fixed; inset:0; background:rgba(0,0,0,.35);
-      display:none; align-items:center; justify-content:center; padding:16px; z-index:50;
-    }
-    .modal{
-      background:#fff; border:1px solid var(--border);
-      border-radius:16px; width:min(760px, 100%); box-shadow:0 20px 60px rgba(0,0,0,.22);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       overflow:hidden;
     }
-    .modal header{
-      padding:14px 16px; background:#f8fafc; border-bottom:1px solid var(--border);
-      display:flex; justify-content:space-between; align-items:center;
+    .head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,0.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
     }
-    .modal header b{ color:var(--primary) }
-    .modal .content{ padding:14px 16px; }
-    .mini{ font-size:12px; color:var(--muted); line-height:1.35; }
+    .head h2{ margin:0; font-size:14px; }
+    .head span{ color:var(--muted); font-size:12px; }
 
-    .footer{ text-align:center; margin-top:16px; font-size:12px; color:var(--muted); }
+    .content{ padding:16px; }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+
+    input, select, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input::placeholder{ color: rgba(147,164,189,0.75); }
+
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .btn{
+      cursor:pointer;
+      border:none;
+      padding:12px 14px;
+      border-radius:14px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color:white;
+      font-weight:800;
+      letter-spacing:.2px;
+      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-width:170px;
+    }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .btn.secondary{
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--line);
+      color:var(--text);
+      box-shadow:none;
+      font-weight:800;
+      min-width:170px;
+    }
+    .btn.danger{
+      background: rgba(239,68,68,0.15);
+      border:1px solid rgba(239,68,68,0.28);
+      box-shadow:none;
+    }
+
+    .msg{
+      display:none;
+      margin-top:12px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      font-size:13px;
+      color:var(--muted);
+      white-space:pre-wrap;
+    }
+    .msg.ok{ display:block; color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); }
+    .msg.err{ display:block; color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
+
+    .hint{ font-size:12px; color:var(--muted); }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--line);
+      padding:2px 8px;
+      border-radius:999px;
+      color:var(--text);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      align-items:end;
+    }
+    @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      font-size:13px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background: rgba(255,255,255,0.05);
+      color:var(--muted);
+      font-weight:800;
+      font-size:12px;
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .miniBtn{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+      font-size:12px;
+    }
+    .miniBtn:hover{ background: rgba(255,255,255,0.07); }
+
+    /* Modal */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.72);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .modal{
+      width:min(560px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mhead{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+    }
+    .modal .mhead h3{ margin:0; font-size:14px; }
+    .modal .mbody{ padding:16px; }
+    .modal .mbody p{ margin:0 0 10px; color:var(--muted); font-size:13px; }
+    .modal .mrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .modal .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
   </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="wrap">
-    <div class="brand">
-      <img src="logo.png" alt="SEMEC" onerror="this.style.display='none'">
-      <div>
-        <b>SEMEC • Painel Administrativo</b>
-        <span>Relatórios mensais • todas as escolas • edição e remoção</span>
+  <!-- MODAL LOGIN -->
+  <div class="overlay" id="loginOverlay">
+    <div class="modal">
+      <div class="mhead">
+        <h3>🔒 Admin SEMEC</h3>
       </div>
-    </div>
-    <div class="flex">
-      <span class="pill" id="statusAuth">Não autenticado</span>
-      <button class="btn gray" id="btnLogout" style="display:none">Sair</button>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-  <div class="grid">
-
-    <div class="card" id="cardLogin">
-      <h2>Login do Administrador</h2>
-      <div class="row">
-        <div style="grid-column: span 2;">
-          <label>Senha do Admin</label>
-          <input id="senha" type="password" placeholder="Digite a senha do admin" />
+      <div class="mbody">
+        <p>Digite a senha do Admin para acessar.</p>
+        <label for="adminPass">Senha</label>
+        <input id="adminPass" type="password" placeholder="Senha do admin..." />
+        <div class="mrow">
+          <button class="btn" id="btnLogin" type="button">✅ Entrar</button>
         </div>
-        <div style="display:flex;align-items:flex-end;gap:10px">
-          <button class="btn primary" id="btnLogin">Entrar</button>
+        <div class="merr" id="loginErr">Senha inválida.</div>
+        <div class="hint" style="margin-top:10px;">
+          (A senha é a variável <span class="kbd">ADMIN_PASSWORD</span> no Render.)
         </div>
-      </div>
-      <div class="mini">Acesso restrito. A senha é configurada no Render: <span class="pill">ADMIN_PASSWORD</span>.</div>
-      <div id="msgLogin" class="msg" style="display:none"></div>
-    </div>
-
-    <div class="card" id="cardPainel" style="display:none">
-      <h2>Filtros e Ações</h2>
-
-      <div class="row">
-        <div>
-          <label>Período (mês)</label>
-          <input id="periodo" type="month">
-        </div>
-
-        <div>
-          <label>Filtrar por Escola (opcional)</label>
-          <select id="escolaFiltro">
-            <option value="">Todas as escolas</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Pesquisar (matrícula ou nome)</label>
-          <input id="pesquisa" placeholder="Ex: 396 ou Ana...">
-        </div>
-
-        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-          <button class="btn ok" id="btnAtualizar">🔄 Atualizar</button>
-          <button class="btn warn" id="btnPdfMes">📄 PDF do Mês</button>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" id="btnVerDetalhes">📌 Ver registros detalhados (por escola)</button>
-        <button class="btn gray" id="btnVoltarResumo" style="display:none">⬅️ Voltar ao resumo</button>
-      </div>
-
-      <div id="msgPainel" class="msg" style="display:none"></div>
-    </div>    <div class="card" id="cardBalanco" style="display:none">
-      <h2>Balanço Geral do Mês (todas as escolas)</h2>
-      <div class="row">
-        <div>
-          <label>Total de envios (registros)</label>
-          <input id="kpiRegistros" disabled>
-        </div>
-        <div>
-          <label>Horas extras (soma)</label>
-          <input id="kpiHoras" disabled>
-        </div>
-        <div>
-          <label>Faltas com atestado (soma)</label>
-          <input id="kpiFA" disabled>
-        </div>
-        <div>
-          <label>Faltas sem atestado (soma)</label>
-          <input id="kpiFS" disabled>
-        </div>
-      </div>
-      <div class="mini">Este balanço considera todos os registros enviados no mês selecionado.</div>
-    </div>
-
-    <div class="card" id="cardTabela" style="display:none">
-      <h2 id="tituloTabela">Relatório do Mês (todos os funcionários)</h2>
-
-      <div class="mini" id="subtituloTabela"></div>
-      <div style="height:10px"></div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Nome</th>
-            <th>Função</th>
-            <th>Vínculo</th>
-            <th>Carga</th>
-            <th>Horas</th>
-            <th>F. Atest.</th>
-            <th>F. S/At.</th>
-            <th>Escolas</th>
-            <th>OBS</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-
-      <div class="mini" style="margin-top:10px">
-        • <b>Resumo</b>: mostra todos os funcionários do cadastro mestre (<span class="pill">funcionarios</span>) e soma os envios no mês.<br>
-        • Para <b>editar/apagar</b>, use “Ver registros detalhados”.
-      </div>
-    </div>
-
-  </div>
-
-  <div class="footer">SEMEC • Wagner/BA • Admin 2026</div>
-</div>
-
-<!-- MODAL DETALHES (registros por escola) -->
-<div class="modal-backdrop" id="modalBack">
-  <div class="modal">
-    <header>
-      <b>Registros detalhados (editar/apagar)</b>
-      <button class="btn danger" id="btnFecharModal" style="padding:8px 10px;border-radius:10px">Fechar</button>
-    </header>
-    <div class="content">
-      <div class="mini" id="detalhesInfo"></div>
-      <div style="height:10px"></div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Escola</th>
-            <th>Matrícula</th>
-            <th>Nome</th>
-            <th>Horas</th>
-            <th>F. Atest.</th>
-            <th>F. S/At.</th>
-            <th>OBS</th>
-            <th>Atualizado</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyDet"></tbody>
-      </table>
-
-      <div class="mini" style="margin-top:10px">
-        • <b>Editar</b>: clique “A” e altere.<br>
-        • <b>Apagar</b>: clique “B” e confirma.
       </div>
     </div>
   </div>
-</div>
 
-<script>
-/* ====== 1) Estado/Auth ====== */
-const LS_TOKEN = "semec_admin_token_v1";
-let token = localStorage.getItem(LS_TOKEN) || "";
-let modoDetalhes = false;
+  <!-- MODAL EDITAR FUNCIONÁRIO -->
+  <div class="overlay" id="editOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mhead">
+        <h3>✏️ Editar Funcionário</h3>
+      </div>
+      <div class="mbody">
+        <div class="grid2">
+          <div>
+            <label>Matrícula</label>
+            <input id="e_matricula" type="text" disabled />
+          </div>
+          <div>
+            <label>Escola</label>
+            <input id="e_escola" type="text" placeholder="Escola" />
+          </div>
+          <div>
+            <label>Nome</label>
+            <input id="e_nome" type="text" placeholder="Nome" />
+          </div>
+          <div>
+            <label>Função</label>
+            <input id="e_funcao" type="text" placeholder="Função" />
+          </div>
+          <div>
+            <label>Vínculo</label>
+            <input id="e_vinculo" type="text" placeholder="Vínculo" />
+          </div>
+          <div>
+            <label>Carga</label>
+            <input id="e_carga" type="text" placeholder="Carga" />
+          </div>
+        </div>
 
-/* ====== 2) Elementos ====== */
-const statusAuth = document.getElementById("statusAuth");
-const btnLogout = document.getElementById("btnLogout");
-
-const cardLogin = document.getElementById("cardLogin");
-const cardPainel = document.getElementById("cardPainel");
-const cardBalanco = document.getElementById("cardBalanco");
-const cardTabela = document.getElementById("cardTabela");
-
-const senhaEl = document.getElementById("senha");
-const btnLogin = document.getElementById("btnLogin");
-const msgLogin = document.getElementById("msgLogin");
-
-const periodoEl = document.getElementById("periodo");
-const escolaFiltroEl = document.getElementById("escolaFiltro");
-const pesquisaEl = document.getElementById("pesquisa");
-const btnAtualizar = document.getElementById("btnAtualizar");
-const btnPdfMes = document.getElementById("btnPdfMes");
-const btnVerDetalhes = document.getElementById("btnVerDetalhes");
-const btnVoltarResumo = document.getElementById("btnVoltarResumo");
-const msgPainel = document.getElementById("msgPainel");
-
-const kpiRegistros = document.getElementById("kpiRegistros");
-const kpiHoras = document.getElementById("kpiHoras");
-const kpiFA = document.getElementById("kpiFA");
-const kpiFS = document.getElementById("kpiFS");
-
-const tituloTabela = document.getElementById("tituloTabela");
-const subtituloTabela = document.getElementById("subtituloTabela");
-const tbody = document.getElementById("tbody");
-
-// modal detalhes
-const modalBack = document.getElementById("modalBack");
-const btnFecharModal = document.getElementById("btnFecharModal");
-const detalhesInfo = document.getElementById("detalhesInfo");
-const tbodyDet = document.getElementById("tbodyDet");
-
-/* ====== 3) Util ====== */
-function setMsg(el, text, type){
-  el.style.display = "block";
-  el.textContent = text;
-  el.className = "msg " + (type || "");
-}
-function clearMsg(el){
-  el.style.display = "none";
-  el.textContent = "";
-}
-function nowMonthISO(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  return `${y}-${m}`;
-}
-function authHeaders(){
-  return token ? { "Authorization": "Bearer " + token } : {};
-}
-function moeda(n){ return String(n ?? 0); }
-
-function updateAuthUI(){
-  const ok = !!token;
-  statusAuth.textContent = ok ? "Autenticado" : "Não autenticado";
-  statusAuth.style.background = ok ? "#dcfce7" : "#fee2e2";
-  statusAuth.style.color = ok ? "#166534" : "#991b1b";
-  btnLogout.style.display = ok ? "inline-flex" : "none";
-
-  cardLogin.style.display = ok ? "none" : "block";
-  cardPainel.style.display = ok ? "block" : "none";
-  cardBalanco.style.display = ok ? "block" : "none";
-  cardTabela.style.display = ok ? "block" : "none";
-}
-
-/* ====== 4) Login/Logout ====== */
-btnLogin.addEventListener("click", async ()=>{
-  clearMsg(msgLogin);
-  const senha = senhaEl.value || "";
-  if(!senha){ setMsg(msgLogin, "Digite a senha.", "err"); return; }
-
-  try{
-    btnLogin.disabled = true;
-    btnLogin.textContent = "Entrando...";
-
-    const resp = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ senha })
-    });
-    const data = await resp.json().catch(()=> ({}));
-
-    if(!resp.ok || !data.ok || !data.token){
-      setMsg(msgLogin, "Senha inválida ou servidor não retornou token.", "err");
-      btnLogin.disabled = false;
-      btnLogin.textContent = "Entrar";
-      return;
-    }
-
-    token = data.token;
-    localStorage.setItem(LS_TOKEN, token);
-    senhaEl.value = "";
-
-    updateAuthUI();
-    await atualizarTudo();
-
-  }catch(e){
-    setMsg(msgLogin, "Erro de rede ao logar.", "err");
-  }finally{
-    btnLogin.disabled = false;
-    btnLogin.textContent = "Entrar";
-  }
-});
-
-btnLogout.addEventListener("click", ()=>{
-  token = "";
-  localStorage.removeItem(LS_TOKEN);
-  updateAuthUI();
-});
-
-/* ====== 5) Inicial ====== */
-periodoEl.value = nowMonthISO();
-updateAuthUI();/* ====== 6) Buscar resumo do mês (todos funcionários) ====== */
-let cacheRows = [];
-
-async function fetchResumoMes(periodo){
-  const resp = await fetch(`/api/admin/mes?periodo=${encodeURIComponent(periodo)}`);
-  const data = await resp.json().catch(()=> ({}));
-  if(!resp.ok || !data.ok) throw new Error("Falha ao carregar /api/admin/mes");
-  return data.rows || [];
-}
-
-async function fetchBalanco(periodo){
-  const resp = await fetch(`/api/admin/balanco?periodo=${encodeURIComponent(periodo)}`);
-  const data = await resp.json().catch(()=> ({}));
-  if(!resp.ok || !data.ok) throw new Error("Falha ao carregar /api/admin/balanco");
-  return data;
-}
-
-function buildEscolaOptions(rows){
-  const set = new Set();
-  for(const r of rows){
-    const escolas = String(r.escolas || "").split(",").map(x=>x.trim()).filter(Boolean);
-    for(const e of escolas) set.add(e);
-  }
-  const arr = Array.from(set).sort((a,b)=>a.localeCompare(b));
-  escolaFiltroEl.innerHTML = `<option value="">Todas as escolas</option>` + arr.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
-}
-
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function applyFilters(){
-  const q = (pesquisaEl.value || "").trim().toLowerCase();
-  const escola = (escolaFiltroEl.value || "").trim();
-
-  return cacheRows.filter(r=>{
-    const mat = String(r.matricula || "").toLowerCase();
-    const nome = String(r.nome || "").toLowerCase();
-    const escolas = String(r.escolas || "");
-    const okQ = !q || mat.includes(q) || nome.includes(q);
-    const okE = !escola || escolas.split(",").map(x=>x.trim()).includes(escola);
-    return okQ && okE;
-  });
-}
-
-function renderResumo(rows){
-  tbody.innerHTML = "";
-  const frag = document.createDocumentFragment();
-
-  for(const r of rows){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(r.matricula)}</td>
-      <td><b>${escapeHtml(r.nome || "")}</b></td>
-      <td>${escapeHtml(r.funcao || "")}</td>
-      <td>${escapeHtml(r.vinculo || "")}</td>
-      <td>${escapeHtml(r.carga || "")}</td>
-      <td>${escapeHtml(r.horas ?? 0)}</td>
-      <td>${escapeHtml(r.falta_atestado ?? 0)}</td>
-      <td>${escapeHtml(r.falta_sem_atestado ?? 0)}</td>
-      <td>${escapeHtml(r.escolas || "")}</td>
-      <td>${escapeHtml(r.obs || "")}</td>
-      <td>
-        <button class="btn warn" style="padding:8px 10px;border-radius:10px" data-act="pdf1" data-m="${escapeHtml(r.matricula)}">📄</button>
-      </td>
-    `;
-    frag.appendChild(tr);
-  }
-  tbody.appendChild(frag);
-
-  tituloTabela.textContent = "Relatório do Mês (todos os funcionários)";
-  subtituloTabela.textContent = `Total exibido: ${rows.length} funcionário(s).`;
-}
-
-/* ====== 7) Detalhes por registros (editar/apagar) ====== */
-async function fetchRegistrosDetalhados(periodo, escola){
-  let url = `/api/admin/registros?periodo=${encodeURIComponent(periodo)}`;
-  if(escola) url += `&escola=${encodeURIComponent(escola)}`;
-
-  const resp = await fetch(url);
-  const data = await resp.json().catch(()=> ({}));
-  if(!resp.ok || !data.ok) throw new Error("Falha ao carregar /api/admin/registros");
-  return data.rows || [];
-}
-
-function renderDetalhes(rows){
-  tbodyDet.innerHTML = "";
-  const frag = document.createDocumentFragment();
-
-  for(const r of rows){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(r.id)}</td>
-      <td>${escapeHtml(r.escola)}</td>
-      <td>${escapeHtml(r.matricula)}</td>
-      <td><b>${escapeHtml(r.nome || "")}</b></td>
-      <td>${escapeHtml(r.horas ?? 0)}</td>
-      <td>${escapeHtml(r.falta_atestado ?? 0)}</td>
-      <td>${escapeHtml(r.falta_sem_atestado ?? 0)}</td>
-      <td>${escapeHtml(r.obs || "")}</td>
-      <td>${escapeHtml(r.updated_at || "")}</td>
-      <td class="flex">
-        <button class="btn primary" style="padding:8px 10px;border-radius:10px" data-act="edit" data-id="${escapeHtml(r.id)}">A</button>
-        <button class="btn danger" style="padding:8px 10px;border-radius:10px" data-act="del" data-id="${escapeHtml(r.id)}">B</button>
-      </td>
-    `;
-    frag.appendChild(tr);
-  }
-
-  tbodyDet.appendChild(frag);
-}
-
-btnFecharModal.addEventListener("click", ()=> modalBack.style.display = "none");
-
-tbodyDet.addEventListener("click", async (e)=>{
-  const btn = e.target.closest("button");
-  if(!btn) return;
-
-  const act = btn.dataset.act;
-  const id = btn.dataset.id;
-
-  if(act === "del"){
-    if(!confirm("Confirma apagar este registro?")) return;
-
-    const resp = await fetch(`/api/registros/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      headers: { ...authHeaders() }
-    });
-    const data = await resp.json().catch(()=> ({}));
-
-    if(!resp.ok || !data.ok){
-      alert("Falha ao apagar. Verifique se está logado (token).");
-      return;
-    }
-    alert("Apagado!");
-    await abrirDetalhes();
-    await atualizarTudo();
-  }
-
-  if(act === "edit"){
-    const escola = prompt("Escola:", "");
-    const periodo = prompt("Período (YYYY-MM):", periodoEl.value);
-    const horas = prompt("Horas (0-300):", "0");
-    const fa = prompt("Falta com atestado (0-15):", "0");
-    const fs = prompt("Falta sem atestado (0-15):", "0");
-    const obs = prompt("OBS:", "");
-
-    const payload = {
-      escola: escola || "",
-      periodo: periodo || periodoEl.value,
-      horas: Number(horas||0),
-      falta_atestado: Number(fa||0),
-      falta_sem_atestado: Number(fs||0),
-      obs: obs || ""
-    };
-
-    const resp = await fetch(`/api/registros/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      headers: { "Content-Type":"application/json", ...authHeaders() },
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json().catch(()=> ({}));
-
-    if(!resp.ok || !data.ok){
-      alert("Falha ao editar. Verifique se está logado (token).");
-      return;
-    }
-    alert("Editado!");
-    await abrirDetalhes();
-    await atualizarTudo();
-  }
-});
-
-/* ====== 8) PDF (simples, via janela de impressão) ====== */
-function abrirPdfHtml(html, titulo="Relatório"){
-  const w = window.open("", "_blank");
-  w.document.open();
-  w.document.write(`
-    <html><head><meta charset="utf-8"><title>${titulo}</title>
-    <style>
-      body{font-family:Arial,Helvetica,sans-serif;padding:18px}
-      h1{font-size:16px;margin:0 0 10px}
-      table{width:100%;border-collapse:collapse}
-      th,td{border:1px solid #ddd;padding:8px;font-size:12px}
-      th{background:#f3f4f6}
-    </style>
-    </head><body>${html}</body></html>
-  `);
-  w.document.close();
-  w.focus();
-  w.print();
-}
-
-btnPdfMes.addEventListener("click", ()=>{
-  const periodo = periodoEl.value;
-  const rows = applyFilters();
-
-  const html = `
-    <h1>SEMEC • Relatório do mês ${escapeHtml(periodo)}</h1>
-    <div style="font-size:12px;color:#555;margin-bottom:10px">
-      Total: ${rows.length} funcionário(s) • Filtro escola: ${escapeHtml(escolaFiltroEl.value||"Todas")}
+        <div class="mrow">
+          <button class="btn" id="btnSalvarEdicao" type="button">💾 Salvar</button>
+          <button class="btn secondary" id="btnCancelarEdicao" type="button">↩️ Cancelar</button>
+        </div>
+        <div class="merr" id="editErr" style="display:none;">Erro ao salvar.</div>
+      </div>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Matrícula</th><th>Nome</th><th>Função</th><th>Vínculo</th><th>Carga</th>
-          <th>Horas</th><th>F. Atest.</th><th>F. S/At.</th><th>Escolas</th><th>OBS</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map(r=>`
+  </div>
+
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">SE</div>
+        <div>
+          <h1>SEMEC • Painel Admin</h1>
+          <p>Funcionários (cadastro fixo) + Folha por mês</p>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="pill"><span class="dot" id="dotApi"></span><span>Servidor: <b id="apiStatus">verificando…</b></span></div>
+        <div class="pill">Token: <span class="kbd" id="tokenStatus">não logado</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <!-- CONTROLES -->
+      <section class="card">
+        <div class="head">
+          <h2>Relatórios</h2>
+          <span>Escolha o mês e filtre por escola</span>
+        </div>
+        <div class="content">
+          <div class="grid2">
+            <div>
+              <label for="periodo">Mês/Ano</label>
+              <input id="periodo" type="month" />
+            </div>
+
+            <div>
+              <label for="filtroEscola">Escola</label>
+              <select id="filtroEscola">
+                <option value="">Todas as escolas</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="pesquisa">Pesquisar (matrícula ou nome)</label>
+              <input id="pesquisa" type="text" placeholder="Ex.: 396 ou Ademilson" />
+            </div>
+
+            <div class="row">
+              <button class="btn" id="btnCarregarMes" type="button">📊 Carregar mês</button>
+              <button class="btn secondary" id="btnCarregarCadastro" type="button">👥 Cadastro</button>
+              <button class="btn secondary" id="btnPDF" type="button">🧾 Gerar PDF</button>
+              <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
+            </div>
+          </div>
+
+          <div class="msg" id="msgBox"></div>
+          <div class="hint" style="margin-top:10px;">
+            Endpoints: <span class="kbd">POST /api/login</span> •
+            <span class="kbd">GET /api/admin/mes</span> •
+            <span class="kbd">GET /api/admin/funcionarios</span> •
+            <span class="kbd">PUT /api/admin/funcionarios/:matricula</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPIs -->
+      <section class="card">
+        <div class="head">
+          <h2>Resumo do mês</h2>
+          <span>Totais do período selecionado</span>
+        </div>
+        <div class="content">
+          <div class="grid2">
+            <div class="pill" style="justify-content:space-between;">
+              <span>Total funcionários</span>
+              <b id="kpiTotalFunc">0</b>
+            </div>
+            <div class="pill" style="justify-content:space-between;">
+              <span>Com folha no mês</span>
+              <b id="kpiComFolha">0</b>
+            </div>
+            <div class="pill" style="justify-content:space-between;">
+              <span>Faltas (soma)</span>
+              <b id="kpiFaltas">0</b>
+            </div>
+            <div class="pill" style="justify-content:space-between;">
+              <span>HE (soma)</span>
+              <b id="kpiHE">0</b>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            O painel sempre mostra TODOS os funcionários do cadastro. A folha do mês aparece quando existe envio.
+          </div>
+        </div>
+      </section>
+
+      <!-- TABELA -->
+      <section class="card">
+        <div class="head">
+          <h2 id="tableTitle">Lista</h2>
+          <span id="tableSubtitle">—</span>
+        </div>
+        <div class="content">
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Escola</th>
+                  <th>Matrícula</th>
+                  <th>Nome</th>
+                  <th>Função</th>
+                  <th>Vínculo</th>
+                  <th>Carga</th>
+                  <th>Faltas</th>
+                  <th>Sem atestado</th>
+                  <th>HE</th>
+                  <th>Obs</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+                <tr><td colspan="11" class="hint">Carregue um mês para visualizar.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            Clique em <b>Editar</b> para alterar dados do funcionário (salva no banco).
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <script>
+    // ====== API ======
+    const API_HEALTH = "/api/health";
+    const API_LOGIN = "/api/login";
+    const API_CADASTRO = "/api/admin/funcionarios";
+    const API_MES = "/api/admin/mes"; // ?periodo=YYYY-MM
+    const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
+
+    // ====== DOM ======
+    const $ = (id) => document.getElementById(id);
+
+    const loginOverlay = $("loginOverlay");
+    const adminPass = $("adminPass");
+    const btnLogin = $("btnLogin");
+    const loginErr = $("loginErr");
+
+    const editOverlay = $("editOverlay");
+    const e_matricula = $("e_matricula");
+    const e_escola = $("e_escola");
+    const e_nome = $("e_nome");
+    const e_funcao = $("e_funcao");
+    const e_vinculo = $("e_vinculo");
+    const e_carga = $("e_carga");
+    const btnSalvarEdicao = $("btnSalvarEdicao");
+    const btnCancelarEdicao = $("btnCancelarEdicao");
+    const editErr = $("editErr");
+
+    const dotApi = $("dotApi");
+    const apiStatus = $("apiStatus");
+    const tokenStatus = $("tokenStatus");
+
+    const periodo = $("periodo");
+    const filtroEscola = $("filtroEscola");
+    const pesquisa = $("pesquisa");
+
+    const btnCarregarMes = $("btnCarregarMes");
+    const btnCarregarCadastro = $("btnCarregarCadastro");
+    const btnPDF = $("btnPDF");
+    const btnSair = $("btnSair");
+
+    const msgBox = $("msgBox");
+    const tbody = $("tbody");
+    const tableTitle = $("tableTitle");
+    const tableSubtitle = $("tableSubtitle");
+
+    const kpiTotalFunc = $("kpiTotalFunc");
+    const kpiComFolha = $("kpiComFolha");
+    const kpiFaltas = $("kpiFaltas");
+    const kpiHE = $("kpiHE");
+
+    // ====== STATE ======
+    let token = localStorage.getItem("semec_admin_token") || "";
+    let lastRows = []; // dados do mês (funcionários + folha)
+    let currentPeriodo = "";
+    let currentMode = "mes"; // "mes" | "cadastro"
+
+    // ====== UTIL ======
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function defaultPeriodo(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      return `${y}-${m}`;
+    }
+
+    function showMsg(text, type){
+      msgBox.className = "msg " + (type || "");
+      msgBox.textContent = text;
+      msgBox.style.display = "block";
+      setTimeout(() => { msgBox.style.display = "none"; }, 7000);
+    }
+
+    function setApiDot(state){
+      dotApi.classList.remove("ok","bad");
+      if(state === "ok"){
+        dotApi.classList.add("ok");
+      } else if(state === "bad"){
+        dotApi.classList.add("bad");
+      }
+    }
+
+    async function checkApi(){
+      try{
+        const r = await fetch(API_HEALTH, { method:"GET" });
+        const j = await r.json().catch(() => ({}));
+        if(r.ok && j.ok){
+          apiStatus.textContent = j.db ? "online (db ok)" : "online (db off)";
+          setApiDot("ok");
+        } else {
+          apiStatus.textContent = "online?";
+          setApiDot("bad");
+        }
+      }catch{
+        apiStatus.textContent = "offline?";
+        setApiDot("bad");
+      }
+    }
+
+    function authHeaders(){
+      return { "Authorization": "Bearer " + token };
+    }
+
+    function ensureLogged(){
+      if(!token){
+        loginOverlay.style.display = "flex";
+        tokenStatus.textContent = "não logado";
+        return false;
+      }
+      loginOverlay.style.display = "none";
+      tokenStatus.textContent = "logado";
+      return true;
+    }
+
+    // ====== LOGIN ======
+    async function doLogin(){
+      loginErr.style.display = "none";
+      const pass = String(adminPass.value || "");
+      if(!pass) {
+        loginErr.textContent = "Digite a senha.";
+        loginErr.style.display = "block";
+        return;
+      }
+
+      btnLogin.disabled = true;
+      btnLogin.textContent = "Entrando...";
+
+      try{
+        const r = await fetch(API_LOGIN, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ password: pass })
+        });
+        const j = await r.json().catch(() => ({}));
+
+        if(!r.ok || !j.ok || !j.token){
+          loginErr.textContent = j.error || "Senha inválida.";
+          loginErr.style.display = "block";
+          return;
+        }
+
+        token = j.token;
+        localStorage.setItem("semec_admin_token", token);
+        ensureLogged();
+        showMsg("✅ Login realizado!", "ok");
+
+        // carrega mês automaticamente
+        await carregarMes();
+
+      }catch(e){
+        loginErr.textContent = "Erro de conexão.";
+        loginErr.style.display = "block";
+      }finally{
+        btnLogin.disabled = false;
+        btnLogin.textContent = "✅ Entrar";
+      }
+    }
+
+    btnLogin.addEventListener("click", doLogin);
+    adminPass.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
+
+    // ====== EDITAR FUNCIONÁRIO ======
+    function openEditModal(row){
+      editErr.style.display = "none";
+      e_matricula.value = row.matricula || "";
+      e_escola.value = row.escola || "";
+      e_nome.value = row.nome || "";
+      e_funcao.value = row.funcao || "";
+      e_vinculo.value = row.vinculo || "";
+      e_carga.value = row.carga || "";
+      editOverlay.style.display = "flex";
+    }
+
+    function closeEditModal(){
+      editOverlay.style.display = "none";
+    }
+
+    btnCancelarEdicao.addEventListener("click", closeEditModal);
+
+    async function salvarEdicao(){
+      if(!ensureLogged()) return;
+
+      const mat = e_matricula.value.trim();
+      if(!mat) return;
+
+      btnSalvarEdicao.disabled = true;
+      btnSalvarEdicao.textContent = "Salvando...";
+
+      try{
+        const body = {
+          escola: e_escola.value.trim(),
+          nome: e_nome.value.trim(),
+          funcao: e_funcao.value.trim(),
+          vinculo: e_vinculo.value.trim(),
+          carga: e_carga.value.trim()
+        };
+
+        const r = await fetch(API_EDIT(mat), {
+          method:"PUT",
+          headers:{
+            "Content-Type":"application/json",
+            ...authHeaders()
+          },
+          body: JSON.stringify(body)
+        });
+
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok || !j.ok){
+          editErr.textContent = j.error || "Erro ao salvar.";
+          editErr.style.display = "block";
+          return;
+        }
+
+        showMsg("✅ Funcionário atualizado!", "ok");
+        closeEditModal();
+
+        // Recarrega o que estava vendo
+        if(currentMode === "mes") await carregarMes();
+        else await carregarCadastro();
+
+      }catch(e){
+        editErr.textContent = "Erro de conexão.";
+        editErr.style.display = "block";
+      }finally{
+        btnSalvarEdicao.disabled = false;
+        btnSalvarEdicao.textContent = "💾 Salvar";
+      }
+    }
+
+    btnSalvarEdicao.addEventListener("click", salvarEdicao);
+
+    // ====== CARREGAR CADASTRO ======
+    async function carregarCadastro(){
+      if(!ensureLogged()) return;
+      currentMode = "cadastro";
+
+      tableTitle.textContent = "Cadastro de Funcionários";
+      tableSubtitle.textContent = "Lista completa (cadastro fixo)";
+
+      btnCarregarCadastro.disabled = true;
+      btnCarregarCadastro.textContent = "Carregando...";
+
+      try{
+        const r = await fetch(API_CADASTRO, { headers: authHeaders() });
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok || !j.ok){
+          showMsg("❌ " + (j.error || "Falha ao carregar cadastro."), "err");
+          return;
+        }
+
+        // Converte para o mesmo formato usado na tabela (sem folha)
+        lastRows = (j.funcionarios || []).map(f => ({
+          escola: f.escola || "",
+          matricula: f.matricula || "",
+          nome: f.nome || "",
+          funcao: f.funcao || "",
+          vinculo: f.vinculo || "",
+          carga: f.carga || "",
+          // campos de folha vazios
+          faltas: null,
+          falta_sem_atestado: null,
+          horas_extras: null,
+          observacoes: null,
+          periodo: ""
+        }));
+
+        buildSchoolOptions(lastRows);
+        applyFiltersAndRender();
+
+        // KPIs do cadastro
+        kpiTotalFunc.textContent = String(lastRows.length);
+        kpiComFolha.textContent = "0";
+        kpiFaltas.textContent = "0";
+        kpiHE.textContent = "0";
+
+      }catch(e){
+        showMsg("❌ Erro de conexão ao carregar cadastro.", "err");
+      }finally{
+        btnCarregarCadastro.disabled = false;
+        btnCarregarCadastro.textContent = "👥 Cadastro";
+      }
+    }
+
+    // ====== CARREGAR MÊS ======
+    async function carregarMes(){
+      if(!ensureLogged()) return;
+      currentMode = "mes";
+
+      if(!periodo.value) periodo.value = defaultPeriodo();
+      currentPeriodo = periodo.value;
+
+      tableTitle.textContent = "Relatório do Mês";
+      tableSubtitle.textContent = "Período: " + currentPeriodo;
+
+      btnCarregarMes.disabled = true;
+      btnCarregarMes.textContent = "Carregando...";
+
+      try{
+        const url = API_MES + "?periodo=" + encodeURIComponent(currentPeriodo);
+        const r = await fetch(url, { headers: authHeaders() });
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok || !j.ok){
+          showMsg("❌ " + (j.error || "Falha ao carregar mês."), "err");
+          return;
+        }
+
+        lastRows = (j.registros || []).map(x => ({
+          escola: x.escola || "",
+          matricula: x.matricula || "",
+          nome: x.nome || "",
+          funcao: x.funcao || "",
+          vinculo: x.vinculo || "",
+          carga: x.carga || "",
+          periodo: x.periodo || currentPeriodo,
+          faltas: (x.faltas ?? null),
+          falta_sem_atestado: (x.falta_sem_atestado ?? null),
+          horas_extras: (x.horas_extras ?? null),
+          observacoes: (x.observacoes ?? null)
+        }));
+
+        buildSchoolOptions(lastRows);
+        applyFiltersAndRender();
+        computeKpis(lastRows);
+
+        showMsg("✅ Mês carregado com sucesso.", "ok");
+
+      }catch(e){
+        showMsg("❌ Erro de conexão ao carregar mês.", "err");
+      }finally{
+        btnCarregarMes.disabled = false;
+        btnCarregarMes.textContent = "📊 Carregar mês";
+      }
+    }
+
+    // ====== KPIs ======
+    function computeKpis(rows){
+      const total = rows.length;
+      let comFolha = 0;
+      let somaFaltas = 0;
+      let somaHE = 0;
+
+      for(const r of rows){
+        const temFolha = r.faltas !== null || r.horas_extras !== null || (r.observacoes && r.observacoes.trim());
+        if(temFolha) comFolha++;
+
+        const f = Number(r.faltas ?? 0);
+        const he = Number(r.horas_extras ?? 0);
+        if(!Number.isNaN(f)) somaFaltas += f;
+        if(!Number.isNaN(he)) somaHE += he;
+      }
+
+      kpiTotalFunc.textContent = String(total);
+      kpiComFolha.textContent = String(comFolha);
+      kpiFaltas.textContent = String(somaFaltas);
+      kpiHE.textContent = String(somaHE);
+    }
+
+    // ====== FILTROS ======
+    function buildSchoolOptions(rows){
+      const set = new Set();
+      for(const r of rows){
+        const esc = (r.escola || "").trim();
+        if(esc) set.add(esc);
+      }
+      const list = Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+      const current = filtroEscola.value || "";
+      filtroEscola.innerHTML = `<option value="">Todas as escolas</option>` +
+        list.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
+
+      // mantém seleção se possível
+      if(list.includes(current)) filtroEscola.value = current;
+      else filtroEscola.value = "";
+    }
+
+    function applyFiltersAndRender(){
+      const q = (pesquisa.value || "").trim().toLowerCase();
+      const esc = (filtroEscola.value || "").trim().toLowerCase();
+
+      const filtered = lastRows.filter(r => {
+        const okEscola = !esc || (r.escola || "").toLowerCase() === esc;
+        if(!okEscola) return false;
+
+        if(!q) return true;
+
+        const mat = String(r.matricula || "").toLowerCase();
+        const nm = String(r.nome || "").toLowerCase();
+        return mat.includes(q) || nm.includes(q);
+      });
+
+      renderTable(filtered);
+      // KPIs sempre do mês inteiro, não do filtro (se quiser por filtro, me diga)
+    }
+
+    pesquisa.addEventListener("input", applyFiltersAndRender);
+    filtroEscola.addEventListener("change", applyFiltersAndRender);
+
+    // ====== TABELA ======
+    function renderTable(rows){
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td colspan="11" class="hint">Nenhum resultado para os filtros.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const obs = (r.observacoes || "").trim();
+        const obsShort = obs.length > 55 ? obs.slice(0,55) + "…" : obs;
+
+        const faltas = (r.faltas ?? "");
+        const semAt = (r.falta_sem_atestado ?? "");
+        const he = (r.horas_extras ?? "");
+
+        return `
           <tr>
-            <td>${escapeHtml(r.matricula)}</td>
-            <td>${escapeHtml(r.nome||"")}</td>
-            <td>${escapeHtml(r.funcao||"")}</td>
-            <td>${escapeHtml(r.vinculo||"")}</td>
-            <td>${escapeHtml(r.carga||"")}</td>
-            <td>${escapeHtml(r.horas??0)}</td>
-            <td>${escapeHtml(r.falta_atestado??0)}</td>
-            <td>${escapeHtml(r.falta_sem_atestado??0)}</td>
-            <td>${escapeHtml(r.escolas||"")}</td>
-            <td>${escapeHtml(r.obs||"")}</td>
+            <td>${escapeHtml(r.escola || "")}</td>
+            <td>${escapeHtml(r.matricula || "")}</td>
+            <td>${escapeHtml(r.nome || "")}</td>
+            <td>${escapeHtml(r.funcao || "")}</td>
+            <td>${escapeHtml(r.vinculo || "")}</td>
+            <td>${escapeHtml(r.carga || "")}</td>
+            <td>${escapeHtml(faltas)}</td>
+            <td>${escapeHtml(semAt)}</td>
+            <td>${escapeHtml(he)}</td>
+            <td title="${escapeHtml(obs)}">${escapeHtml(obsShort)}</td>
+            <td>
+              <div class="actions">
+                <button class="miniBtn" data-edit="${escapeHtml(r.matricula)}">Editar</button>
+              </div>
+            </td>
           </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
-  abrirPdfHtml(html, `SEMEC_${periodo}`);
-});
+        `;
+      }).join("");
 
-// PDF individual
-tbody.addEventListener("click", (e)=>{
-  const btn = e.target.closest("button");
-  if(!btn) return;
-  if(btn.dataset.act !== "pdf1") return;
+      // bind editar
+      tbody.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const mat = btn.getAttribute("data-edit");
+          const row = lastRows.find(x => String(x.matricula) === String(mat));
+          if(row) openEditModal(row);
+        });
+      });
+    }
 
-  const mat = btn.dataset.m;
-  const r = cacheRows.find(x => String(x.matricula) === String(mat));
-  if(!r) return;
+    // ====== PDF (resumo simples) ======
+    function gerarPDF(){
+      if(!ensureLogged()) return;
+      if(!lastRows.length){
+        showMsg("❌ Carregue um mês ou cadastro antes.", "err");
+        return;
+      }
 
-  const periodo = periodoEl.value;
+      // Imprime a página com layout. (prático e sem biblioteca)
+      // Dica: no print, escolha "Salvar como PDF".
+      showMsg("🧾 Abrindo impressão… escolha 'Salvar como PDF'.", "ok");
+      window.print();
+    }
 
-  const html = `
-    <h1>SEMEC • Resumo Individual • ${escapeHtml(periodo)}</h1>
-    <div style="font-size:13px;margin-bottom:12px">
-      <b>${escapeHtml(r.nome||"")}</b><br>
-      Matrícula: ${escapeHtml(r.matricula)}<br>
-      Função: ${escapeHtml(r.funcao||"")}<br>
-      Vínculo: ${escapeHtml(r.vinculo||"")} • Carga: ${escapeHtml(r.carga||"")}<br>
-      Escolas: ${escapeHtml(r.escolas||"")}
-    </div>
+    // ====== BOTÕES ======
+    btnCarregarMes.addEventListener("click", carregarMes);
+    btnCarregarCadastro.addEventListener("click", carregarCadastro);
+    btnPDF.addEventListener("click", gerarPDF);
 
-    <table>
-      <tr><th>Horas extras</th><td>${escapeHtml(r.horas??0)}</td></tr>
-      <tr><th>Falta com atestado</th><td>${escapeHtml(r.falta_atestado??0)}</td></tr>
-      <tr><th>Falta sem atestado</th><td>${escapeHtml(r.falta_sem_atestado??0)}</td></tr>
-      <tr><th>OBS</th><td>${escapeHtml(r.obs||"")}</td></tr>
-    </table>
-  `;
-  abrirPdfHtml(html, `SEMEC_${periodo}_${r.matricula}`);
-});
+    btnSair.addEventListener("click", () => {
+      token = "";
+      localStorage.removeItem("semec_admin_token");
+      ensureLogged();
+      tbody.innerHTML = `<tr><td colspan="11" class="hint">Deslogado. Faça login novamente.</td></tr>`;
+      showMsg("🚪 Você saiu do Admin.", "");
+    });
 
-/* ====== 9) Fluxo principal ====== */
-async function atualizarTudo(){
-  clearMsg(msgPainel);
+    // ====== INIT ======
+    (function init(){
+      periodo.value = defaultPeriodo();
+      checkApi();
+      setInterval(checkApi, 20000);
 
-  const periodo = periodoEl.value || nowMonthISO();
-
-  try{
-    // resumo
-    cacheRows = await fetchResumoMes(periodo);
-    buildEscolaOptions(cacheRows);
-    renderResumo(applyFilters());
-
-    // balanço
-    const bal = await fetchBalanco(periodo);
-    kpiRegistros.value = bal.registros ?? 0;
-    kpiHoras.value = bal.horas ?? 0;
-    kpiFA.value = bal.falta_atestado ?? 0;
-    kpiFS.value = bal.falta_sem_atestado ?? 0;
-
-  }catch(e){
-    setMsg(msgPainel, "Erro ao atualizar. Verifique o servidor e o período.", "err");
-  }
-}
-
-btnAtualizar.addEventListener("click", atualizarTudo);
-pesquisaEl.addEventListener("input", ()=> renderResumo(applyFilters()));
-escolaFiltroEl.addEventListener("change", ()=> renderResumo(applyFilters()));
-
-async function abrirDetalhes(){
-  const periodo = periodoEl.value || nowMonthISO();
-  const escola = escolaFiltroEl.value || "";
-
-  try{
-    const rows = await fetchRegistrosDetalhados(periodo, escola);
-    detalhesInfo.textContent = `Período: ${periodo} • Escola: ${escola || "Todas (detalhes mostra tudo)" } • Total registros: ${rows.length}`;
-    renderDetalhes(rows);
-    modalBack.style.display = "flex";
-  }catch(e){
-    alert("Falha ao abrir detalhes.");
-  }
-}
-
-btnVerDetalhes.addEventListener("click", abrirDetalhes);
-
-// Se já tem token, carrega automático
-if(token){
-  atualizarTudo();
-}
-</script>
-</body>
+      if(!token){
+        ensureLogged();
+        adminPass.focus();
+      }else{
+        ensureLogged();
+        // tenta carregar mês automático
+        carregarMes().catch(()=>{});
+      }
+    })();
+  </script>
+  </body>
 </html>
