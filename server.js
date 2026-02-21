@@ -1,6 +1,8 @@
 import express from "express";
 import pkg from "pg";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const { Pool } = pkg;
 
@@ -8,14 +10,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// conexão postgres render/supabase
+// =============================
+// CONFIGURAR CAMINHO PUBLIC
+// =============================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "public")));
+
+// =============================
+// BANCO
+// =============================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
 // =============================
-// CRIAR TABELAS AUTOMATICAMENTE
+// CRIAR TABELAS AUTOMATICO
 // =============================
 async function ensureSchema() {
   try {
@@ -45,9 +57,9 @@ async function ensureSchema() {
       );
     `);
 
-    console.log("Tabelas verificadas");
+    console.log("Tabelas OK");
   } catch (err) {
-    console.log("ERRO AO CRIAR TABELAS:", err);
+    console.log("Erro no schema:", err);
     process.exit(1);
   }
 }
@@ -55,109 +67,66 @@ async function ensureSchema() {
 await ensureSchema();
 
 // =============================
-// STATUS ONLINE
+// ROTAS HTML
 // =============================
-app.get("/", (req,res)=>{
-  res.send("SERVIDOR SEMEC ONLINE");
+
+// Página principal
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Admin
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+// Folha
+app.get("/folha", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "folha.html"));
 });
 
 // =============================
-// LISTAR FUNCIONÁRIOS (ADMIN)
+// API
 // =============================
+
 app.get("/api/admin/funcionarios", async (req,res)=>{
-  try{
-    const r = await pool.query(`
-      SELECT * FROM funcionarios
-      ORDER BY nome
-    `);
-    res.json(r.rows);
-  }catch(err){
-    console.log(err);
-    res.status(500).json({erro:"erro ao buscar"});
-  }
+  const r = await pool.query("SELECT * FROM funcionarios ORDER BY nome");
+  res.json(r.rows);
 });
 
-// =============================
-// CADASTRAR FUNCIONÁRIO (ADMIN)
-// =============================
-app.post("/api/admin/funcionarios", async (req,res)=>{
-  try{
-    const { matricula,nome,funcao,vinculo,carga,escola } = req.body;
-
-    await pool.query(`
-      INSERT INTO funcionarios
-      (matricula,nome,funcao,vinculo,carga,escola)
-      VALUES ($1,$2,$3,$4,$5,$6)
-      ON CONFLICT (matricula) DO NOTHING
-    `,[matricula,nome,funcao,vinculo,carga,escola]);
-
-    res.json({ok:true});
-  }catch(err){
-    console.log(err);
-    res.status(500).json({erro:"erro salvar"});
-  }
-});
-
-// =============================
-// ENVIAR FOLHA
-// =============================
 app.post("/api/folha", async (req,res)=>{
-  try{
-    const { matricula,nome,mes,ano,faltas,extras,obs } = req.body;
+  const { matricula,nome,mes,ano,faltas,extras,obs } = req.body;
 
-    await pool.query(`
-      INSERT INTO folhas
-      (matricula,nome,mes,ano,faltas,extras,obs)
-      VALUES ($1,$2,$3,$4,$5,$6,$7)
-    `,[matricula,nome,mes,ano,faltas,extras,obs]);
+  await pool.query(`
+    INSERT INTO folhas
+    (matricula,nome,mes,ano,faltas,extras,obs)
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
+  `,[matricula,nome,mes,ano,faltas,extras,obs]);
 
-    res.json({ok:true});
-  }catch(err){
-    console.log(err);
-    res.status(500).json({erro:"erro folha"});
-  }
+  res.json({ok:true});
 });
 
-// =============================
-// VER TODAS AS FOLHAS (ADMIN)
-// =============================
 app.get("/api/admin/folhas", async (req,res)=>{
-  try{
-    const r = await pool.query(`
-      SELECT * FROM folhas
-      ORDER BY id DESC
-    `);
-    res.json(r.rows);
-  }catch(err){
-    console.log(err);
-    res.status(500).json({erro:"erro buscar folhas"});
-  }
+  const r = await pool.query("SELECT * FROM folhas ORDER BY id DESC");
+  res.json(r.rows);
 });
 
-// =============================
-// ADMIN EDITAR FOLHA
-// =============================
 app.put("/api/admin/folha/:id", async (req,res)=>{
-  try{
-    const { id } = req.params;
-    const { faltas,extras,obs } = req.body;
+  const { id } = req.params;
+  const { faltas,extras,obs } = req.body;
 
-    await pool.query(`
-      UPDATE folhas
-      SET faltas=$1,
-          extras=$2,
-          obs=$3,
-          atualizado_em=NOW()
-      WHERE id=$4
-    `,[faltas,extras,obs,id]);
+  await pool.query(`
+    UPDATE folhas
+    SET faltas=$1,
+        extras=$2,
+        obs=$3,
+        atualizado_em=NOW()
+    WHERE id=$4
+  `,[faltas,extras,obs,id]);
 
-    res.json({ok:true});
-  }catch(err){
-    console.log(err);
-    res.status(500).json({erro:"erro atualizar"});
-  }
+  res.json({ok:true});
 });
 
 // =============================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>console.log("Servidor rodando na porta "+PORT));
+app.listen(PORT, ()=>console.log("Servidor rodando"));
