@@ -1,168 +1,639 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEMEC - Folha</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Folha de Ponto - Usuário</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
-    margin: 0;
-    padding: 20px;
-}
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#0b1224;
+      --card2:#101b35;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#1d4ed8;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --border:rgba(255,255,255,0.08);
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
 
-.container {
-    max-width: 800px;
-    margin: auto;
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 30% 0%, #1e293b 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+    }
 
-h1 {
-    text-align: center;
-    color: #2c3e50;
-}
+    header{
+      padding:18px 18px 8px;
+    }
 
-input, select, button, textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-}
+    .topbar{
+      max-width:1100px;
+      margin:0 auto;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      box-shadow: var(--shadow);
+    }
 
-button {
-    background: #2c3e50;
-    color: white;
-    cursor: pointer;
-    border: none;
-}
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:220px;
+    }
 
-button:hover {
-    background: #34495e;
-}
+    .logo{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.9), rgba(34,197,94,0.75));
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:0.5px;
+      box-shadow: 0 10px 28px rgba(37,99,235,0.25);
+    }
 
-.resultado {
-    background: #eef2f7;
-    padding: 10px;
-    border-radius: 6px;
-    margin-top: 10px;
-}
-</style>
+    .brand h1{
+      font-size:15px;
+      margin:0;
+      line-height:1.15;
+    }
+    .brand p{
+      margin:0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      padding:6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background: var(--ok);
+      box-shadow:0 0 0 4px rgba(34,197,94,0.15);
+    }
+
+    main{
+      padding:14px 18px 40px;
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap:14px;
+    }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card .head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(0,0,0,0.10);
+    }
+
+    .card .head h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:0.2px;
+    }
+
+    .card .head span{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .content{
+      padding:16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width: 700px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:block;
+      margin:0 0 6px;
+    }
+
+    input, select, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+
+    input::placeholder, textarea::placeholder{ color: rgba(148,163,184,0.7); }
+
+    textarea{
+      min-height:100px;
+      resize: vertical;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      cursor:pointer;
+      border:none;
+      padding:12px 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color:white;
+      font-weight:700;
+      letter-spacing:0.2px;
+      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-width: 160px;
+    }
+
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.secondary{
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+      font-weight:600;
+      min-width: 160px;
+    }
+
+    .msg{
+      margin-top:12px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      font-size:13px;
+      color:var(--muted);
+      display:none;
+    }
+    .msg.ok{ color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }
+    .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13px;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid var(--border);
+    }
+
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      background: rgba(255,255,255,0.04);
+      color:var(--muted);
+      font-weight:600;
+      font-size:12px;
+    }
+
+    tr:last-child td{ border-bottom:none; }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .danger{
+      color:#fecaca;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      padding:2px 8px;
+      border-radius: 999px;
+      color:var(--text);
+    }
+  </style>
 </head>
 
 <body>
-<div class="container">
-<h1>Folha de Lançamento</h1>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">SE</div>
+        <div>
+          <h1>SEMEC • Folha de Ponto</h1>
+          <p>Envio mensal para o Administrativo</p>
+        </div>
+      </div>
 
-<label>Pesquisar Funcionário (Nome ou Matrícula)</label>
-<input type="text" id="busca" placeholder="Digite nome ou matrícula">
-<button onclick="buscarFuncionario()">Buscar</button>
+      <div class="status">
+        <div class="pill"><span class="dot"></span><span>Servidor: <span id="apiStatus">verificando...</span></span></div>
+        <div class="pill">Endpoint: <span class="kbd">/api/folha/enviar</span></div>
+      </div>
+    </div>
+  </header>
 
-<div id="resultadoBusca"></div>
+  <main>
+    <div class="wrap">
 
-<div id="formLancamento" style="display:none;">
-<hr>
+      <!-- CARD 1: FORMULÁRIO -->
+      <section class="card">
+        <div class="head">
+          <h2>Preencher folha</h2>
+          <span>Envio individual por funcionário</span>
+        </div>
 
-<h3>Lançamento</h3>
+        <div class="content">
 
-<label>Mês (YYYY-MM)</label>
-<input type="month" id="mes">
+          <div class="grid">
+            <div>
+              <label for="periodo">Mês/Ano do registro</label>
+              <input id="periodo" type="month" />
+              <div class="small" style="margin-top:6px;">Ex.: 2026-02</div>
+            </div>
 
-<label>Faltas</label>
-<input type="number" id="faltas" min="0" value="0">
+            <div>
+              <label for="escola">Escola (opcional)</label>
+              <input id="escola" type="text" placeholder="Ex.: Escola X" />
+            </div>
 
-<label>Faltas com Atestado</label>
-<input type="number" id="faltas_atestado" min="0" value="0">
+            <div>
+              <label for="matricula">Matrícula</label>
+              <input id="matricula" type="text" placeholder="Ex.: 101" />
+            </div>
 
-<label>Horas Extras</label>
-<input type="number" id="horas_extras" min="0" value="0">
+            <div>
+              <label for="nome">Nome do funcionário</label>
+              <input id="nome" type="text" placeholder="Ex.: Maria Silva" />
+            </div>
 
-<label>Observações</label>
-<textarea id="obs"></textarea>
+            <div>
+              <label for="funcao">Função</label>
+              <input id="funcao" type="text" placeholder="Ex.: Professor(a)" />
+            </div>
 
-<button onclick="enviarLancamento()">Enviar Lançamento</button>
+            <div>
+              <label for="vinculo">Vínculo</label>
+              <input id="vinculo" type="text" placeholder="Ex.: Efetivo / Contrato" />
+            </div>
 
-</div>
-</div>
+            <div>
+              <label for="carga">Carga horária</label>
+              <input id="carga" type="text" placeholder="Ex.: 40h" />
+            </div>
 
-<script>
-let funcionarioSelecionado = null;
+            <div>
+              <label for="horas_extras">Horas Extras (soma)</label>
+              <input id="horas_extras" type="number" min="0" step="0.5" placeholder="0" />
+            </div>
 
-async function buscarFuncionario() {
-    const q = document.getElementById("busca").value;
+            <div>
+              <label for="total_faltas">Total de faltas</label>
+              <input id="total_faltas" type="number" min="0" step="1" placeholder="0" />
+            </div>
 
-    const res = await fetch(`https://semec-sistema.onrender.com/api/funcionarios/search?q=${q}`);
-    const data = await res.json();
+            <div>
+              <label for="falta_sem_atestado">Falta sem atestado (0-15)</label>
+              <input id="falta_sem_atestado" type="number" min="0" max="15" step="1" placeholder="0" />
+            </div>
+          </div>
 
-    const div = document.getElementById("resultadoBusca");
-    div.innerHTML = "";
+          <div style="margin-top:12px;">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" placeholder="Digite observações do mês..."></textarea>
+          </div>
 
-    if (!data.data || data.data.length === 0) {
-        div.innerHTML = "<p>Nenhum funcionário encontrado.</p>";
-        return;
+          <div class="row" style="margin-top:14px;">
+            <button class="btn" id="btnEnviar" type="button">📩 Enviar para ADM</button>
+            <button class="btn secondary" id="btnLimpar" type="button">🧹 Limpar</button>
+            <span class="small">Dica: confira matrícula e mês antes de enviar.</span>
+          </div>
+
+          <div class="msg" id="msgBox"></div>
+        </div>
+      </section>
+
+      <!-- CARD 2: ÚLTIMOS ENVIOS (LOCAL) -->
+      <section class="card">
+        <div class="head">
+          <h2>Registros enviados (local)</h2>
+          <span>Histórico no seu navegador</span>
+        </div>
+
+        <div class="content">
+          <div class="row" style="margin-bottom:10px;">
+            <button class="btn secondary" id="btnAtualizarLista" type="button">🔄 Atualizar lista</button>
+            <button class="btn secondary" id="btnLimparHistorico" type="button">🗑️ Limpar histórico</button>
+          </div>
+
+          <div class="small" style="margin-bottom:10px;">
+            Esse quadro é só pra você conferir o que foi enviado (salvo no navegador).  
+            O que vale é o que chega no servidor.
+          </div>
+
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Matrícula</th>
+                  <th>Nome</th>
+                  <th>Faltas</th>
+                  <th>HE</th>
+                </tr>
+              </thead>
+              <tbody id="listaEnvios">
+                <tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="msg" id="msgList"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const periodo = $("periodo");
+    const escola = $("escola");
+    const matricula = $("matricula");
+    const nome = $("nome");
+    const funcao = $("funcao");
+    const vinculo = $("vinculo");
+    const carga = $("carga");
+    const horas_extras = $("horas_extras");
+    const total_faltas = $("total_faltas");
+    const falta_sem_atestado = $("falta_sem_atestado");
+    const observacoes = $("observacoes");
+
+    const msgBox = $("msgBox");
+    const msgList = $("msgList");
+
+    const API_SEND = "/api/folha/enviar";
+
+    function showMsg(el, text, type){
+      el.className = "msg " + (type || "");
+      el.textContent = text;
+      el.style.display = "block";
+      setTimeout(() => { el.style.display = "none"; }, 6500);
     }
 
-    data.data.forEach(func => {
-        const btn = document.createElement("button");
-        btn.innerText = `${func.nome} (${func.matricula})`;
-        btn.onclick = () => selecionarFuncionario(func);
-        div.appendChild(btn);
+    function nowISO(){
+      return new Date().toISOString();
+    }
+
+    function getLocalHistory(){
+      try{
+        return JSON.parse(localStorage.getItem("semec_envios") || "[]");
+      }catch{
+        return [];
+      }
+    }
+
+    function setLocalHistory(arr){
+      localStorage.setItem("semec_envios", JSON.stringify(arr));
+    }
+
+    function addToHistory(item){
+      const arr = getLocalHistory();
+      arr.unshift(item);
+      setLocalHistory(arr.slice(0, 200));
+    }
+
+    function renderHistory(){
+      const tbody = $("listaEnvios");
+      const arr = getLocalHistory();
+
+      if(!arr.length){
+        tbody.innerHTML = `<tr><td colspan="5" class="small">Nenhum envio ainda.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = arr.map(it => `
+        <tr>
+          <td>${escapeHtml(it.periodo || "")}</td>
+          <td>${escapeHtml(it.matricula || "")}</td>
+          <td>${escapeHtml(it.nome || "")}</td>
+          <td>${Number(it.total_faltas ?? 0)}</td>
+          <td>${Number(it.horas_extras ?? 0)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function defaultPeriodo(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      return `${y}-${m}`;
+    }
+
+    function validate(){
+      if(!periodo.value) periodo.value = defaultPeriodo();
+      if(!matricula.value.trim()) return "Informe a matrícula.";
+      if(!nome.value.trim()) return "Informe o nome do funcionário.";
+      return null;
+    }
+
+    async function pingServer(){
+      // ping simples: tenta bater no próprio endpoint com OPTIONS (não quebra se não existir CORS)
+      // Se der erro, apenas marca como "offline?"
+      try{
+        const res = await fetch("/", { method:"GET" });
+        $("apiStatus").textContent = res.ok ? "online" : "online?";
+      }catch{
+        $("apiStatus").textContent = "offline?";
+      }
+    }
+
+    function clearForm(){
+      // não limpa o período por padrão
+      escola.value = "";
+      matricula.value = "";
+      nome.value = "";
+      funcao.value = "";
+      vinculo.value = "";
+      carga.value = "";
+      horas_extras.value = "";
+      total_faltas.value = "";
+      falta_sem_atestado.value = "";
+      observacoes.value = "";
+    }
+
+    async function enviar(){
+      const err = validate();
+      if(err){
+        showMsg(msgBox, "❌ " + err, "err");
+        return;
+      }
+
+      const payload = {
+        periodo: periodo.value, // "YYYY-MM"
+        funcionario: {
+          matricula: matricula.value.trim(),
+          nome: nome.value.trim(),
+          funcao: funcao.value.trim(),
+          vinculo: vinculo.value.trim(),
+          carga: carga.value.trim(),
+          escola: escola.value.trim()
+        },
+        folha: {
+          total_faltas: Number(total_faltas.value || 0),
+          falta_sem_atestado: Number(falta_sem_atestado.value || 0),
+          horas_extras: Number(horas_extras.value || 0),
+          observacoes: (observacoes.value || "").trim()
+        }
+      };
+
+      $("btnEnviar").disabled = true;
+      $("btnEnviar").textContent = "Enviando...";
+
+      try{
+        const res = await fetch(API_SEND, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        // ✅ Se der 404 aqui, é rota errada no server.js
+        if(res.status === 404){
+          showMsg(msgBox, "❌ Erro 404: rota não encontrada no servidor. Verifique se existe POST " + API_SEND, "err");
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if(!res.ok){
+          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
+          showMsg(msgBox, "❌ " + msg, "err");
+          return;
+        }
+
+        // sucesso
+        addToHistory({
+          quando: nowISO(),
+          periodo: payload.periodo,
+          matricula: payload.funcionario.matricula,
+          nome: payload.funcionario.nome,
+          total_faltas: payload.folha.total_faltas,
+          horas_extras: payload.folha.horas_extras
+        });
+
+        renderHistory();
+        showMsg(msgBox, "✅ Enviado com sucesso!", "ok");
+        clearForm();
+
+      }catch(e){
+        showMsg(msgBox, "❌ Erro de conexão: " + (e?.message || "não foi possível enviar"), "err");
+      }finally{
+        $("btnEnviar").disabled = false;
+        $("btnEnviar").textContent = "📩 Enviar para ADM";
+      }
+    }
+
+    // EVENTOS
+    $("btnEnviar").addEventListener("click", enviar);
+    $("btnLimpar").addEventListener("click", () => {
+      clearForm();
+      showMsg(msgBox, "🧹 Campos limpos.", "");
     });
-}
 
-function selecionarFuncionario(func) {
-    funcionarioSelecionado = func;
-    document.getElementById("formLancamento").style.display = "block";
-}
-  if (!funcionarioSelecionado) {
-    alert("Selecione um funcionário primeiro");
-    return;
-}
+    $("btnAtualizarLista").addEventListener("click", () => {
+      renderHistory();
+      showMsg(msgList, "🔄 Lista atualizada.", "ok");
+    });
 
-const mes = document.getElementById("mes").value;
-const faltas = document.getElementById("faltas").value || 0;
-const faltas_atestado = document.getElementById("faltas_atestado").value || 0;
-const horas_extras = document.getElementById("horas_extras").value || 0;
-const obs = document.getElementById("obs").value;
+    $("btnLimparHistorico").addEventListener("click", () => {
+      setLocalHistory([]);
+      renderHistory();
+      showMsg(msgList, "🗑️ Histórico apagado.", "");
+    });
 
-if (!mes) {
-    alert("Informe o mês");
-    return;
-}
-
-const res = await fetch("https://semec-sistema.onrender.com/api/folha/lancar", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-  
-    body: JSON.stringify({
-        matricula: funcionarioSelecionado.matricula,
-        mes,
-        faltas,
-        faltas_atestado,
-        horas_extras,
-        obs
-    })
-});
-
-const data = await res.json();
-
-if (data.ok) {
-    alert("Lançamento salvo com sucesso!");
-    document.getElementById("faltas").value = 0;
-    document.getElementById("faltas_atestado").value = 0;
-    document.getElementById("horas_extras").value = 0;
-    document.getElementById("obs").value = "";
-} else {
-    alert("Erro ao salvar");
-}
+    // INIT
+    periodo.value = defaultPeriodo();
+    renderHistory();
+    pingServer();
+  </script>
   </body>
 </html>
