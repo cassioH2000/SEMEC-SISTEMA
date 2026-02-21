@@ -3,536 +3,427 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SEMEC • Admin</title>
-
+  <title>Admin - Folha SEMEC</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#0f1b33;
-      --card2:#0c162b;
-      --text:#e5e7eb;
-      --muted:#93a4bd;
-      --line:rgba(255,255,255,0.08);
-      --accent:#2563eb;
-      --accent2:#1d4ed8;
-      --ok:#22c55e;
-      --bad:#ef4444;
-      --warn:#f59e0b;
-      --radius:18px;
-      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --bg:#0b1020;
+      --card:#111a33;
+      --card2:#0f1730;
+      --text:#e9ecf6;
+      --muted:#9fb0d0;
+      --accent:#59a6ff;
+      --danger:#ff5c6c;
+      --ok:#38d39f;
+      --border:rgba(255,255,255,.08);
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
     }
-
-    *{box-sizing:border-box;}
+    *{box-sizing:border-box}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(89,166,255,.25), transparent 60%),
+                  radial-gradient(900px 550px at 80% 10%, rgba(56,211,159,.18), transparent 55%),
+                  var(--bg);
       color:var(--text);
-      background: radial-gradient(1100px 700px at 20% 0%, #1e2a45 0%, var(--bg) 55%);
-      min-height:100vh;
     }
-
-    header{ padding:18px 16px 10px; }
-
-    .topbar{
-      max-width:1200px;
-      margin:0 auto;
-      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      padding:14px 16px;
-      box-shadow: var(--shadow);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
+    header{
+      padding:22px 18px;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(to bottom, rgba(255,255,255,.03), transparent);
+      position: sticky;
+      top:0;
+      backdrop-filter: blur(8px);
+      z-index:10;
     }
-
+    .wrap{max-width:1200px;margin:0 auto}
     .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      min-width:260px;
+      display:flex;align-items:center;gap:12px;justify-content:space-between;
     }
-
-    .logo{
-      width:46px;height:46px;
-      border-radius:14px;
-      background: linear-gradient(145deg, rgba(37,99,235,0.95), rgba(34,197,94,0.75));
-      display:grid;place-items:center;
-      font-weight:900;
-      letter-spacing:.5px;
-      box-shadow: 0 14px 28px rgba(37,99,235,0.25);
-      user-select:none;
+    .brand h1{
+      margin:0;font-size:18px;letter-spacing:.4px;font-weight:700
     }
-
-    .brand h1{ margin:0; font-size:15px; line-height:1.1; }
-    .brand p{ margin:2px 0 0; color:var(--muted); font-size:12px; }
-
-    .status{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .pill{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,0.04);
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      color:var(--muted);
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      white-space:nowrap;
-    }
-    .dot{
-      width:8px;height:8px;border-radius:999px;
-      background: var(--warn);
-      box-shadow:0 0 0 4px rgba(245,158,11,0.15);
-    }
-    .dot.ok{ background: var(--ok); box-shadow:0 0 0 4px rgba(34,197,94,0.15); }
-    .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(239,68,68,0.15); }
-
-    main{ padding: 8px 16px 40px; }
-
-    .wrap{
-      max-width:1200px;
-      margin:0 auto;
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-    }
-
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .head{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
-      background: rgba(0,0,0,0.10);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .head h2{ margin:0; font-size:14px; }
-    .head span{ color:var(--muted); font-size:12px; }
-
-    .content{ padding:16px; }
-
-    label{
-      display:block;
-      font-size:12px;
-      color:var(--muted);
-      margin:0 0 6px;
-    }
-
-    input, select, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,0.20);
-      color:var(--text);
-      outline:none;
-      font-size:14px;
-    }
-    input::placeholder{ color: rgba(147,164,189,0.75); }
-
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
+    .brand small{color:var(--muted)}
     .btn{
-      cursor:pointer;
-      border:none;
-      padding:12px 14px;
-      border-radius:14px;
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      color:white;
-      font-weight:800;
-      letter-spacing:.2px;
-      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      min-width:170px;
-    }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; }
-    .btn.secondary{
-      background: rgba(255,255,255,0.06);
-      border:1px solid var(--line);
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
       color:var(--text);
-      box-shadow:none;
-      font-weight:800;
-      min-width:170px;
+      padding:10px 12px;border-radius:10px;
+      cursor:pointer;
+      transition:.15s ease;
+      font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.16)}
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(89,166,255,.35), rgba(89,166,255,.18));
+      border-color:rgba(89,166,255,.45);
     }
     .btn.danger{
-      background: rgba(239,68,68,0.15);
-      border:1px solid rgba(239,68,68,0.28);
-      box-shadow:none;
+      background: linear-gradient(135deg, rgba(255,92,108,.28), rgba(255,92,108,.12));
+      border-color:rgba(255,92,108,.45);
     }
-
-    .msg{
-      display:none;
-      margin-top:12px;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,0.18);
-      font-size:13px;
-      color:var(--muted);
-      white-space:pre-wrap;
+    .btn.ok{
+      background: linear-gradient(135deg, rgba(56,211,159,.26), rgba(56,211,159,.12));
+      border-color:rgba(56,211,159,.45);
     }
-    .msg.ok{ display:block; color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.10); }
-    .msg.err{ display:block; color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.10); }
-
-    .hint{ font-size:12px; color:var(--muted); }
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size:12px;
-      background: rgba(255,255,255,0.06);
-      border:1px solid var(--line);
-      padding:2px 8px;
-      border-radius:999px;
-      color:var(--text);
-    }
-
-    .grid2{
+    main{padding:18px}
+    .grid{
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-      align-items:end;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      align-items:start;
     }
-    @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--border);
       border-radius:14px;
+      box-shadow: var(--shadow);
       overflow:hidden;
-      border:1px solid var(--line);
-      font-size:13px;
     }
+    .card .hd{
+      padding:14px 14px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background: rgba(255,255,255,.02);
+    }
+    .card .hd h2{margin:0;font-size:14px}
+    .card .bd{padding:14px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input, select, textarea{
+      width:100%;
+      padding:10px 11px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:80px;resize:vertical}
+    .row{display:flex;gap:10px}
+    .row > div{flex:1}
+    .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.35}
+    .status{
+      font-size:12px;
+      padding:8px 10px;border-radius:10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      color:var(--muted);
+      margin-top:10px;
+      white-space: pre-wrap;
+    }
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--border);
+      padding:6px 10px;border-radius:999px;
+      background: rgba(0,0,0,.15);
+    }
+    table{width:100%;border-collapse:collapse}
     th, td{
+      border-bottom:1px solid var(--border);
       padding:10px 10px;
-      border-bottom:1px solid var(--line);
-      text-align:left;
+      font-size:13px;
       vertical-align:top;
     }
     th{
-      background: rgba(255,255,255,0.05);
+      text-align:left;
       color:var(--muted);
-      font-weight:800;
+      font-weight:700;
       font-size:12px;
+      position:sticky;
+      top:72px; /* header sticky */
+      background: rgba(11,16,32,.95);
+      backdrop-filter: blur(6px);
+      z-index:5;
     }
-    tr:last-child td{ border-bottom:none; }
-
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .miniBtn{
-      cursor:pointer;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,0.05);
+    .tableWrap{max-height: 70vh; overflow:auto}
+    .mini{
+      width:100%;
+      padding:8px 9px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.20);
       color: var(--text);
-      padding:8px 10px;
-      border-radius:12px;
-      font-weight:800;
-      font-size:12px;
+      font-size:13px;
     }
-    .miniBtn:hover{ background: rgba(255,255,255,0.07); }
-
-    /* Modal */
-    .overlay{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,0.72);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index:9999;
-    }
-    .modal{
-      width:min(560px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .modal .mhead{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
-      background: rgba(0,0,0,0.18);
-    }
-    .modal .mhead h3{ margin:0; font-size:14px; }
-    .modal .mbody{ padding:16px; }
-    .modal .mbody p{ margin:0 0 10px; color:var(--muted); font-size:13px; }
-    .modal .mrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .modal .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
+    .mini.small{max-width:110px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .muted{color:var(--muted)}
+    .right{display:flex;justify-content:flex-end}
+    .tagOk{color:var(--ok);font-weight:700}
+    .tagErr{color:var(--danger);font-weight:700}
+    .hidden{display:none !important;}
   </style>
 </head>
 
 <body>
-
-  <!-- MODAL LOGIN -->
-  <div class="overlay" id="loginOverlay">
-    <div class="modal">
-      <div class="mhead">
-        <h3>🔒 Admin SEMEC</h3>
-      </div>
-      <div class="mbody">
-        <p>Digite a senha do Admin para acessar.</p>
-        <label for="adminPass">Senha</label>
-        <input id="adminPass" type="password" placeholder="Senha do admin..." />
-        <div class="mrow">
-          <button class="btn" id="btnLogin" type="button">✅ Entrar</button>
-        </div>
-        <div class="merr" id="loginErr">Senha inválida.</div>
-        <div class="hint" style="margin-top:10px;">
-          (A senha é a variável <span class="kbd">ADMIN_PASSWORD</span> no Render.)
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL EDITAR FUNCIONÁRIO -->
-  <div class="overlay" id="editOverlay" style="display:none;">
-    <div class="modal">
-      <div class="mhead">
-        <h3>✏️ Editar Funcionário</h3>
-      </div>
-      <div class="mbody">
-        <div class="grid2">
-          <div>
-            <label>Matrícula</label>
-            <input id="e_matricula" type="text" disabled />
-          </div>
-          <div>
-            <label>Escola</label>
-            <input id="e_escola" type="text" placeholder="Escola" />
-          </div>
-          <div>
-            <label>Nome</label>
-            <input id="e_nome" type="text" placeholder="Nome" />
-          </div>
-          <div>
-            <label>Função</label>
-            <input id="e_funcao" type="text" placeholder="Função" />
-          </div>
-          <div>
-            <label>Vínculo</label>
-            <input id="e_vinculo" type="text" placeholder="Vínculo" />
-          </div>
-          <div>
-            <label>Carga</label>
-            <input id="e_carga" type="text" placeholder="Carga" />
-          </div>
-        </div>
-
-        <div class="mrow">
-          <button class="btn" id="btnSalvarEdicao" type="button">💾 Salvar</button>
-          <button class="btn secondary" id="btnCancelarEdicao" type="button">↩️ Cancelar</button>
-        </div>
-        <div class="merr" id="editErr" style="display:none;">Erro ao salvar.</div>
-      </div>
-    </div>
-  </div>
-
   <header>
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">SE</div>
-        <div>
-          <h1>SEMEC • Painel Admin</h1>
-          <p>Funcionários (cadastro fixo) + Folha por mês</p>
-        </div>
+    <div class="wrap brand">
+      <div>
+        <h1>Admin — Folha SEMEC</h1>
+        <small class="muted">Gerencie funcionários e edite faltas/horas extras/observações por mês.</small>
       </div>
-
-      <div class="status">
-        <div class="pill"><span class="dot" id="dotApi"></span><span>Servidor: <b id="apiStatus">verificando…</b></span></div>
-        <div class="pill">Token: <span class="kbd" id="tokenStatus">não logado</span></div>
+      <div class="actions">
+        <span id="apiPill" class="pill">API: <span id="apiUrlLabel"></span></span>
+        <button class="btn" id="btnHealth">Testar API</button>
+        <button class="btn danger hidden" id="btnLogout">Sair</button>
       </div>
     </div>
   </header>
 
-  <main>
-    <div class="wrap">
-
-      <!-- CONTROLES -->
+  <main class="wrap">
+    <div class="grid">
+      <!-- LOGIN / CONFIG -->
       <section class="card">
-        <div class="head">
-          <h2>Relatórios</h2>
-          <span>Escolha o mês e filtre por escola</span>
+        <div class="hd">
+          <h2>Login do Admin</h2>
+          <span class="pill" id="pillAuth">deslogado</span>
         </div>
-        <div class="content">
-          <div class="grid2">
+        <div class="bd">
+          <div class="row">
             <div>
-              <label for="periodo">Mês/Ano</label>
-              <input id="periodo" type="month" />
+              <label>URL da API (onde roda o server.js)</label>
+              <input id="apiUrl" placeholder="Ex: http://localhost:3000" />
+              <div class="hint">Se estiver no celular e o servidor no PC, use o IP do PC na rede (ex: http://192.168.0.10:3000).</div>
             </div>
+          </div>
 
+          <div style="height:10px"></div>
+
+          <label>Senha do Admin</label>
+          <input id="adminPass" type="password" placeholder="Digite a senha do admin" />
+
+          <div style="height:10px"></div>
+
+          <div class="actions">
+            <button class="btn primary" id="btnLogin">Entrar</button>
+            <button class="btn" id="btnCarregarFuncionarios">Carregar Funcionários</button>
+          </div>
+
+          <div id="status" class="status">Pronto.</div>
+        </div>
+      </section>
+
+      <!-- PAINEL -->
+      <section class="card">
+        <div class="hd">
+          <h2>Painel</h2>
+          <div class="actions">
+            <button class="btn ok" id="btnCarregarFolhas">Carregar Folhas do Mês</button>
+          </div>
+        </div>
+
+        <div class="bd">
+          <div class="row">
             <div>
-              <label for="filtroEscola">Escola</label>
-              <select id="filtroEscola">
-                <option value="">Todas as escolas</option>
+              <label>Mês</label>
+              <select id="mes">
+                <option value="1">01 - Janeiro</option>
+                <option value="2">02 - Fevereiro</option>
+                <option value="3">03 - Março</option>
+                <option value="4">04 - Abril</option>
+                <option value="5">05 - Maio</option>
+                <option value="6">06 - Junho</option>
+                <option value="7">07 - Julho</option>
+                <option value="8">08 - Agosto</option>
+                <option value="9">09 - Setembro</option>
+                <option value="10">10 - Outubro</option>
+                <option value="11">11 - Novembro</option>
+                <option value="12">12 - Dezembro</option>
               </select>
             </div>
-
             <div>
-              <label for="pesquisa">Pesquisar (matrícula ou nome)</label>
-              <input id="pesquisa" type="text" placeholder="Ex.: 396 ou Ademilson" />
+              <label>Ano</label>
+              <input id="ano" class="mini" placeholder="2026" />
             </div>
-
-            <div class="row">
-              <button class="btn" id="btnCarregarMes" type="button">📊 Carregar mês</button>
-              <button class="btn secondary" id="btnCarregarCadastro" type="button">👥 Cadastro</button>
-              <button class="btn secondary" id="btnPDF" type="button">🧾 Gerar PDF</button>
-              <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
+            <div>
+              <label>Buscar por nome/matrícula</label>
+              <input id="busca" class="mini" placeholder="Ex: Maria / 358" />
             </div>
           </div>
 
-          <div class="msg" id="msgBox"></div>
-          <div class="hint" style="margin-top:10px;">
-            Endpoints: <span class="kbd">POST /api/login</span> •
-            <span class="kbd">GET /api/admin/mes</span> •
-            <span class="kbd">GET /api/admin/funcionarios</span> •
-            <span class="kbd">PUT /api/admin/funcionarios/:matricula</span>
-          </div>
-        </div>
-      </section>
+          <div style="height:10px"></div>
 
-      <!-- KPIs -->
-      <section class="card">
-        <div class="head">
-          <h2>Resumo do mês</h2>
-          <span>Totais do período selecionado</span>
-        </div>
-        <div class="content">
-          <div class="grid2">
-            <div class="pill" style="justify-content:space-between;">
-              <span>Total funcionários</span>
-              <b id="kpiTotalFunc">0</b>
-            </div>
-            <div class="pill" style="justify-content:space-between;">
-              <span>Com folha no mês</span>
-              <b id="kpiComFolha">0</b>
-            </div>
-            <div class="pill" style="justify-content:space-between;">
-              <span>Faltas (soma)</span>
-              <b id="kpiFaltas">0</b>
-            </div>
-            <div class="pill" style="justify-content:space-between;">
-              <span>HE (soma)</span>
-              <b id="kpiHE">0</b>
+          <div class="row">
+            <div>
+              <label>Resumo</label>
+              <div class="status" id="resumo">
+                Funcionários carregados: 0
+                Folhas do mês: 0
+              </div>
             </div>
           </div>
-          <div class="hint" style="margin-top:10px;">
-            O painel sempre mostra TODOS os funcionários do cadastro. A folha do mês aparece quando existe envio.
-          </div>
-        </div>
-      </section>
 
-      <!-- TABELA -->
-      <section class="card">
-        <div class="head">
-          <h2 id="tableTitle">Lista</h2>
-          <span id="tableSubtitle">—</span>
-        </div>
-        <div class="content">
-          <div style="overflow:auto;">
+          <div style="height:12px"></div>
+
+          <div class="tableWrap">
             <table>
               <thead>
                 <tr>
-                  <th>Escola</th>
-                  <th>Matrícula</th>
-                  <th>Nome</th>
-                  <th>Função</th>
-                  <th>Vínculo</th>
-                  <th>Carga</th>
-                  <th>Faltas</th>
-                  <th>Sem atestado</th>
-                  <th>HE</th>
-                  <th>Obs</th>
-                  <th>Ações</th>
+                  <th style="min-width:90px">Matrícula</th>
+                  <th style="min-width:240px">Nome</th>
+                  <th style="min-width:200px">Função</th>
+                  <th style="min-width:110px">Faltas</th>
+                  <th style="min-width:140px">Horas Extras</th>
+                  <th style="min-width:280px">Observações</th>
+                  <th style="min-width:160px">Ações</th>
                 </tr>
               </thead>
               <tbody id="tbody">
-                <tr><td colspan="11" class="hint">Carregue um mês para visualizar.</td></tr>
+                <tr><td colspan="7" class="muted">Faça login e clique em “Carregar Funcionários”.</td></tr>
               </tbody>
             </table>
           </div>
-          <div class="hint" style="margin-top:10px;">
-            Clique em <b>Editar</b> para alterar dados do funcionário (salva no banco).
+
+          <div style="height:12px"></div>
+
+          <div class="hint">
+            ✅ Dica: Se o funcionário não tiver folha lançada no mês, o sistema cria ao salvar (zerada) e já atualiza faltas/horas/obs.
           </div>
         </div>
       </section>
-
     </div>
   </main>
+
   <script>
-    // ====== API ======
-    const API_HEALTH = "/api/health";
-    const API_LOGIN = "/api/login";
-    const API_CADASTRO = "/api/admin/funcionarios";
-    const API_MES = "/api/admin/mes"; // ?periodo=YYYY-MM
-    const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
+    // =========================
+    // State
+    // =========================
+    let TOKEN = "";
+    let FUNCIONARIOS = [];  // [{matricula,nome,funcao,vinculo,carga,escola}]
+    let FOLHAS = new Map(); // key: matricula -> folha do mês
 
-    // ====== DOM ======
-    const $ = (id) => document.getElementById(id);
+    // =========================
+    // Elements
+    // =========================
+    const elApiUrl = document.getElementById("apiUrl");
+    const elApiUrlLabel = document.getElementById("apiUrlLabel");
+    const elStatus = document.getElementById("status");
+    const elResumo = document.getElementById("resumo");
 
-    const loginOverlay = $("loginOverlay");
-    const adminPass = $("adminPass");
-    const btnLogin = $("btnLogin");
-    const loginErr = $("loginErr");
+    const elBtnLogin = document.getElementById("btnLogin");
+    const elBtnLogout = document.getElementById("btnLogout");
+    const elBtnHealth = document.getElementById("btnHealth");
+    const elBtnCarregarFuncionarios = document.getElementById("btnCarregarFuncionarios");
+    const elBtnCarregarFolhas = document.getElementById("btnCarregarFolhas");
 
-    const editOverlay = $("editOverlay");
-    const e_matricula = $("e_matricula");
-    const e_escola = $("e_escola");
-    const e_nome = $("e_nome");
-    const e_funcao = $("e_funcao");
-    const e_vinculo = $("e_vinculo");
-    const e_carga = $("e_carga");
-    const btnSalvarEdicao = $("btnSalvarEdicao");
-    const btnCancelarEdicao = $("btnCancelarEdicao");
-    const editErr = $("editErr");
+    const elAdminPass = document.getElementById("adminPass");
+    const elPillAuth = document.getElementById("pillAuth");
 
-    const dotApi = $("dotApi");
-    const apiStatus = $("apiStatus");
-    const tokenStatus = $("tokenStatus");
+    const elMes = document.getElementById("mes");
+    const elAno = document.getElementById("ano");
+    const elBusca = document.getElementById("busca");
+    const elTbody = document.getElementById("tbody");
 
-    const periodo = $("periodo");
-    const filtroEscola = $("filtroEscola");
-    const pesquisa = $("pesquisa");
+    // =========================
+    // Init
+    // =========================
+    function getDefaultApiUrl(){
+      // tenta usar o mesmo host (se servido junto), senão local
+      return localStorage.getItem("SEMEC_API_URL") || (location.origin.includes("http") ? location.origin : "http://localhost:3000");
+    }
+    function setApiUrlLabel(){
+      elApiUrlLabel.textContent = elApiUrl.value.trim() || "-";
+    }
+    function setStatus(msg){
+      elStatus.textContent = msg;
+    }
+    function setResumo(){
+      const totalF = FUNCIONARIOS.length;
+      const totalFolhas = FOLHAS.size;
+      elResumo.textContent = `Funcionários carregados: ${totalF}\nFolhas do mês: ${totalFolhas}`;
+    }
+    function setAuthUI(isAuthed){
+      if (isAuthed){
+        elPillAuth.innerHTML = `<span class="tagOk">logado</span>`;
+        elBtnLogout.classList.remove("hidden");
+      } else {
+        elPillAuth.innerHTML = `deslogado`;
+        elBtnLogout.classList.add("hidden");
+      }
+    }
 
-    const btnCarregarMes = $("btnCarregarMes");
-    const btnCarregarCadastro = $("btnCarregarCadastro");
-    const btnPDF = $("btnPDF");
-    const btnSair = $("btnSair");
+    elApiUrl.value = getDefaultApiUrl();
+    setApiUrlLabel();
 
-    const msgBox = $("msgBox");
-    const tbody = $("tbody");
-    const tableTitle = $("tableTitle");
-    const tableSubtitle = $("tableSubtitle");
+    // ano default
+    const now = new Date();
+    elAno.value = String(now.getFullYear());
+    elMes.value = String(now.getMonth() + 1);
 
-    const kpiTotalFunc = $("kpiTotalFunc");
-    const kpiComFolha = $("kpiComFolha");
-    const kpiFaltas = $("kpiFaltas");
-    const kpiHE = $("kpiHE");
+    TOKEN = localStorage.getItem("SEMEC_ADMIN_TOKEN") || "";
+    setAuthUI(!!TOKEN);
 
-    // ====== STATE ======
-    let token = localStorage.getItem("semec_admin_token") || "";
-    let lastRows = []; // dados do mês (funcionários + folha)
-    let currentPeriodo = "";
-    let currentMode = "mes"; // "mes" | "cadastro"
+    elApiUrl.addEventListener("input", () => {
+      localStorage.setItem("SEMEC_API_URL", elApiUrl.value.trim());
+      setApiUrlLabel();
+    });
 
-    // ====== UTIL ======
+    // =========================
+    // API helper
+    // =========================
+    async function api(path, options = {}){
+      const base = (elApiUrl.value || "").trim().replace(/\/+$/,"");
+      const url = base + path;
+      const headers = options.headers || {};
+      if (TOKEN) headers["Authorization"] = "Bearer " + TOKEN;
+      if (!headers["Content-Type"] && options.body) headers["Content-Type"] = "application/json";
+      const res = await fetch(url, { ...options, headers });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+      if (!res.ok){
+        const msg = data?.error || data?.message || res.statusText || "Erro";
+        throw new Error(`${res.status} - ${msg}`);
+      }
+      return data;
+    }
+
+    // =========================
+    // Render
+    // =========================
+    function matchesBusca(func, q){
+      if (!q) return true;
+      const s = q.toLowerCase().trim();
+      return String(func.matricula).includes(s) || String(func.nome || "").toLowerCase().includes(s);
+    }
+
+    function render(){
+      const q = elBusca.value.trim();
+      const lista = FUNCIONARIOS.filter(f => matchesBusca(f, q));
+
+      if (!lista.length){
+        elTbody.innerHTML = `<tr><td colspan="7" class="muted">Nenhum funcionário encontrado.</td></tr>`;
+        return;
+      }
+
+      elTbody.innerHTML = lista.map(f => {
+        const folha = FOLHAS.get(String(f.matricula));
+        const faltas = folha?.faltas ?? 0;
+        const horas = folha?.horas_extras ?? 0;
+        const obs = folha?.obs ?? "";
+
+        const key = String(f.matricula);
+        return `
+          <tr data-mat="${key}">
+            <td><b>${key}</b></td>
+            <td>${escapeHtml(f.nome || "")}</td>
+            <td class="muted">${escapeHtml(f.funcao || "")}</td>
+            <td><input class="mini small" type="number" min="0" step="1" value="${escapeAttr(faltas)}" data-field="faltas"/></td>
+            <td><input class="mini small" type="number" min="0" step="0.25" value="${escapeAttr(horas)}" data-field="horas_extras"/></td>
+            <td><input class="mini" value="${escapeAttr(obs)}" data-field="obs" placeholder="Observações..."/></td>
+            <td>
+              <div class="actions">
+                <button class="btn ok" data-action="salvar">Salvar</button>
+              </div>
+              <div class="hint" style="margin-top:6px" data-rowstatus></div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
     function escapeHtml(str){
       return String(str ?? "")
         .replaceAll("&","&amp;")
@@ -541,433 +432,155 @@
         .replaceAll('"',"&quot;")
         .replaceAll("'","&#039;");
     }
-
-    function defaultPeriodo(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      return `${y}-${m}`;
-    }
-
-    function showMsg(text, type){
-      msgBox.className = "msg " + (type || "");
-      msgBox.textContent = text;
-      msgBox.style.display = "block";
-      setTimeout(() => { msgBox.style.display = "none"; }, 7000);
-    }
-
-    function setApiDot(state){
-      dotApi.classList.remove("ok","bad");
-      if(state === "ok"){
-        dotApi.classList.add("ok");
-      } else if(state === "bad"){
-        dotApi.classList.add("bad");
-      }
-    }
-
-    async function checkApi(){
+    function escapeAttr(str){ return escapeHtml(str); }
+    // =========================
+    // Actions
+    // =========================
+    async function health(){
       try{
-        const r = await fetch(API_HEALTH, { method:"GET" });
-        const j = await r.json().catch(() => ({}));
-        if(r.ok && j.ok){
-          apiStatus.textContent = j.db ? "online (db ok)" : "online (db off)";
-          setApiDot("ok");
-        } else {
-          apiStatus.textContent = "online?";
-          setApiDot("bad");
-        }
-      }catch{
-        apiStatus.textContent = "offline?";
-        setApiDot("bad");
+        setStatus("Testando API...");
+        const r = await api("/api/health");
+        setStatus(`✅ API OK: ${JSON.stringify(r)}`);
+      }catch(e){
+        setStatus(`❌ Falha na API: ${e.message}`);
       }
     }
 
-    function authHeaders(){
-      return { "Authorization": "Bearer " + token };
-    }
-
-    function ensureLogged(){
-      if(!token){
-        loginOverlay.style.display = "flex";
-        tokenStatus.textContent = "não logado";
-        return false;
-      }
-      loginOverlay.style.display = "none";
-      tokenStatus.textContent = "logado";
-      return true;
-    }
-
-    // ====== LOGIN ======
-    async function doLogin(){
-      loginErr.style.display = "none";
-      const pass = String(adminPass.value || "");
-      if(!pass) {
-        loginErr.textContent = "Digite a senha.";
-        loginErr.style.display = "block";
-        return;
-      }
-
-      btnLogin.disabled = true;
-      btnLogin.textContent = "Entrando...";
-
+    async function login(){
       try{
-        const r = await fetch(API_LOGIN, {
+        const password = elAdminPass.value;
+        if (!password) return setStatus("⚠️ Digite a senha do admin.");
+
+        setStatus("Entrando...");
+        const r = await api("/api/admin/login", {
           method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ password: pass })
+          body: JSON.stringify({ password })
         });
-        const j = await r.json().catch(() => ({}));
 
-        if(!r.ok || !j.ok || !j.token){
-          loginErr.textContent = j.error || "Senha inválida.";
-          loginErr.style.display = "block";
-          return;
-        }
-
-        token = j.token;
-        localStorage.setItem("semec_admin_token", token);
-        ensureLogged();
-        showMsg("✅ Login realizado!", "ok");
-
-        // carrega mês automaticamente
-        await carregarMes();
-
+        TOKEN = r.token;
+        localStorage.setItem("SEMEC_ADMIN_TOKEN", TOKEN);
+        setAuthUI(true);
+        setStatus("✅ Login realizado. Agora carregue os funcionários.");
       }catch(e){
-        loginErr.textContent = "Erro de conexão.";
-        loginErr.style.display = "block";
-      }finally{
-        btnLogin.disabled = false;
-        btnLogin.textContent = "✅ Entrar";
+        setAuthUI(false);
+        setStatus(`❌ Login falhou: ${e.message}`);
       }
     }
 
-    btnLogin.addEventListener("click", doLogin);
-    adminPass.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
-
-    // ====== EDITAR FUNCIONÁRIO ======
-    function openEditModal(row){
-      editErr.style.display = "none";
-      e_matricula.value = row.matricula || "";
-      e_escola.value = row.escola || "";
-      e_nome.value = row.nome || "";
-      e_funcao.value = row.funcao || "";
-      e_vinculo.value = row.vinculo || "";
-      e_carga.value = row.carga || "";
-      editOverlay.style.display = "flex";
+    function logout(){
+      TOKEN = "";
+      localStorage.removeItem("SEMEC_ADMIN_TOKEN");
+      setAuthUI(false);
+      setStatus("Você saiu.");
     }
 
-    function closeEditModal(){
-      editOverlay.style.display = "none";
+    async function carregarFuncionarios(){
+      try{
+        if (!TOKEN) return setStatus("⚠️ Faça login primeiro.");
+
+        setStatus("Carregando funcionários...");
+        const r = await api("/api/admin/funcionarios");
+        FUNCIONARIOS = r.funcionarios || [];
+        setStatus(`✅ Funcionários carregados: ${FUNCIONARIOS.length}`);
+        setResumo();
+        render();
+      }catch(e){
+        setStatus(`❌ Erro ao carregar funcionários: ${e.message}`);
+      }
     }
 
-    btnCancelarEdicao.addEventListener("click", closeEditModal);
+    async function carregarFolhasMes(){
+      try{
+        if (!TOKEN) return setStatus("⚠️ Faça login primeiro.");
+        if (!FUNCIONARIOS.length) return setStatus("⚠️ Carregue os funcionários primeiro.");
 
-    async function salvarEdicao(){
-      if(!ensureLogged()) return;
+        const ano = Number(elAno.value || new Date().getFullYear());
+        const mes = Number(elMes.value || (new Date().getMonth()+1));
+        if (!mes || mes < 1 || mes > 12) return setStatus("⚠️ Mês inválido.");
+        if (!ano || ano < 2000) return setStatus("⚠️ Ano inválido.");
 
-      const mat = e_matricula.value.trim();
-      if(!mat) return;
+        setStatus(`Carregando folhas de ${String(mes).padStart(2,"0")}/${ano}...`);
+        const r = await api(`/api/admin/folhas?ano=${encodeURIComponent(ano)}&mes=${encodeURIComponent(mes)}`);
 
-      btnSalvarEdicao.disabled = true;
-      btnSalvarEdicao.textContent = "Salvando...";
+        FOLHAS = new Map();
+        (r.folhas || []).forEach(f => {
+          FOLHAS.set(String(f.matricula), f);
+        });
+
+        setStatus(`✅ Folhas carregadas do mês: ${FOLHAS.size}`);
+        setResumo();
+        render();
+      }catch(e){
+        setStatus(`❌ Erro ao carregar folhas: ${e.message}`);
+      }
+    }
+
+    async function salvarLinha(tr){
+      const mat = tr.getAttribute("data-mat");
+      const ano = Number(elAno.value || new Date().getFullYear());
+      const mes = Number(elMes.value || (new Date().getMonth()+1));
+
+      const inputs = tr.querySelectorAll("input[data-field]");
+      const payload = {};
+      inputs.forEach(i => payload[i.dataset.field] = i.value);
+
+      const faltas = Number(payload.faltas || 0);
+      const horas_extras = Number(payload.horas_extras || 0);
+      const obs = String(payload.obs || "");
+
+      const rowStatus = tr.querySelector("[data-rowstatus]");
+      rowStatus.textContent = "Salvando...";
 
       try{
-        const body = {
-          escola: e_escola.value.trim(),
-          nome: e_nome.value.trim(),
-          funcao: e_funcao.value.trim(),
-          vinculo: e_vinculo.value.trim(),
-          carga: e_carga.value.trim()
-        };
-
-        const r = await fetch(API_EDIT(mat), {
+        const r = await api(`/api/admin/folhas/${encodeURIComponent(mat)}`, {
           method:"PUT",
-          headers:{
-            "Content-Type":"application/json",
-            ...authHeaders()
-          },
-          body: JSON.stringify(body)
+          body: JSON.stringify({
+            ano, mes,
+            faltas: Number.isFinite(faltas) ? faltas : 0,
+            horas_extras: Number.isFinite(horas_extras) ? horas_extras : 0,
+            obs
+          })
         });
 
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          editErr.textContent = j.error || "Erro ao salvar.";
-          editErr.style.display = "block";
-          return;
-        }
+        // atualiza cache local
+        if (r?.folha) FOLHAS.set(String(mat), r.folha);
 
-        showMsg("✅ Funcionário atualizado!", "ok");
-        closeEditModal();
-
-        // Recarrega o que estava vendo
-        if(currentMode === "mes") await carregarMes();
-        else await carregarCadastro();
-
+        rowStatus.innerHTML = `<span class="tagOk">Salvo ✅</span>`;
+        setResumo();
       }catch(e){
-        editErr.textContent = "Erro de conexão.";
-        editErr.style.display = "block";
-      }finally{
-        btnSalvarEdicao.disabled = false;
-        btnSalvarEdicao.textContent = "💾 Salvar";
+        rowStatus.innerHTML = `<span class="tagErr">Erro: ${escapeHtml(e.message)}</span>`;
       }
     }
 
-    btnSalvarEdicao.addEventListener("click", salvarEdicao);
+    // =========================
+    // Events
+    // =========================
+    elBtnHealth.addEventListener("click", health);
+    elBtnLogin.addEventListener("click", login);
+    elBtnLogout.addEventListener("click", logout);
+    elBtnCarregarFuncionarios.addEventListener("click", carregarFuncionarios);
+    elBtnCarregarFolhas.addEventListener("click", carregarFolhasMes);
 
-    // ====== CARREGAR CADASTRO ======
-    async function carregarCadastro(){
-      if(!ensureLogged()) return;
-      currentMode = "cadastro";
+    elBusca.addEventListener("input", () => render());
 
-      tableTitle.textContent = "Cadastro de Funcionários";
-      tableSubtitle.textContent = "Lista completa (cadastro fixo)";
+    elTbody.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+      const tr = ev.target.closest("tr[data-mat]");
+      if (!tr) return;
 
-      btnCarregarCadastro.disabled = true;
-      btnCarregarCadastro.textContent = "Carregando...";
-
-      try{
-        const r = await fetch(API_CADASTRO, { headers: authHeaders() });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          showMsg("❌ " + (j.error || "Falha ao carregar cadastro."), "err");
-          return;
-        }
-
-        // Converte para o mesmo formato usado na tabela (sem folha)
-        lastRows = (j.funcionarios || []).map(f => ({
-          escola: f.escola || "",
-          matricula: f.matricula || "",
-          nome: f.nome || "",
-          funcao: f.funcao || "",
-          vinculo: f.vinculo || "",
-          carga: f.carga || "",
-          // campos de folha vazios
-          faltas: null,
-          falta_sem_atestado: null,
-          horas_extras: null,
-          observacoes: null,
-          periodo: ""
-        }));
-
-        buildSchoolOptions(lastRows);
-        applyFiltersAndRender();
-
-        // KPIs do cadastro
-        kpiTotalFunc.textContent = String(lastRows.length);
-        kpiComFolha.textContent = "0";
-        kpiFaltas.textContent = "0";
-        kpiHE.textContent = "0";
-
-      }catch(e){
-        showMsg("❌ Erro de conexão ao carregar cadastro.", "err");
-      }finally{
-        btnCarregarCadastro.disabled = false;
-        btnCarregarCadastro.textContent = "👥 Cadastro";
+      const action = btn.dataset.action;
+      if (action === "salvar"){
+        salvarLinha(tr);
       }
-    }
-
-    // ====== CARREGAR MÊS ======
-    async function carregarMes(){
-      if(!ensureLogged()) return;
-      currentMode = "mes";
-
-      if(!periodo.value) periodo.value = defaultPeriodo();
-      currentPeriodo = periodo.value;
-
-      tableTitle.textContent = "Relatório do Mês";
-      tableSubtitle.textContent = "Período: " + currentPeriodo;
-
-      btnCarregarMes.disabled = true;
-      btnCarregarMes.textContent = "Carregando...";
-
-      try{
-        const url = API_MES + "?periodo=" + encodeURIComponent(currentPeriodo);
-        const r = await fetch(url, { headers: authHeaders() });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          showMsg("❌ " + (j.error || "Falha ao carregar mês."), "err");
-          return;
-        }
-
-        lastRows = (j.registros || []).map(x => ({
-          escola: x.escola || "",
-          matricula: x.matricula || "",
-          nome: x.nome || "",
-          funcao: x.funcao || "",
-          vinculo: x.vinculo || "",
-          carga: x.carga || "",
-          periodo: x.periodo || currentPeriodo,
-          faltas: (x.faltas ?? null),
-          falta_sem_atestado: (x.falta_sem_atestado ?? null),
-          horas_extras: (x.horas_extras ?? null),
-          observacoes: (x.observacoes ?? null)
-        }));
-
-        buildSchoolOptions(lastRows);
-        applyFiltersAndRender();
-        computeKpis(lastRows);
-
-        showMsg("✅ Mês carregado com sucesso.", "ok");
-
-      }catch(e){
-        showMsg("❌ Erro de conexão ao carregar mês.", "err");
-      }finally{
-        btnCarregarMes.disabled = false;
-        btnCarregarMes.textContent = "📊 Carregar mês";
-      }
-    }
-
-    // ====== KPIs ======
-    function computeKpis(rows){
-      const total = rows.length;
-      let comFolha = 0;
-      let somaFaltas = 0;
-      let somaHE = 0;
-
-      for(const r of rows){
-        const temFolha = r.faltas !== null || r.horas_extras !== null || (r.observacoes && r.observacoes.trim());
-        if(temFolha) comFolha++;
-
-        const f = Number(r.faltas ?? 0);
-        const he = Number(r.horas_extras ?? 0);
-        if(!Number.isNaN(f)) somaFaltas += f;
-        if(!Number.isNaN(he)) somaHE += he;
-      }
-
-      kpiTotalFunc.textContent = String(total);
-      kpiComFolha.textContent = String(comFolha);
-      kpiFaltas.textContent = String(somaFaltas);
-      kpiHE.textContent = String(somaHE);
-    }
-
-    // ====== FILTROS ======
-    function buildSchoolOptions(rows){
-      const set = new Set();
-      for(const r of rows){
-        const esc = (r.escola || "").trim();
-        if(esc) set.add(esc);
-      }
-      const list = Array.from(set).sort((a,b)=>a.localeCompare(b,"pt-BR"));
-
-      const current = filtroEscola.value || "";
-      filtroEscola.innerHTML = `<option value="">Todas as escolas</option>` +
-        list.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
-
-      // mantém seleção se possível
-      if(list.includes(current)) filtroEscola.value = current;
-      else filtroEscola.value = "";
-    }
-
-    function applyFiltersAndRender(){
-      const q = (pesquisa.value || "").trim().toLowerCase();
-      const esc = (filtroEscola.value || "").trim().toLowerCase();
-
-      const filtered = lastRows.filter(r => {
-        const okEscola = !esc || (r.escola || "").toLowerCase() === esc;
-        if(!okEscola) return false;
-
-        if(!q) return true;
-
-        const mat = String(r.matricula || "").toLowerCase();
-        const nm = String(r.nome || "").toLowerCase();
-        return mat.includes(q) || nm.includes(q);
-      });
-
-      renderTable(filtered);
-      // KPIs sempre do mês inteiro, não do filtro (se quiser por filtro, me diga)
-    }
-
-    pesquisa.addEventListener("input", applyFiltersAndRender);
-    filtroEscola.addEventListener("change", applyFiltersAndRender);
-
-    // ====== TABELA ======
-    function renderTable(rows){
-      if(!rows.length){
-        tbody.innerHTML = `<tr><td colspan="11" class="hint">Nenhum resultado para os filtros.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = rows.map(r => {
-        const obs = (r.observacoes || "").trim();
-        const obsShort = obs.length > 55 ? obs.slice(0,55) + "…" : obs;
-
-        const faltas = (r.faltas ?? "");
-        const semAt = (r.falta_sem_atestado ?? "");
-        const he = (r.horas_extras ?? "");
-
-        return `
-          <tr>
-            <td>${escapeHtml(r.escola || "")}</td>
-            <td>${escapeHtml(r.matricula || "")}</td>
-            <td>${escapeHtml(r.nome || "")}</td>
-            <td>${escapeHtml(r.funcao || "")}</td>
-            <td>${escapeHtml(r.vinculo || "")}</td>
-            <td>${escapeHtml(r.carga || "")}</td>
-            <td>${escapeHtml(faltas)}</td>
-            <td>${escapeHtml(semAt)}</td>
-            <td>${escapeHtml(he)}</td>
-            <td title="${escapeHtml(obs)}">${escapeHtml(obsShort)}</td>
-            <td>
-              <div class="actions">
-                <button class="miniBtn" data-edit="${escapeHtml(r.matricula)}">Editar</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join("");
-
-      // bind editar
-      tbody.querySelectorAll("[data-edit]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const mat = btn.getAttribute("data-edit");
-          const row = lastRows.find(x => String(x.matricula) === String(mat));
-          if(row) openEditModal(row);
-        });
-      });
-    }
-
-    // ====== PDF (resumo simples) ======
-    function gerarPDF(){
-      if(!ensureLogged()) return;
-      if(!lastRows.length){
-        showMsg("❌ Carregue um mês ou cadastro antes.", "err");
-        return;
-      }
-
-      // Imprime a página com layout. (prático e sem biblioteca)
-      // Dica: no print, escolha "Salvar como PDF".
-      showMsg("🧾 Abrindo impressão… escolha 'Salvar como PDF'.", "ok");
-      window.print();
-    }
-
-    // ====== BOTÕES ======
-    btnCarregarMes.addEventListener("click", carregarMes);
-    btnCarregarCadastro.addEventListener("click", carregarCadastro);
-    btnPDF.addEventListener("click", gerarPDF);
-
-    btnSair.addEventListener("click", () => {
-      token = "";
-      localStorage.removeItem("semec_admin_token");
-      ensureLogged();
-      tbody.innerHTML = `<tr><td colspan="11" class="hint">Deslogado. Faça login novamente.</td></tr>`;
-      showMsg("🚪 Você saiu do Admin.", "");
     });
 
-    // ====== INIT ======
-    (function init(){
-      periodo.value = defaultPeriodo();
-      checkApi();
-      setInterval(checkApi, 20000);
-
-      if(!token){
-        ensureLogged();
-        adminPass.focus();
-      }else{
-        ensureLogged();
-        // tenta carregar mês automático
-        carregarMes().catch(()=>{});
-      }
-    })();
+    // auto: se tiver token, tenta facilitar
+    if (TOKEN){
+      setStatus("Token encontrado. Clique em “Carregar Funcionários”.");
+    } else {
+      setStatus("Pronto. Configure a URL da API, faça login e carregue os funcionários.");
+    }
   </script>
-  </body>
+</body>
 </html>
