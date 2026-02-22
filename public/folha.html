@@ -1,775 +1,195 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Folha de Ponto - Usuário</title>
+<meta charset="UTF-8">
+<title>Folha</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root{
-      --bg:#0f172a;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --accent:#2563eb;
-      --accent2:#1d4ed8;
-      --ok:#22c55e;
-      --bad:#ef4444;
-      --border:rgba(255,255,255,0.08);
-      --shadow: 0 14px 40px rgba(0,0,0,0.35);
-      --radius: 18px;
-      --cardGrad: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-    }
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+padding:20px;
+}
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 30% 0%, #1e293b 0%, var(--bg) 55%);
-      color:var(--text);
-      min-height:100vh;
-    }
+.box{
+max-width:600px;
+margin:auto;
+background:#111827;
+padding:25px;
+border-radius:12px;
+}
 
-    header{ padding:18px 18px 8px; }
+input,textarea{
+width:100%;
+padding:12px;
+margin-bottom:12px;
+border-radius:8px;
+border:none;
+}
 
-    .topbar{
-      max-width:1100px;
-      margin:0 auto;
-      background: var(--cardGrad);
-      border:1px solid var(--border);
-      border-radius: var(--radius);
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      box-shadow: var(--shadow);
-    }
+button{
+padding:12px;
+background:#2563eb;
+color:white;
+border:none;
+width:100%;
+border-radius:8px;
+font-weight:bold;
+cursor:pointer;
+}
 
-    .brand{ display:flex; align-items:center; gap:12px; min-width:220px; }
-    .logo{
-      width:44px; height:44px; border-radius:12px;
-      background: linear-gradient(145deg, rgba(37,99,235,0.9), rgba(34,197,94,0.75));
-      display:grid; place-items:center; font-weight:800; letter-spacing:0.5px;
-      box-shadow: 0 10px 28px rgba(37,99,235,0.25);
-    }
-    .brand h1{ font-size:15px; margin:0; line-height:1.15; }
-    .brand p{ margin:0; font-size:12px; color:var(--muted); }
-
-    .status{
-      font-size:12px; color:var(--muted);
-      display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
-    }
-    .pill{
-      border:1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      padding:6px 10px;
-      border-radius: 999px;
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      white-space:nowrap;
-    }
-    .dot{
-      width:8px; height:8px; border-radius:999px;
-      background: var(--ok);
-      box-shadow:0 0 0 4px rgba(34,197,94,0.15);
-    }
-
-    main{ padding:14px 18px 40px; }
-    .wrap{
-      max-width:1100px; margin:0 auto;
-      display:grid; grid-template-columns: 1.05fr 0.95fr; gap:14px;
-    }
-    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
-
-    .card{
-      background: var(--cardGrad);
-      border:1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .card .head{
-      padding:14px 16px;
-      border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      background: rgba(0,0,0,0.10);
-    }
-    .card .head h2{ margin:0; font-size:14px; letter-spacing:0.2px; }
-    .card .head span{ color:var(--muted); font-size:12px; }
-    .content{ padding:16px; }
-
-    .grid{
-      display:grid; grid-template-columns: 1fr 1fr; gap:12px;
-    }
-    @media (max-width: 700px){ .grid{ grid-template-columns:1fr; } }
-
-    label{
-      font-size:12px; color:var(--muted);
-      display:block; margin:0 0 6px;
-    }
-
-    input, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background: rgba(0,0,0,0.20);
-      color:var(--text);
-      outline:none;
-      font-size:14px;
-    }
-
-    input[disabled], input[readonly], textarea[readonly]{
-      opacity:0.85;
-      cursor:not-allowed;
-      background: rgba(0,0,0,0.28);
-    }
-
-    input::placeholder, textarea::placeholder{ color: rgba(148,163,184,0.7); }
-    textarea{ min-height:100px; resize: vertical; }
-
-    .row{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-    }
-
-    .btn{
-      cursor:pointer;
-      border:none;
-      padding:12px 14px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      color:white;
-      font-weight:700;
-      letter-spacing:0.2px;
-      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      min-width: 160px;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn.secondary{
-      background: rgba(255,255,255,0.06);
-      border:1px solid var(--border);
-      color:var(--text);
-      box-shadow:none;
-      font-weight:600;
-      min-width: 160px;
-    }
-
-    .msg{
-      margin-top:12px;
-      padding:12px 12px;
-      border-radius: 14px;
-      border:1px solid var(--border);
-      background: rgba(0,0,0,0.18);
-      font-size:13px;
-      color:var(--muted);
-      display:none;
-    }
-    .msg.ok{ color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }
-    .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
-
-    table{
-      width:100%;
-      border-collapse: collapse;
-      font-size:13px;
-      overflow:hidden;
-      border-radius: 14px;
-      border:1px solid var(--border);
-    }
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:top;
-    }
-    th{
-      background: rgba(255,255,255,0.04);
-      color:var(--muted);
-      font-weight:600;
-      font-size:12px;
-    }
-    tr:last-child td{ border-bottom:none; }
-
-    .small{ font-size:12px; color:var(--muted); }
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size:12px;
-      background: rgba(255,255,255,0.06);
-      border:1px solid var(--border);
-      padding:2px 8px;
-      border-radius: 999px;
-      color:var(--text);
-    }
-
-    /* ====== LOGIN SIMPLES (FOLHA) ====== */
-    .overlay{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,0.62);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index: 50;
-    }
-    .modal{
-      width:min(520px, 100%);
-      background: var(--cardGrad);
-      border:1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .modal .mhead{
-      padding:14px 16px;
-      border-bottom:1px solid var(--border);
-      background: rgba(0,0,0,0.14);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .modal .mhead h3{ margin:0; font-size:14px; }
-    .modal .mbody{ padding:16px; }
-    .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
-  </style>
+.login{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:black;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+</style>
 </head>
 
 <body>
 
-  <!-- 🔒 LOGIN SIMPLES -->
-  <div class="overlay" id="loginOverlay">
-    <div class="modal">
-      <div class="mhead">
-        <h3>🔒 Acesso • Folha de Ponto</h3>
-        <span class="kbd">Senha: 2026</span>
-      </div>
-      <div class="mbody">
-        <div class="small" style="margin-bottom:10px;">
-          Digite a senha para acessar a página de envio.
-        </div>
-
-        <label for="senhaFolha">Senha</label>
-        <input id="senhaFolha" type="password" placeholder="Digite a senha..." />
-
-        <div class="row" style="margin-top:12px; justify-content:flex-end;">
-          <button class="btn" id="btnEntrar" type="button">✅ Entrar</button>
-        </div>
-
-        <div class="merr" id="loginErr">Senha inválida.</div>
-
-        <div class="small" style="margin-top:10px;">
-          Obs.: esta senha é simples e fica no HTML (não é segurança forte).
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <header>
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">SE</div>
-        <div>
-          <h1>SEMEC • Folha de Ponto</h1>
-          <p>Envio mensal para o Administrativo</p>
-        </div>
-      </div>
-
-      <div class="status">
-        <div class="pill"><span class="dot"></span><span>Servidor: <span id="apiStatus">verificando...</span></span></div>
-        <div class="pill">Funcionários: <span class="kbd" id="funcCount">0</span></div>
-        <div class="pill">Envio: <span class="kbd">somente mês vigente</span></div>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <div class="wrap">
-
-      <!-- CARD 1: FORMULÁRIO -->
-      <section class="card">
-        <div class="head">
-          <h2>Preencher folha</h2>
-          <span>Somente faltas, HE e observações</span>
-        </div>
-
-        <div class="content">
-
-          <div class="grid">
-            <div>
-              <label for="periodo">Mês/Ano do registro (mês vigente)</label>
-              <input id="periodo" type="month" disabled />
-              <div class="small" style="margin-top:6px;">
-                O envio é permitido somente para o mês atual.
-              </div>
-            </div>
-
-            <div>
-              <label for="matricula">Matrícula (busca no cadastro)</label>
-              <input id="matricula" type="text" placeholder="Ex.: 101" list="dlMatriculas" />
-              <datalist id="dlMatriculas"></datalist>
-              <div class="small" id="hintMatricula"></div>
-            </div>
-
-            <div>
-              <label for="nome">Nome do funcionário (busca no cadastro)</label>
-              <input id="nome" type="text" placeholder="Ex.: Maria Silva" list="dlNomes" />
-              <datalist id="dlNomes"></datalist>
-              <div class="small" id="hintNome"></div>
-            </div>
-
-            <div>
-              <label for="escola">Escola (somente leitura)</label>
-              <input id="escola" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="funcao">Função (somente leitura)</label>
-              <input id="funcao" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="vinculo">Vínculo (somente leitura)</label>
-              <input id="vinculo" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="carga">Carga horária (somente leitura)</label>
-              <input id="carga" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="horas_extras">Horas Extras (soma)</label>
-              <input id="horas_extras" type="number" min="0" step="1" placeholder="0" />
-            </div>
-
-            <div>
-              <label for="faltas">Faltas (total)</label>
-              <input id="faltas" type="number" min="0" step="1" placeholder="0" />
-            </div>
-
-            <div>
-              <label for="falta_com_atestado">Falta com atestado</label>
-              <input id="falta_com_atestado" type="number" min="0" step="1" placeholder="0" />
-            </div>
-          </div>
-
-          <div style="margin-top:12px;">
-            <label for="observacoes">Observações</label>
-            <textarea id="observacoes" placeholder="Digite observações do mês..."></textarea>
-          </div>
-
-          <div class="row" style="margin-top:14px;">
-            <button class="btn" id="btnEnviar" type="button">📩 Enviar para ADM</button>
-            <button class="btn secondary" id="btnLimpar" type="button">🧹 Limpar</button>
-            <span class="small">Pesquise por matrícula ou nome para preencher automático.</span>
-          </div>
-
-          <div class="msg" id="msgBox"></div>
-        </div>
-      </section>
-
-      <!-- CARD 2: ÚLTIMOS ENVIOS (LOCAL) -->
-      <section class="card">
-        <div class="head">
-          <h2>Registros enviados (local)</h2>
-          <span>Histórico no navegador</span>
-        </div>
-
-        <div class="content">
-          <div class="row" style="margin-bottom:10px;">
-            <button class="btn secondary" id="btnAtualizarLista" type="button">🔄 Atualizar lista</button>
-            <button class="btn secondary" id="btnLimparHistorico" type="button">🗑️ Limpar histórico</button>
-          </div>
-
-          <div class="small" style="margin-bottom:10px;">
-            Esse quadro é apenas para conferência no seu navegador.
-          </div>
-
-          <div style="overflow:auto;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Matrícula</th>
-                  <th>Nome</th>
-                  <th>Faltas</th>
-                  <th>Com atestado</th>
-                  <th>HE</th>
-                </tr>
-              </thead>
-              <tbody id="listaEnvios">
-                <tr><td colspan="6" class="small">Nenhum envio ainda.</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="msg" id="msgList"></div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <script>
-    const $ = (id) => document.getElementById(id);
-
-    // ====== SENHA SIMPLES (CLIENT-SIDE) ======
-    const FOLHA_PASSWORD = "2026";
-    const loginOverlay = $("loginOverlay");
-    const senhaFolha = $("senhaFolha");
-    const btnEntrar = $("btnEntrar");
-    const loginErr = $("loginErr");
-
-    // Se quiser “lembrar” no navegador:
-    const KEY_AUTH = "folha_auth_ok";
-
-    function openLogin(){
-      loginOverlay.style.display = "flex";
-      loginErr.style.display = "none";
-      senhaFolha.value = "";
-      senhaFolha.focus();
-    }
-    function closeLogin(){
-      loginOverlay.style.display = "none";
-    }
-    function doLogin(){
-      loginErr.style.display = "none";
-      const s = String(senhaFolha.value || "").trim();
-      if(s !== FOLHA_PASSWORD){
-        loginErr.textContent = "Senha inválida.";
-        loginErr.style.display = "block";
-        return;
-      }
-      localStorage.setItem(KEY_AUTH, "1");
-      closeLogin();
-    }
-    btnEntrar.addEventListener("click", doLogin);
-    senhaFolha.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
-
-    // ====== DOM ======
-    const periodo = $("periodo");
-    const escola = $("escola");
-    const matricula = $("matricula");
-    const nome = $("nome");
-    const funcao = $("funcao");
-    const vinculo = $("vinculo");
-    const carga = $("carga");
-    const horas_extras = $("horas_extras");
-    const faltas = $("faltas");
-    const falta_com_atestado = $("falta_com_atestado");
-    const observacoes = $("observacoes");
-
-    const msgBox = $("msgBox");
-    const msgList = $("msgList");
-
-    const dlMatriculas = $("dlMatriculas");
-    const dlNomes = $("dlNomes");
-    const hintMatricula = $("hintMatricula");
-    const hintNome = $("hintNome");
-    const funcCount = $("funcCount");
-
-    // ====== API ======
-    const API_SEND = "/api/folha/enviar";
-    const API_FUNC = "/api/funcionarios";
-
-    let funcionarios = [];
-    let byMat = new Map();   // matricula -> funcionario
-    let byNome = new Map();  // nomeLower -> funcionario
-
-    function showMsg(el, text, type){
-      el.className = "msg " + (type || "");
-      el.textContent = text;
-      el.style.display = "block";
-      setTimeout(() => { el.style.display = "none"; }, 6500);
-    }
-
-    function nowISO(){ return new Date().toISOString(); }
-
-    function escapeHtml(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function getLocalHistory(){
-      try{ return JSON.parse(localStorage.getItem("semec_envios") || "[]"); }
-      catch{ return []; }
-    }
-    function setLocalHistory(arr){ localStorage.setItem("semec_envios", JSON.stringify(arr)); }
-    function addToHistory(item){
-      const arr = getLocalHistory();
-      arr.unshift(item);
-      setLocalHistory(arr.slice(0, 200));
-    }
-
-    function renderHistory(){
-      const tbody = $("listaEnvios");
-      const arr = getLocalHistory();
-
-      if(!arr.length){
-        tbody.innerHTML = `<tr><td colspan="6" class="small">Nenhum envio ainda.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = arr.map(it => `
-        <tr>
-          <td>${escapeHtml(it.periodo || "")}</td>
-          <td>${escapeHtml(it.matricula || "")}</td>
-          <td>${escapeHtml(it.nome || "")}</td>
-          <td>${Number(it.faltas ?? 0)}</td>
-          <td>${Number(it.falta_com_atestado ?? 0)}</td>
-          <td>${Number(it.horas_extras ?? 0)}</td>
-        </tr>
-      `).join("");
-    }
-
-    function defaultPeriodoAtual(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      return `${y}-${m}`;
-    }
-
-    function ensurePeriodoVigente(){
-      const vigente = defaultPeriodoAtual();
-      if(periodo.value !== vigente){
-        periodo.value = vigente;
-      }
-      return vigente;
-    }
-
-    async function pingServer(){
-      try{
-        const res = await fetch("/", { method:"GET" });
-        $("apiStatus").textContent = res.ok ? "online" : "online?";
-      }catch{
-        $("apiStatus").textContent = "offline?";
-      }
-    }
-
-    function clearForm(){
-      // não limpa o período (mês vigente)
-      matricula.value = "";
-      nome.value = "";
-      escola.value = "";
-      funcao.value = "";
-      vinculo.value = "";
-      carga.value = "";
-
-      horas_extras.value = "";
-      faltas.value = "";
-      falta_com_atestado.value = "";
-      observacoes.value = "";
-
-      hintMatricula.textContent = "";
-      hintNome.textContent = "";
-    }
-
-    function fillFuncionario(f){
-      if(!f) return;
-
-      // Campos do cadastro: SOMENTE LEITURA
-      matricula.value = String(f.matricula || "");
-      nome.value = String(f.nome || "");
-      escola.value = String(f.escola || "");
-      funcao.value = String(f.funcao || "");
-      vinculo.value = String(f.vinculo || "");
-      carga.value = String(f.carga || "");
-
-      hintMatricula.textContent = f.nome ? `Encontrado: ${f.nome}` : "Encontrado no cadastro.";
-      hintNome.textContent = f.matricula ? `Matrícula: ${f.matricula}` : "";
-    }
-
-    function buildIndexes(list){
-      funcionarios = Array.isArray(list) ? list : [];
-      byMat = new Map();
-      byNome = new Map();
-
-      dlMatriculas.innerHTML = "";
-      dlNomes.innerHTML = "";
-
-      for(const f of funcionarios){
-        const mat = String(f.matricula || "").trim();
-        const nm = String(f.nome || "").trim();
-
-        if(mat){
-          byMat.set(mat, f);
-          const opt = document.createElement("option");
-          opt.value = mat;
-          dlMatriculas.appendChild(opt);
-        }
-
-        if(nm){
-          byNome.set(nm.toLowerCase(), f);
-          const opt = document.createElement("option");
-          opt.value = nm;
-          dlNomes.appendChild(opt);
-        }
-      }
-
-      funcCount.textContent = String(funcionarios.length);
-    }
-
-    async function carregarFuncionarios(){
-      try{
-        const r = await fetch(API_FUNC, { method: "GET" });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          showMsg(msgBox, "⚠️ Não foi possível carregar funcionários. (Cadastre no Admin)", "err");
-          return;
-        }
-        buildIndexes(j.funcionarios || []);
-      }catch(e){
-        showMsg(msgBox, "⚠️ Falha ao carregar funcionários (sem conexão).", "err");
-      }
-    }
-
-    function validateAndLockFuncionario(){
-      const vigente = ensurePeriodoVigente();
-
-      if(periodo.value !== vigente){
-        return "Só é permitido enviar o mês vigente.";
-      }
-
-      const mat = matricula.value.trim();
-      const nm = nome.value.trim();
-
-      const fByMat = byMat.get(mat);
-      const fByNome = byNome.get(nm.toLowerCase());
-      const f = fByMat || fByNome;
-
-      if(!f){
-        return "Funcionário não encontrado no cadastro do Admin. Pesquise pela matrícula ou nome correto.";
-      }
-
-      // trava e força dados do cadastro
-      fillFuncionario(f);
-      return null;
-    }
-
-    async function enviar(){
-      const err = validateAndLockFuncionario();
-      if(err){
-        showMsg(msgBox, "❌ " + err, "err");
-        return;
-      }
-
-      const payload = {
-        // mês vigente travado
-        periodo: periodo.value,
-
-        // dados do funcionário (do cadastro - somente leitura)
-        matricula: matricula.value.trim(),
-        nome: nome.value.trim(),
-        funcao: funcao.value.trim(),
-        vinculo: vinculo.value.trim(),
-        carga: carga.value.trim(),
-        escola: escola.value.trim(),
-
-        // únicos campos editáveis na folha:
-        faltas: Number(faltas.value || 0),
-        falta_com_atestado: Number(falta_com_atestado.value || 0),
-        horas_extras: Number(horas_extras.value || 0),
-        observacoes: (observacoes.value || "").trim()
-      };
-
-      const btn = $("btnEnviar");
-      btn.disabled = true;
-      btn.textContent = "Enviando...";
-
-      try{
-        const res = await fetch(API_SEND, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if(!res.ok || !data?.ok){
-          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
-          showMsg(msgBox, "❌ " + msg, "err");
-          return;
-        }
-
-        addToHistory({
-          quando: nowISO(),
-          periodo: payload.periodo,
-          matricula: payload.matricula,
-          nome: payload.nome,
-          faltas: payload.faltas,
-          falta_com_atestado: payload.falta_com_atestado,
-          horas_extras: payload.horas_extras
-        });
-
-        renderHistory();
-        showMsg(msgBox, "✅ Enviado com sucesso!", "ok");
-
-        // limpa apenas campos editáveis + pesquisa
-        clearForm();
-
-      }catch(e){
-        showMsg(msgBox, "❌ Erro de conexão: " + (e?.message || "não foi possível enviar"), "err");
-      }finally{
-        btn.disabled = false;
-        btn.textContent = "📩 Enviar para ADM";
-      }
-    }
-
-    // Autopreenchimento por matrícula / nome
-    matricula.addEventListener("input", () => {
-      const mat = matricula.value.trim();
-      const f = byMat.get(mat);
-      if(f) fillFuncionario(f);
-    });
-
-    nome.addEventListener("input", () => {
-      const nm = nome.value.trim().toLowerCase();
-      const f = byNome.get(nm);
-      if(f) fillFuncionario(f);
-    });
-
-    // BOTÕES
-    $("btnEnviar").addEventListener("click", enviar);
-    $("btnLimpar").addEventListener("click", () => {
-      clearForm();
-      showMsg(msgBox, "🧹 Campos limpos.", "");
-    });
-
-    $("btnAtualizarLista").addEventListener("click", () => {
-      renderHistory();
-      showMsg(msgList, "🔄 Lista atualizada.", "ok");
-    });
-
-    $("btnLimparHistorico").addEventListener("click", () => {
-      setLocalHistory([]);
-      renderHistory();
-      showMsg(msgList, "🗑️ Histórico apagado.", "");
-    });
-
-    // INIT
-    (function init(){
-      // Login simples
-      const ok = localStorage.getItem(KEY_AUTH) === "1";
-      if(!ok) openLogin();
-      else closeLogin();
-
-      periodo.value = defaultPeriodoAtual();
-      ensurePeriodoVigente();
-      renderHistory();
-      pingServer();
-      carregarFuncionarios();
-
-      // reforço: trava mês atual
-      setInterval(ensurePeriodoVigente, 5000);
-    })();
-  </script>
+<div class="login" id="login">
+<div class="box">
+<h2>Senha</h2>
+<input type="password" id="senha">
+<button onclick="entrar()">Entrar</button>
+<p id="erro"></p>
+</div>
+</div>
+
+<div class="box">
+<h2>Enviar Folha</h2>
+
+<label>Mês</label>
+<input type="month" id="mes" disabled>
+
+<label>Matrícula</label>
+<input list="listaMat" id="matricula">
+<datalist id="listaMat"></datalist>
+
+<label>Nome</label>
+<input list="listaNome" id="nome">
+<datalist id="listaNome"></datalist>
+
+<label>Função</label>
+<input id="funcao" readonly>
+
+<label>Vínculo</label>
+<input id="vinculo" readonly>
+
+<label>Carga</label>
+<input id="carga" readonly>
+
+<label>Escola</label>
+<input id="escola" readonly>
+
+<label>Faltas</label>
+<input type="number" id="faltas">
+
+<label>Falta com atestado</label>
+<input type="number" id="falta">
+
+<label>Horas extras</label>
+<input type="number" id="he">
+
+<label>Observações</label>
+<textarea id="obs"></textarea>
+
+<button onclick="enviar()">ENVIAR</button>
+
+<p id="msg"></p>
+</div>
+
+<script>
+if(localStorage.getItem("logado")=="1"){
+document.getElementById("login").style.display="none";
+}
+
+function entrar(){
+if(document.getElementById("senha").value=="2026"){
+localStorage.setItem("logado","1");
+location.reload();
+}else{
+document.getElementById("erro").innerText="Senha errada";
+}
+}
+
+// mês atual
+let d=new Date();
+let mes=(d.getMonth()+1).toString().padStart(2,"0");
+let atual=d.getFullYear()+"-"+mes;
+document.getElementById("mes").value=atual;
+
+// carregar funcionarios
+fetch("/api/funcionarios")
+.then(r=>r.json())
+.then(d=>{
+let lista=d.funcionarios;
+
+lista.forEach(f=>{
+let o=document.createElement("option");
+o.value=f.matricula;
+listaMat.appendChild(o);
+
+let n=document.createElement("option");
+n.value=f.nome;
+listaNome.appendChild(n);
+});
+
+window.funcs=lista;
+});
+
+matricula.oninput=preencher;
+nome.oninput=preencher;
+
+function preencher(){
+let m=matricula.value;
+let n=nome.value;
+
+let f=funcs.find(x=>x.matricula==m||x.nome==n);
+if(!f) return;
+
+nome.value=f.nome;
+matricula.value=f.matricula;
+funcao.value=f.funcao;
+vinculo.value=f.vinculo;
+carga.value=f.carga;
+escola.value=f.escola;
+}
+
+function enviar(){
+let data={
+periodo:mes.value,
+matricula:matricula.value,
+nome:nome.value,
+funcao:funcao.value,
+vinculo:vinculo.value,
+carga:carga.value,
+escola:escola.value,
+faltas:faltas.value,
+falta_com_atestado:falta.value,
+horas_extras:he.value,
+observacoes:obs.value
+};
+
+fetch("/api/folha/enviar",{
+method:"POST",
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify(data)
+})
+.then(r=>r.json())
+.then(r=>{
+msg.innerText="Enviado!";
+});
+}
+</script>
 </body>
 </html>
