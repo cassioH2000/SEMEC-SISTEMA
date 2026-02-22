@@ -142,10 +142,134 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 12px;
     }
-    /* Fundo branco SOMENTE quando estiver editando funcionário */
-      #editOverlay{
-     background: #ffffff !important;
-}
+
+    /* =========================
+       PDF PROFISSIONAL - PREFEITURA (PRINT)
+       ========================= */
+    @media print {
+
+      @page{
+        size: A4 landscape;
+        margin: 12mm;
+      }
+
+      body{
+        background:#fff !important;
+        color:#000 !important;
+      }
+
+      /* Esconde tudo que não deve ir pro PDF */
+      .topbar, .controls, .actions, #msgBox, #loginOverlay, #editOverlay{
+        display:none !important;
+      }
+
+      /* Remove "cards" do tema escuro */
+      .card{
+        box-shadow:none !important;
+        border:none !important;
+        background:#fff !important;
+      }
+
+      /* Mostra apenas a área do relatório */
+      #printArea{
+        display:block !important;
+      }
+
+      /* Cabeçalho institucional */
+      .pdf-header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        border: 1px solid #000;
+        padding:10px 12px;
+        margin-bottom:10px;
+      }
+
+      .pdf-left, .pdf-right{
+        width:120px;
+        height:60px;
+        border: 1px solid #000;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:10px;
+        text-align:center;
+        line-height:1.1;
+      }
+
+      .pdf-center{
+        flex:1;
+        text-align:center;
+        line-height:1.15;
+      }
+
+      .pdf-center .t1{
+        font-size:14px;
+        font-weight:800;
+        letter-spacing:0.2px;
+      }
+
+      .pdf-center .t2{
+        font-size:12px;
+        font-weight:700;
+        margin-top:2px;
+      }
+
+      .pdf-center .t3{
+        font-size:11px;
+        margin-top:4px;
+      }
+
+      /* Tabela */
+      table{
+        width:100% !important;
+        border-collapse:collapse !important;
+        font-size:10.5px !important;
+      }
+
+      thead th{
+        position:static !important;
+        background:#000 !important;
+        color:#fff !important;
+        border:1px solid #000 !important;
+        padding:6px 6px !important;
+        text-align:left !important;
+      }
+
+      tbody td{
+        border:1px solid #000 !important;
+        padding:6px 6px !important;
+        vertical-align:top !important;
+      }
+
+      tbody tr:nth-child(even) td{
+        background:#f2f2f2 !important;
+      }
+
+      /* Totais */
+      .pdf-totals{
+        margin:10px 0 10px;
+        border:1px solid #000;
+        padding:8px 10px;
+        font-size:11px;
+      }
+
+      .pdf-footer{
+        position:fixed;
+        left: 12mm;
+        right: 12mm;
+        bottom: 8mm;
+        border-top:1px solid #000;
+        padding-top:6px;
+        font-size:10px;
+        display:flex;
+        justify-content:space-between;
+      }
+
+      .pageNumber:before { content: counter(page); }
+      .totalPages:before { content: counter(pages); }
+    }
   </style>
 </head>
 
@@ -270,6 +394,29 @@
   <main>
     <div class="wrap">
 
+      <!-- ===== ÁREA DO PDF (SÓ APARECE NO PRINT) ===== -->
+      <div id="printArea" style="display:none;">
+        <div class="pdf-header">
+          <div class="pdf-left">LOGO<br>PREFEITURA</div>
+
+          <div class="pdf-center">
+            <div class="t1">SECRETARIA MUNICIPAL DE EDUCAÇÃO</div>
+            <div class="t2">RELATÓRIO MENSAL – FOLHA DE PONTO</div>
+            <div class="t3" id="pdfPeriodoTxt">Período: —</div>
+          </div>
+
+          <div class="pdf-right">LOGO<br>SEMEC</div>
+        </div>
+
+        <div class="pdf-totals" id="pdfTotalsBox"></div>
+
+        <div class="pdf-footer">
+          <div id="pdfEmitidoEm">Emitido em: —</div>
+          <div>Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>
+        </div>
+      </div>
+      <!-- ===== FIM ÁREA DO PDF ===== -->
+
       <div class="grid">
         <section class="card">
           <div class="head"><h2>Controles</h2><span class="pill">Admin</span></div>
@@ -312,7 +459,7 @@
             </div>
 
             <div class="hint" style="margin-top:10px;">
-              • O botão <b>Editar</b> edita cadastro e a folha do mês (faltas / falta com atestado / HE / obs).
+              • O botão <b>Editar</b> edita cadastro e a folha do mês (faltas / com atestado / HE / obs).
             </div>
           </div>
         </section>
@@ -325,7 +472,7 @@
         </div>
         <div class="content">
           <div style="overflow:auto;">
-            <table>
+            <table id="tabelaRelatorio">
               <thead>
                 <tr>
                   <th>Escola</th>
@@ -360,9 +507,7 @@
     const API_CADASTRO = "/api/admin/funcionarios";
     const API_MES = "/api/admin/mes"; // ?periodo=YYYY-MM
     const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
-
-    // usa endpoint existente do server para salvar folha (UPSERT)
-    const API_ENVIAR_FOLHA = "/api/folha/enviar";
+    const API_ENVIAR_FOLHA = "/api/folha/enviar"; // salva folha (UPSERT)
 
     // ====== DOM ======
     const $ = (id) => document.getElementById(id);
@@ -413,6 +558,12 @@
     const kpiComFolha = $("kpiComFolha");
     const kpiFaltas = $("kpiFaltas");
     const kpiHE = $("kpiHE");
+
+    // PDF area
+    const pdfPeriodoTxt = $("pdfPeriodoTxt");
+    const pdfTotalsBox = $("pdfTotalsBox");
+    const pdfEmitidoEm = $("pdfEmitidoEm");
+    const printArea = $("printArea");
 
     // ====== STATE ======
     let token = localStorage.getItem("semec_admin_token") || "";
@@ -553,7 +704,6 @@
     }
 
     function closeEditModal(){ editOverlay.style.display = "none"; }
-
     btnCancelarEdicao.addEventListener("click", closeEditModal);
 
     async function salvarEdicao(){
@@ -588,7 +738,7 @@
           return;
         }
 
-        // 2) salva folha do mês (se estiver no modo mês)
+        // 2) salva folha do mês
         if(currentMode === "mes"){
           const periodoSel = (currentPeriodo || e_periodo.value || "").trim();
           if(!periodoSel){
@@ -836,16 +986,53 @@
     btnCarregarMes.addEventListener("click", carregarMes);
     btnCarregarCadastro.addEventListener("click", carregarCadastro);
 
-    // ====== PDF ======
-    btnPDF.addEventListener("click", () => {
+    // ====== PDF PROFISSIONAL - PREFEITURA ======
+    btnPDF.addEventListener("click", gerarPDFPrefeitura);
+
+    function gerarPDFPrefeitura(){
       if(!ensureLogged()) return;
-      if(!lastRows.length){
-        showMsg("❌ Carregue um mês ou cadastro antes.", "err");
+
+      if(currentMode !== "mes"){
+        showMsg("Carregue um mês (📅 Carregar Mês) antes de gerar o PDF.", "err");
         return;
       }
-      showMsg("🧾 Abrindo impressão… escolha 'Salvar como PDF'.", "ok");
+
+      if(!lastRows || !lastRows.length){
+        showMsg("Nenhum dado para gerar PDF.", "err");
+        return;
+      }
+
+      const p = (currentPeriodo || "");
+      const now = new Date();
+      const dt = now.toLocaleString("pt-BR");
+
+      if(pdfPeriodoTxt) pdfPeriodoTxt.textContent = `Período: ${p}`;
+      if(pdfEmitidoEm) pdfEmitidoEm.textContent = `Emitido em: ${dt}`;
+
+      let totalFaltas = 0;
+      let totalComAt = 0;
+      let totalHE = 0;
+
+      for(const r of lastRows){
+        totalFaltas += Number(r.faltas || 0);
+        totalComAt += Number(r.falta_com_atestado || 0);
+        totalHE += Number(r.horas_extras || 0);
+      }
+
+      if(pdfTotalsBox){
+        pdfTotalsBox.innerHTML = `
+          <b>Resumo do Período</b><br>
+          Total de funcionários: ${lastRows.length} &nbsp;•&nbsp;
+          Total de faltas: ${totalFaltas} &nbsp;•&nbsp;
+          Total com atestado: ${totalComAt} &nbsp;•&nbsp;
+          Total HE: ${totalHE}
+        `;
+      }
+
+      if(printArea) printArea.style.display = "block";
       window.print();
-    });
+      if(printArea) printArea.style.display = "none";
+    }
 
     // ====== SAIR ======
     btnSair.addEventListener("click", () => {
@@ -871,6 +1058,17 @@
       }
     })();
   </script>
+
+  <!--
+    ✅ COMO COLOCAR LOGO DE VERDADE:
+    1) Coloque os arquivos dentro de /public (ex: public/logo_prefeitura.png e public/logo_semec.png)
+    2) Troque:
+         <div class="pdf-left">LOGO...</div>
+       por:
+         <div class="pdf-left" style="border:none;">
+           <img src="logo_prefeitura.png" style="max-width:120px; max-height:60px;">
+         </div>
+       e faça o mesmo na .pdf-right
+  -->
 </body>
 </html>
-
