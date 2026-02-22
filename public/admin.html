@@ -158,24 +158,20 @@
         color:#000 !important;
       }
 
-      /* Esconde tudo que não deve ir pro PDF */
       .topbar, .controls, .actions, #msgBox, #loginOverlay, #editOverlay{
         display:none !important;
       }
 
-      /* Remove "cards" do tema escuro */
       .card{
         box-shadow:none !important;
         border:none !important;
         background:#fff !important;
       }
 
-      /* Mostra apenas a área do relatório */
       #printArea{
         display:block !important;
       }
 
-      /* Cabeçalho institucional */
       .pdf-header{
         display:flex;
         align-items:center;
@@ -189,11 +185,9 @@
       .pdf-left, .pdf-right{
         width:120px;
         height:60px;
-        border: 1px solid #000;
         display:flex;
         align-items:center;
         justify-content:center;
-        font-size:10px;
         text-align:center;
         line-height:1.1;
       }
@@ -221,7 +215,6 @@
         margin-top:4px;
       }
 
-      /* Tabela */
       table{
         width:100% !important;
         border-collapse:collapse !important;
@@ -247,7 +240,6 @@
         background:#f2f2f2 !important;
       }
 
-      /* Totais */
       .pdf-totals{
         margin:10px 0 10px;
         border:1px solid #000;
@@ -396,22 +388,27 @@
 
       <!-- ===== ÁREA DO PDF (SÓ APARECE NO PRINT) ===== -->
       <div id="printArea" style="display:none;">
+
+        <!-- ✅ CORRIGIDO: agora o pdf-header fecha certinho -->
         <div class="pdf-header">
-         <div class="pdf-left" style="border:none;">
-        <img src="logo_prefeitura.png" alt="Prefeitura"
-       style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
-        </div>
 
-           <div class="pdf-center">
-             <div class="t1">SECRETARIA MUNICIPAL DE EDUCAÇÃO</div>
-           <div class="t2">RELATÓRIO MENSAL – FOLHA DE PONTO</div>
-           <div class="t3" id="pdfPeriodoTxt">Período: —</div>
-</div>
+          <div class="pdf-left" style="border:none;">
+            <img src="logo_prefeitura.png" alt="Prefeitura"
+              style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
+          </div>
 
-<div class="pdf-right" style="border:none;">
-  <img src="logo_educacaoo.png" alt="Secretaria de Educação"
-       style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
-</div>
+          <div class="pdf-center">
+            <div class="t1">SECRETARIA MUNICIPAL DE EDUCAÇÃO</div>
+            <div class="t2">RELATÓRIO MENSAL – FOLHA DE PONTO</div>
+            <div class="t3" id="pdfPeriodoTxt">Período: —</div>
+          </div>
+
+          <div class="pdf-right" style="border:none;">
+            <img src="logo_educacaoo.png" alt="Secretaria de Educação"
+              style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
+          </div>
+
+        </div><!-- ✅ fecha pdf-header -->
 
         <div class="pdf-totals" id="pdfTotalsBox"></div>
 
@@ -419,6 +416,7 @@
           <div id="pdfEmitidoEm">Emitido em: —</div>
           <div>Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>
         </div>
+
       </div>
       <!-- ===== FIM ÁREA DO PDF ===== -->
 
@@ -506,15 +504,13 @@
   </main>
 
   <script>
-    // ====== API ======
     const API_HEALTH = "/api/health";
     const API_LOGIN = "/api/login";
     const API_CADASTRO = "/api/admin/funcionarios";
-    const API_MES = "/api/admin/mes"; // ?periodo=YYYY-MM
+    const API_MES = "/api/admin/mes";
     const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
-    const API_ENVIAR_FOLHA = "/api/folha/enviar"; // salva folha (UPSERT)
+    const API_ENVIAR_FOLHA = "/api/folha/enviar";
 
-    // ====== DOM ======
     const $ = (id) => document.getElementById(id);
 
     const loginOverlay = $("loginOverlay");
@@ -564,19 +560,16 @@
     const kpiFaltas = $("kpiFaltas");
     const kpiHE = $("kpiHE");
 
-    // PDF area
     const pdfPeriodoTxt = $("pdfPeriodoTxt");
     const pdfTotalsBox = $("pdfTotalsBox");
     const pdfEmitidoEm = $("pdfEmitidoEm");
     const printArea = $("printArea");
 
-    // ====== STATE ======
     let token = localStorage.getItem("semec_admin_token") || "";
     let lastRows = [];
     let currentPeriodo = "";
-    let currentMode = "mes"; // "mes" | "cadastro"
+    let currentMode = "mes";
 
-    // ====== UTIL ======
     function escapeHtml(str){
       return String(str ?? "")
         .replaceAll("&","&amp;")
@@ -638,7 +631,6 @@
       return true;
     }
 
-    // ====== LOGIN ======
     async function doLogin(){
       loginErr.style.display = "none";
       const pass = String(adminPass.value || "").trim();
@@ -683,7 +675,6 @@
     btnLogin.addEventListener("click", doLogin);
     adminPass.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
 
-    // ====== EDITAR ======
     function openEditModal(row){
       editErr.style.display = "none";
 
@@ -721,7 +712,6 @@
       btnSalvarEdicao.textContent = "Salvando...";
 
       try{
-        // 1) salva cadastro
         const bodyCadastro = {
           escola: e_escola.value.trim(),
           nome: e_nome.value.trim(),
@@ -743,7 +733,6 @@
           return;
         }
 
-        // 2) salva folha do mês
         if(currentMode === "mes"){
           const periodoSel = (currentPeriodo || e_periodo.value || "").trim();
           if(!periodoSel){
@@ -806,7 +795,6 @@
 
     btnSalvarEdicao.addEventListener("click", salvarEdicao);
 
-    // ====== FILTROS / TABELA ======
     function buildSchoolOptions(rows){
       const schools = Array.from(new Set(rows.map(r => (r.escola||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
       const cur = filtroEscola.value;
@@ -895,7 +883,6 @@
     filtroEscola.addEventListener("change", applyFiltersAndRender);
     pesquisa.addEventListener("input", applyFiltersAndRender);
 
-    // ====== CARREGAR CADASTRO ======
     async function carregarCadastro(){
       if(!ensureLogged()) return;
       currentMode = "cadastro";
@@ -939,7 +926,6 @@
       }
     }
 
-    // ====== CARREGAR MÊS ======
     async function carregarMes(){
       if(!ensureLogged()) return;
       currentMode = "mes";
@@ -991,7 +977,6 @@
     btnCarregarMes.addEventListener("click", carregarMes);
     btnCarregarCadastro.addEventListener("click", carregarCadastro);
 
-    // ====== PDF PROFISSIONAL - PREFEITURA ======
     btnPDF.addEventListener("click", gerarPDFPrefeitura);
 
     function gerarPDFPrefeitura(){
@@ -1039,7 +1024,6 @@
       if(printArea) printArea.style.display = "none";
     }
 
-    // ====== SAIR ======
     btnSair.addEventListener("click", () => {
       token = "";
       localStorage.removeItem("semec_admin_token");
@@ -1048,7 +1032,6 @@
       showMsg("🚪 Você saiu do Admin.", "warn");
     });
 
-    // ====== INIT ======
     (function init(){
       periodo.value = defaultPeriodo();
       checkApi();
@@ -1063,19 +1046,5 @@
       }
     })();
   </script>
-
-  <!--
-    ✅ COMO COLOCAR LOGO DE VERDADE:
-    1) Coloque os arquivos dentro de /public (ex: public/logo_prefeitura.png e public/logo_semec.png)
-    2) Troque:
-         <div class="pdf-left">LOGO...</div>
-       por:
-         <div class="pdf-left" style="border:none;">
-           <img src="logo_prefeitura.png" style="max-width:120px; max-height:60px;">
-         </div>
-       e faça o mesmo na .pdf-right
-  -->
 </body>
 </html>
-
-
