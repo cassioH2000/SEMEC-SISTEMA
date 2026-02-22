@@ -1,4 +1,4 @@
-// src/server.js
+// server.js
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -10,27 +10,18 @@ import dns from "dns";
 const { Pool } = pg;
 
 /**
- * =========================
- * Ajuste importante (Render/Supabase)
- * - força resolver IPv4 primeiro (evita ENETUNREACH/ENODATA em alguns hosts)
- * =========================
+ * Render/Supabase: prioriza IPv4 em alguns ambientes (ajuda a evitar erros de DNS/rede)
  */
-try {
-  dns.setDefaultResultOrder("ipv4first");
-} catch (e) {
-  // ok seguir
-}
+try { dns.setDefaultResultOrder("ipv4first"); } catch {}
 
 /**
- * =========================
- * ENV obrigatórias no Render
- * =========================
- * DATABASE_URL   -> string completa do Postgres (Supabase). Preferir pooler IPv4.
- * ADMIN_PASSWORD -> senha do admin (a mesma que você digita no admin.html)
- * JWT_SECRET     -> qualquer texto grande (ex: "minha-chave-super-secreta-123")
+ * ENV (Render)
+ * - DATABASE_URL
+ * - ADMIN_PASSWORD
+ * - JWT_SECRET
  */
 const PORT = process.env.PORT || 10000;
-const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const JWT_SECRET = process.env.JWT_SECRET || "";
 
@@ -39,33 +30,26 @@ if (!ADMIN_PASSWORD) console.warn("⚠️ Falta ADMIN_PASSWORD no ambiente (Rend
 if (!JWT_SECRET) console.warn("⚠️ Falta JWT_SECRET no ambiente (Render).");
 
 /**
- * =========================
  * Pool Postgres
- * - SSL rejectUnauthorized:false para Supabase (evita SELF_SIGNED_CERT_IN_CHAIN)
- * - max baixo (Render free) e timeouts
- * =========================
  */
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: DATABASE_URL?.includes("sslmode=") ? undefined : { rejectUnauthorized: false },
+  // Se sua DATABASE_URL já tiver sslmode, deixa o pg lidar.
+  ssl: DATABASE_URL.includes("sslmode=") ? undefined : { rejectUnauthorized: false },
   max: 5,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
 });
 
 /**
- * Helper de query SEM prepared statements:
- * - Transaction Pooler (Supabase) pode reclamar de PREPARE
- * - queryMode: 'simple' força protocolo simples (sem prepare)
+ * queryMode: 'simple' para evitar prepared statements (supabase pooler pode reclamar)
  */
 async function dbQuery(text, values = []) {
   return pool.query({ text, values, queryMode: "simple" });
 }
 
 /**
- * =========================
- * Cria tabelas se não existir + MIGRAÇÕES
- * =========================
+ * Cria/atualiza tabelas
  */
 async function ensureSchema() {
   try {
@@ -96,33 +80,27 @@ async function ensureSchema() {
       );
     `);
 
-    // ✅ MIGRAÇÃO: adiciona falta_com_atestado sem quebrar o antigo
+    // ✅ Novo campo (sem quebrar o antigo)
     await dbQuery(`alter table folhas add column if not exists falta_com_atestado int default 0;`);
 
     await dbQuery(`create index if not exists idx_folhas_periodo on folhas(periodo);`);
 
-    console.log("✅ Schema ok (funcionarios / folhas).");
+    console.log("✅ Schema ok.");
   } catch (err) {
-    console.error("❌ Falha ao preparar o banco (ensureSchema):", err?.message || err);
+    console.error("❌ ensureSchema erro:", err?.message || err);
   }
 }
-
-// dispara schema
 ensureSchema();
 
 /**
- * =========================
- * App / middlewares
- * =========================
+ * App
  */
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
 /**
- * =========================
- * Static (páginas)
- * =========================
+ * Static: /public
  */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,9 +108,7 @@ const publicDir = path.join(__dirname, "public");
 app.use(express.static(publicDir));
 
 /**
- * =========================
  * Auth Admin
- * =========================
  */
 function signAdminToken() {
   return jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
@@ -155,9 +131,7 @@ function requireAdmin(req, res, next) {
 }
 
 /**
- * =========================
- * Health check
- * =========================
+ * Health
  */
 app.get("/api/health", async (req, res) => {
   try {
@@ -169,10 +143,8 @@ app.get("/api/health", async (req, res) => {
 });
 
 /**
- * =========================
- * LOGIN Admin
- * POST /api/login  { password } -> { token }
- * =========================
+ * Login Admin
+ * POST /api/login {password} -> {token}
  */
 app.post("/api/login", (req, res) => {
   const { password } = req.body || {};
@@ -182,25 +154,20 @@ app.post("/api/login", (req, res) => {
   if (!password || password !== ADMIN_PASSWORD) {
     return res.status(401).json({ ok: false, error: "Senha inválida" });
   }
-  const token = signAdminToken();
-  return res.json({ ok: true, token });
+  return res.json({ ok: true, token: signAdminToken() });
 });
 
 /**
- * =========================
- * ✅ PÚBLICO (FOLHA) - lista funcionários (somente leitura)
+ * ✅ PÚBLICO (Folha): lista funcionários (somente leitura)
  * GET /api/funcionarios
- * =========================
  */
 app.get("/api/funcionarios", async (req, res) => {
   try {
-    const r = await dbQuery(
-      `
+    const r = await dbQuery(`
       select matricula, nome, funcao, vinculo, carga, escola
       from funcionarios
       order by nome nulls last, matricula
-      `
-    );
+    `);
     res.json({ ok: true, funcionarios: r.rows });
   } catch (err) {
     console.error("❌ GET /api/funcionarios erro:", err);
@@ -209,25 +176,13 @@ app.get("/api/funcionarios", async (req, res) => {
 });
 
 /**
- * =========================
- * FOLHA envia (UPSERT) - atualiza folha do mês
+ * Folha envia (UPSERT)
  * POST /api/folha/enviar
- * body:
- * {
- *   periodo: "2026-02",
- *   matricula: "101",
- *   nome, funcao, vinculo, carga, escola,
- *   faltas,
- *   falta_com_atestado OR falta_sem_atestado,
- *   horas_extras,
- *   observacoes
- * }
- * =========================
  */
 app.post("/api/folha/enviar", async (req, res) => {
   try {
     const body = req.body || {};
-    const periodo = String(body.periodo || "").trim(); // "YYYY-MM"
+    const periodo = String(body.periodo || "").trim(); // YYYY-MM
     const matricula = String(body.matricula || "").trim();
 
     if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) {
@@ -237,8 +192,6 @@ app.post("/api/folha/enviar", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Matrícula é obrigatória" });
     }
 
-    // Observação: na folha (usuário) você travou os dados do cadastro,
-    // então normalmente esses campos chegam iguais aos do banco.
     const nome = body.nome ?? null;
     const funcao = body.funcao ?? null;
     const vinculo = body.vinculo ?? null;
@@ -247,7 +200,7 @@ app.post("/api/folha/enviar", async (req, res) => {
 
     const faltas = Number.isFinite(+body.faltas) ? +body.faltas : 0;
 
-    // ✅ aceita novo campo e mantém compatibilidade com o antigo
+    // ✅ aceita o novo e mantém compatibilidade com o antigo
     const faltaComAtestado =
       Number.isFinite(+body.falta_com_atestado) ? +body.falta_com_atestado :
       (Number.isFinite(+body.falta_sem_atestado) ? +body.falta_sem_atestado : 0);
@@ -255,7 +208,7 @@ app.post("/api/folha/enviar", async (req, res) => {
     const horasExtras = Number.isFinite(+body.horas_extras) ? +body.horas_extras : 0;
     const observacoes = body.observacoes ?? null;
 
-    // 1) UPSERT no cadastro (não quebra)
+    // 1) garante que o funcionário existe/atualiza cadastro
     await dbQuery(
       `
       insert into funcionarios (matricula, nome, funcao, vinculo, carga, escola, atualizado_em)
@@ -271,12 +224,16 @@ app.post("/api/folha/enviar", async (req, res) => {
       [matricula, nome, funcao, vinculo, carga, escola]
     );
 
-    // 2) UPSERT da folha do mês
-    //    - grava em falta_com_atestado
-    //    - e também espelha em falta_sem_atestado para não quebrar telas antigas
+    // 2) grava folha do mês
+    // - salva no novo campo falta_com_atestado
+    // - e também espelha no antigo falta_sem_atestado (para não quebrar nada antigo)
     await dbQuery(
       `
-      insert into folhas (periodo, matricula, faltas, falta_com_atestado, falta_sem_atestado, horas_extras, observacoes, atualizado_em)
+      insert into folhas (
+        periodo, matricula,
+        faltas, falta_com_atestado, falta_sem_atestado,
+        horas_extras, observacoes, atualizado_em
+      )
       values ($1,$2,$3,$4,$4,$5,$6, now())
       on conflict (periodo, matricula) do update set
         faltas = excluded.faltas,
@@ -297,32 +254,26 @@ app.post("/api/folha/enviar", async (req, res) => {
 });
 
 /**
- * =========================
- * ADMIN - listar funcionários
+ * ADMIN: listar cadastro
  * GET /api/admin/funcionarios
- * =========================
  */
 app.get("/api/admin/funcionarios", requireAdmin, async (req, res) => {
   try {
-    const r = await dbQuery(
-      `
+    const r = await dbQuery(`
       select matricula, nome, funcao, vinculo, carga, escola, atualizado_em
       from funcionarios
       order by nome nulls last, matricula
-      `
-    );
+    `);
     res.json({ ok: true, funcionarios: r.rows });
   } catch (err) {
-    console.error("❌ /api/admin/funcionarios erro:", err);
+    console.error("❌ GET /api/admin/funcionarios erro:", err);
     res.status(500).json({ ok: false, error: err?.message || "Erro interno" });
   }
 });
 
 /**
- * =========================
- * ADMIN - editar cadastro do funcionário
+ * ADMIN: editar cadastro
  * PUT /api/admin/funcionarios/:matricula
- * =========================
  */
 app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
   try {
@@ -360,10 +311,10 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => 
 });
 
 /**
- * =========================
- * ADMIN - dados do mês (todos funcionários + folha do mês se existir)
- * GET /api/admin/mes?periodo=2026-02
- * =========================
+ * ✅ ADMIN: dados do mês
+ * GET /api/admin/mes?periodo=YYYY-MM
+ *
+ * ⚠️ IMPORTANTE: seu admin.html espera "registros"
  */
 app.get("/api/admin/mes", requireAdmin, async (req, res) => {
   try {
@@ -375,14 +326,17 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
     const r = await dbQuery(
       `
       select
+        f.escola,
         f.matricula,
-        f.nome, f.funcao, f.vinculo, f.carga, f.escola,
-        fl.periodo,
-        fl.faltas,
+        f.nome,
+        f.funcao,
+        f.vinculo,
+        f.carga,
+        $1 as periodo,
+        coalesce(fl.faltas, 0) as faltas,
         coalesce(fl.falta_com_atestado, fl.falta_sem_atestado, 0) as falta_com_atestado,
-        fl.horas_extras,
-        fl.observacoes,
-        fl.atualizado_em as folha_atualizado_em
+        coalesce(fl.horas_extras, 0) as horas_extras,
+        coalesce(fl.observacoes, '') as observacoes
       from funcionarios f
       left join folhas fl
         on fl.matricula = f.matricula
@@ -392,14 +346,17 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
       [periodo]
     );
 
-    res.json({ ok: true, periodo, rows: r.rows });
+    // ✅ admin.html usa j.registros
+    return res.json({ ok: true, periodo, registros: r.rows });
   } catch (err) {
     console.error("❌ GET /api/admin/mes erro:", err);
     res.status(500).json({ ok: false, error: err?.message || "Erro interno" });
   }
 });
 
-// fallback: abre a página inicial se existir
+/**
+ * Fallback (opcional)
+ */
 app.get("*", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"), (err) => {
     if (err) res.status(404).send("Not found");
