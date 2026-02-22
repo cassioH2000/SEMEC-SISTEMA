@@ -244,12 +244,12 @@
 
 <body>
 
-  <!-- 🔒 LOGIN SIMPLES -->
+  <!-- 🔒 LOGIN SIMPLES (sempre pede ao entrar) -->
   <div class="overlay" id="loginOverlay">
     <div class="modal">
       <div class="mhead">
         <h3>🔒 Acesso • Folha de Ponto</h3>
-        <span class="kbd">Senha: 2026</span>
+        <span class="kbd">Acesso</span>
       </div>
       <div class="mbody">
         <div class="small" style="margin-bottom:10px;">
@@ -266,7 +266,7 @@
         <div class="merr" id="loginErr">Senha inválida.</div>
 
         <div class="small" style="margin-top:10px;">
-          Obs.: esta senha é simples (fica no HTML).
+          Obs.: Digite sua senha para continuar.
         </div>
       </div>
     </div>
@@ -424,10 +424,10 @@
   <script>
     const $ = (id) => document.getElementById(id);
 
-    // ===== SENHA SIMPLES =====
+    // ✅ senha simples (não exibida na tela)
     const FOLHA_PASSWORD = "2026";
-    const KEY_AUTH = "folha_auth_ok";
 
+    // ===== LOGIN =====
     const loginOverlay = $("loginOverlay");
     const senhaFolha = $("senhaFolha");
     const btnEntrar = $("btnEntrar");
@@ -448,7 +448,6 @@
         loginErr.style.display = "block";
         return;
       }
-      localStorage.setItem(KEY_AUTH, "1");
       closeLogin();
     }
 
@@ -735,8 +734,8 @@
 
     // INIT
     (function init(){
-      const ok = localStorage.getItem(KEY_AUTH) === "1";
-      if(!ok) openLogin(); else closeLogin();
+      // ✅ sempre pede senha ao abrir
+      openLogin();
 
       periodo.value = defaultPeriodoAtual();
       ensurePeriodoVigente();
