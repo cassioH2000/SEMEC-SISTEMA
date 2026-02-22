@@ -65,7 +65,7 @@ async function dbQuery(text, values = []) {
 /**
  * =========================
  * Cria tabelas se não existir
- * (não derruba o servidor se falhar; só avisa)
+ * + garante coluna falta_com_atestado
  * =========================
  */
 async function ensureSchema() {
@@ -97,6 +97,12 @@ async function ensureSchema() {
       );
     `);
 
+    // ✅ NOVO: agora você vai usar "falta_com_atestado"
+    await dbQuery(`
+      alter table folhas
+      add column if not exists falta_com_atestado int default 0;
+    `);
+
     await dbQuery(`create index if not exists idx_folhas_periodo on folhas(periodo);`);
 
     console.log("✅ Schema ok (funcionarios / folhas).");
@@ -117,7 +123,6 @@ app.use(express.json({ limit: "2mb" }));
 /**
  * =========================
  * Static (páginas)
- * - Mantém padrão /src/public (igual seus logs)
  * =========================
  */
 const __filename = fileURLToPath(import.meta.url);
@@ -192,7 +197,7 @@ app.post("/api/login", (req, res) => {
  *   periodo: "2026-02",
  *   matricula: "101",
  *   nome, funcao, vinculo, carga, escola,   // cadastro
- *   faltas, falta_sem_atestado, horas_extras, observacoes // folha
+ *   faltas, falta_com_atestado, horas_extras, observacoes // folha
  * }
  * =========================
  */
@@ -205,22 +210,22 @@ app.post("/api/folha/enviar", async (req, res) => {
     if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) {
       return res.status(400).json({ ok: false, error: "Período inválido. Use YYYY-MM (ex: 2026-02)" });
     }
-    if (!matricula) {
-      return res.status(400).json({ ok: false, error: "Matrícula é obrigatória" });
-    }
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
 
+    // cadastro (pode vir vazio, mas mantém compatível)
     const nome = body.nome ?? null;
     const funcao = body.funcao ?? null;
     const vinculo = body.vinculo ?? null;
     const carga = body.carga ?? null;
     const escola = body.escola ?? null;
 
+    // folha (SEPARADOS)
     const faltas = Number.isFinite(+body.faltas) ? +body.faltas : 0;
-    const faltaSemAtestado = Number.isFinite(+body.falta_sem_atestado) ? +body.falta_sem_atestado : 0;
+    const faltaComAtestado = Number.isFinite(+body.falta_com_atestado) ? +body.falta_com_atestado : 0;
     const horasExtras = Number.isFinite(+body.horas_extras) ? +body.horas_extras : 0;
-    const observacoes = body.observacoes ?? null;
+    const observacoes = typeof body.observacoes === "string" ? body.observacoes : (body.observacoes ?? null);
 
-    // 1) UPSERT no cadastro do funcionário
+    // 1) UPSERT no cadastro
     await dbQuery(
       `
       insert into funcionarios (matricula, nome, funcao, vinculo, carga, escola, atualizado_em)
@@ -236,22 +241,22 @@ app.post("/api/folha/enviar", async (req, res) => {
       [matricula, nome, funcao, vinculo, carga, escola]
     );
 
-    // 2) UPSERT na folha do mês
+    // 2) UPSERT na folha do mês (usando falta_com_atestado)
     const folhaResult = await dbQuery(
       `
       insert into folhas (
-        periodo, matricula, faltas, falta_sem_atestado, horas_extras, observacoes, atualizado_em
+        periodo, matricula, faltas, falta_com_atestado, horas_extras, observacoes, atualizado_em
       )
       values ($1,$2,$3,$4,$5,$6, now())
       on conflict (periodo, matricula) do update set
         faltas = excluded.faltas,
-        falta_sem_atestado = excluded.falta_sem_atestado,
+        falta_com_atestado = excluded.falta_com_atestado,
         horas_extras = excluded.horas_extras,
         observacoes = excluded.observacoes,
         atualizado_em = now()
       returning *
       `,
-      [periodo, matricula, faltas, faltaSemAtestado, horasExtras, observacoes]
+      [periodo, matricula, faltas, faltaComAtestado, horasExtras, observacoes]
     );
 
     return res.json({ ok: true, folha: folhaResult.rows[0] });
@@ -342,7 +347,7 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
         f.matricula,
         f.nome, f.funcao, f.vinculo, f.carga, f.escola,
         fl.periodo,
-        fl.faltas, fl.falta_sem_atestado, fl.horas_extras, fl.observacoes,
+        fl.faltas, fl.falta_com_atestado, fl.horas_extras, fl.observacoes,
         fl.atualizado_em as folha_atualizado_em
       from funcionarios f
       left join folhas fl
@@ -363,7 +368,6 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 /**
  * =========================
  * Fallback SPA/HTML
- * - se abrir /admin.html ou /folha.html do public, ok
  * =========================
  */
 app.get("/", (req, res) => {
