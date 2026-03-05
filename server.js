@@ -41,12 +41,17 @@ async function criarTabelas() {
     )
   `);
 
-  // ✅ NOVO: lotacao e seguimento (sem quebrar tabela antiga)
+  // ✅ NOVO: lotacao + seguimento (sem quebrar o antigo)
   await dbQuery(`alter table funcionarios add column if not exists lotacao text;`);
   await dbQuery(`alter table funcionarios add column if not exists seguimento text;`);
 
-  // ✅ backfill: se lotacao estiver vazio, copia de escola
-  await dbQuery(`update funcionarios set lotacao = escola where (lotacao is null or lotacao = '') and (escola is not null and escola <> '');`);
+  // ✅ backfill: se lotacao vazio, copia de escola
+  await dbQuery(`
+    update funcionarios
+       set lotacao = escola
+     where (lotacao is null or lotacao = '')
+       and (escola is not null and escola <> '')
+  `);
 
   await dbQuery(`
     create table if not exists folhas(
@@ -65,6 +70,17 @@ async function criarTabelas() {
   // ✅ novo campo (sem quebrar nada antigo)
   await dbQuery(`alter table folhas add column if not exists falta_com_atestado int default 0;`);
 
+  // ✅ Comentários gerais por lotação (sem matrícula)
+  await dbQuery(`
+    create table if not exists comentarios_gerais(
+      id bigserial primary key,
+      periodo text not null,
+      lotacao text not null,
+      comentario text not null,
+      criado_em timestamptz default now()
+    )
+  `);
+
   console.log("✅ Banco pronto");
 }
 criarTabelas().catch((e) => console.log("❌ criarTabelas erro:", e));
@@ -73,6 +89,9 @@ criarTabelas().catch((e) => console.log("❌ criarTabelas erro:", e));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "public")));
+
+// ================= HEALTH =================
+app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 // ================= LOGIN ADMIN =================
 app.post("/api/login", (req, res) => {
@@ -96,21 +115,20 @@ function requireAdmin(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     if (payload?.role !== "admin") return res.status(403).json({ ok: false, error: "Acesso negado" });
     next();
-  } catch (e) {
+  } catch {
     return res.status(401).json({ ok: false, error: "Token inválido" });
   }
 }
 
 // ================= FUNCIONÁRIOS PÚBLICO (FOLHA) =================
-// (Mantive compatibilidade: ainda retorna "escola" porque a página folha pode usar isso)
 app.get("/api/funcionarios", async (req, res) => {
   try {
     const r = await dbQuery(`
       select
         matricula, nome, funcao, vinculo, carga,
-        coalesce(lotacao, escola, '') as escola,
         coalesce(lotacao, escola, '') as lotacao,
-        coalesce(seguimento,'') as seguimento
+        coalesce(seguimento, '') as seguimento,
+        coalesce(lotacao, escola, '') as escola
       from funcionarios
       order by nome nulls last, matricula
     `);
@@ -141,29 +159,42 @@ app.post("/api/folha/enviar", async (req, res) => {
     const he = Number.isFinite(+b.horas_extras) ? +b.horas_extras : 0;
     const obs = (b.observacoes ?? "").toString();
 
-    const lotacao = (b.lotacao ?? b.escola ?? "").toString();
-    const seguimento = (b.seguimento ?? "").toString();
+    const lotacao = String(b.lotacao ?? b.escola ?? "").trim();
+    const seguimento = String(b.seguimento ?? "").trim();
 
-    // garante que funcionário existe (não altera cadastro do admin se já existir)
+    const nome = (b.nome ?? "").toString();
+    const funcao = (b.funcao ?? "").toString();
+    const vinculo = (b.vinculo ?? "").toString();
+    const carga = (b.carga ?? "").toString();
+
+    // upsert funcionario (mantém dados do admin se vierem vazios)
     await dbQuery(
       `
       insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, lotacao, seguimento, atualizado_em)
       values($1,$2,$3,$4,$5,$6,$7,$8, now())
       on conflict(matricula) do update set
+        nome = coalesce(nullif(excluded.nome,''), funcionarios.nome),
+        funcao = coalesce(nullif(excluded.funcao,''), funcionarios.funcao),
+        vinculo = coalesce(nullif(excluded.vinculo,''), funcionarios.vinculo),
+        carga = coalesce(nullif(excluded.carga,''), funcionarios.carga),
+        escola = coalesce(nullif(excluded.escola,''), funcionarios.escola),
+        lotacao = coalesce(nullif(excluded.lotacao,''), funcionarios.lotacao),
+        seguimento = coalesce(nullif(excluded.seguimento,''), funcionarios.seguimento),
         atualizado_em = now()
       `,
       [
         matricula,
-        b.nome ?? null,
-        b.funcao ?? null,
-        b.vinculo ?? null,
-        b.carga ?? null,
-        lotacao || null,  // escola (compat)
+        nome || null,
+        funcao || null,
+        vinculo || null,
+        carga || null,
+        lotacao || null,  // escola compat
         lotacao || null,  // lotacao
         seguimento || null
       ]
     );
 
+    // folha do mês
     await dbQuery(
       `
       insert into folhas(
@@ -182,6 +213,32 @@ app.post("/api/folha/enviar", async (req, res) => {
         atualizado_em=now()
       `,
       [periodo, matricula, faltas, faltaCom, faltaCom, he, obs]
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
+  }
+});
+
+// ================= COMENTÁRIO GERAL (FOLHA) =================
+app.post("/api/folha/comentario", async (req, res) => {
+  try {
+    const b = req.body || {};
+    const periodo = String(b.periodo || "").trim();
+    const lotacao = String(b.lotacao ?? b.escola ?? "").trim();
+    const comentario = String(b.comentario || "").trim();
+
+    if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) {
+      return res.status(400).json({ ok: false, error: "Período inválido (use YYYY-MM)" });
+    }
+    if (!lotacao) return res.status(400).json({ ok: false, error: "Lotação obrigatória" });
+    if (!comentario) return res.status(400).json({ ok: false, error: "Comentário vazio" });
+
+    await dbQuery(
+      `insert into comentarios_gerais(periodo, lotacao, comentario) values($1,$2,$3)`,
+      [periodo, lotacao, comentario]
     );
 
     res.json({ ok: true });
@@ -210,7 +267,7 @@ app.get("/api/admin/funcionarios", requireAdmin, async (req, res) => {
   }
 });
 
-// ================= ✅ ADMIN: CRIAR FUNCIONÁRIO =================
+// ================= ADMIN: CRIAR FUNCIONÁRIO =================
 app.post("/api/admin/funcionarios", requireAdmin, async (req, res) => {
   try {
     const b = req.body || {};
@@ -221,7 +278,6 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req, res) => {
     const funcao = (b.funcao ?? "").toString();
     const vinculo = (b.vinculo ?? "").toString();
     const carga = (b.carga ?? "").toString();
-
     const lotacao = (b.lotacao ?? b.escola ?? "").toString();
     const seguimento = (b.seguimento ?? "").toString();
 
@@ -230,35 +286,18 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req, res) => {
       insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, lotacao, seguimento, atualizado_em)
       values($1,$2,$3,$4,$5,$6,$7,$8, now())
       on conflict(matricula) do nothing
-      returning matricula, nome, funcao, vinculo, carga,
-                coalesce(lotacao, escola, '') as lotacao,
-                coalesce(seguimento,'') as seguimento,
-                atualizado_em
+      returning
+        matricula, nome, funcao, vinculo, carga,
+        coalesce(lotacao, escola, '') as lotacao,
+        coalesce(seguimento,'') as seguimento,
+        atualizado_em
       `,
       [matricula, nome, funcao, vinculo, carga, lotacao, lotacao, seguimento]
     );
 
-    if (!r.rows[0]) {
-      return res.status(409).json({ ok: false, error: "Já existe funcionário com essa matrícula" });
-    }
+    if (!r.rows[0]) return res.status(409).json({ ok: false, error: "Já existe funcionário com essa matrícula" });
 
     res.json({ ok: true, funcionario: r.rows[0] });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
-  }
-});
-
-// ================= ✅ ADMIN: EXCLUIR FUNCIONÁRIO =================
-app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
-  try {
-    const matricula = String(req.params.matricula || "").trim();
-    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula inválida" });
-
-    const r = await dbQuery(`delete from funcionarios where matricula=$1 returning matricula`, [matricula]);
-    if (!r.rows[0]) return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
-
-    res.json({ ok: true });
   } catch (e) {
     console.log(e);
     res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
@@ -276,7 +315,6 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => 
     const funcao = (b.funcao ?? "").toString();
     const vinculo = (b.vinculo ?? "").toString();
     const carga = (b.carga ?? "").toString();
-
     const lotacao = (b.lotacao ?? b.escola ?? "").toString();
     const seguimento = (b.seguimento ?? "").toString();
 
@@ -293,15 +331,32 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => 
         lotacao=excluded.lotacao,
         seguimento=excluded.seguimento,
         atualizado_em=now()
-      returning matricula, nome, funcao, vinculo, carga,
-                coalesce(lotacao, escola, '') as lotacao,
-                coalesce(seguimento,'') as seguimento,
-                atualizado_em
+      returning
+        matricula, nome, funcao, vinculo, carga,
+        coalesce(lotacao, escola, '') as lotacao,
+        coalesce(seguimento,'') as seguimento,
+        atualizado_em
       `,
       [matricula, nome, funcao, vinculo, carga, lotacao, lotacao, seguimento]
     );
 
     res.json({ ok: true, funcionario: r.rows[0] });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
+  }
+});
+
+// ================= ADMIN: EXCLUIR FUNCIONÁRIO =================
+app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
+  try {
+    const matricula = String(req.params.matricula || "").trim();
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula inválida" });
+
+    const r = await dbQuery(`delete from funcionarios where matricula=$1 returning matricula`, [matricula]);
+    if (!r.rows[0]) return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
+
+    res.json({ ok: true });
   } catch (e) {
     console.log(e);
     res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
@@ -318,9 +373,9 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 
     const r = await dbQuery(
       `
-      select
+      select 
         coalesce(f.lotacao, f.escola, '') as lotacao,
-        coalesce(f.seguimento,'') as seguimento,
+        coalesce(f.seguimento, '') as seguimento,
         f.matricula,
         f.nome,
         f.funcao,
@@ -340,6 +395,43 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
     );
 
     res.json({ ok: true, registros: r.rows });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
+  }
+});
+
+// ================= ADMIN: LISTAR COMENTÁRIOS =================
+app.get("/api/admin/comentarios", requireAdmin, async (req, res) => {
+  try {
+    const periodo = String(req.query.periodo || "").trim();
+    const lotacao = String(req.query.lotacao || "").trim();
+
+    const where = [];
+    const vals = [];
+
+    if (periodo) {
+      if (!/^\d{4}-\d{2}$/.test(periodo)) {
+        return res.status(400).json({ ok: false, error: "Período inválido (use YYYY-MM)" });
+      }
+      vals.push(periodo);
+      where.push(`periodo = $${vals.length}`);
+    }
+    if (lotacao) {
+      vals.push(lotacao);
+      where.push(`lotacao = $${vals.length}`);
+    }
+
+    const sql = `
+      select id, periodo, lotacao, comentario, criado_em
+      from comentarios_gerais
+      ${where.length ? "where " + where.join(" and ") : ""}
+      order by criado_em desc
+      limit 200
+    `;
+
+    const r = await dbQuery(sql, vals);
+    res.json({ ok: true, comentarios: r.rows });
   } catch (e) {
     console.log(e);
     res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
