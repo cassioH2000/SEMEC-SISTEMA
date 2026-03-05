@@ -2,214 +2,255 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SEMEC • Admin</title>
 
   <style>
     :root{
-      --bg:#0b1220;
-      --line: rgba(255,255,255,0.08);
+      --bg:#0f172a;
       --text:#e5e7eb;
-      --muted:#a9b0c2;
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
-      --radius:16px;
+      --muted:#94a3b8;
+      --accent:#2563eb;
+      --accent2:#1d4ed8;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --border:rgba(255,255,255,0.08);
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --cardGrad: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
     }
+
     *{ box-sizing:border-box; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 10% 0%, rgba(59,130,246,0.16), transparent 60%),
-                  radial-gradient(900px 500px at 90% 10%, rgba(168,85,247,0.15), transparent 60%),
-                  var(--bg);
+      background: radial-gradient(1200px 600px at 30% 0%, #1e293b 0%, var(--bg) 55%);
       color:var(--text);
+      min-height:100vh;
     }
+
+    header{ padding:18px 18px 8px; }
     .topbar{
-      padding:18px 16px;
-      border-bottom:1px solid var(--line);
-      background: rgba(0,0,0,0.14);
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 5;
+      max-width:1200px;
+      margin:0 auto;
+      background: var(--cardGrad);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      box-shadow: var(--shadow);
+      flex-wrap:wrap;
     }
-    .wrap{ max-width:1200px; margin:0 auto; }
-    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-    .brand{ display:flex; align-items:center; gap:12px; }
-    .badge{
-      font-size:12px; padding:6px 10px; border:1px solid var(--line);
-      border-radius:999px; background: rgba(255,255,255,0.06); color:var(--muted);
+
+    .brand{ display:flex; align-items:center; gap:12px; min-width:220px; }
+    .logo{
+      width:44px; height:44px; border-radius:12px;
+      background: linear-gradient(145deg, rgba(37,99,235,0.9), rgba(34,197,94,0.75));
+      display:grid; place-items:center; font-weight:800; letter-spacing:0.5px;
+      box-shadow: 0 10px 28px rgba(37,99,235,0.25);
     }
-    .status{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
-    .dot{ width:10px; height:10px; border-radius:999px; background: rgba(255,255,255,0.2); border:1px solid var(--line); }
-    .dot.ok{ background: rgba(34,197,94,0.9); }
-    .dot.bad{ background: rgba(239,68,68,0.9); }
-    main{ padding:18px 16px 40px; }
-    .grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap:14px; }
-    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+    .brand h1{ font-size:15px; margin:0; line-height:1.15; }
+    .brand p{ margin:0; font-size:12px; color:var(--muted); }
+
+    .status{
+      font-size:12px; color:var(--muted);
+      display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      padding:6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: var(--ok);
+      box-shadow:0 0 0 4px rgba(34,197,94,0.15);
+    }
+    .dot.bad{
+      background: var(--bad);
+      box-shadow:0 0 0 4px rgba(239,68,68,0.14);
+    }
+
+    main{ padding:14px 18px 40px; }
+    .wrap{ max-width:1200px; margin:0 auto; display:grid; gap:14px; }
+
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border:1px solid var(--line);
+      background: var(--cardGrad);
+      border:1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
     .card .head{
-      padding:14px 16px; border-bottom:1px solid var(--line);
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
       display:flex; align-items:center; justify-content:space-between; gap:10px;
-      background: rgba(0,0,0,0.14);
+      background: rgba(0,0,0,0.10);
+      flex-wrap:wrap;
     }
-    .card .head h2{ margin:0; font-size:14px; letter-spacing: 0.2px; }
-    .card .content{ padding:14px 16px; }
+    .card .head h2{ margin:0; font-size:14px; }
+    .card .head span{ color:var(--muted); font-size:12px; }
+    .content{ padding:16px; }
 
-    .controls{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
-    @media (max-width: 680px){ .controls{ grid-template-columns: 1fr; } }
-    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
-    input, select, textarea{
-      width:100%; padding:10px 10px; border-radius: 12px;
-      border:1px solid var(--line); background: rgba(0,0,0,0.18);
-      color:var(--text); outline:none;
+    label{ font-size:12px; color:var(--muted); display:block; margin:0 0 6px; }
+    input, textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
     }
-    textarea{ resize: vertical; }
+    textarea{ min-height:110px; resize: vertical; }
+    .row{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+
     .btn{
-      padding:10px 12px; border-radius: 12px; border:1px solid var(--line);
-      background: rgba(255,255,255,0.06); color:var(--text); cursor:pointer;
-      transition: 0.15s ease; font-weight: 600;
+      cursor:pointer;
+      border:none;
+      padding:12px 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      color:white;
+      font-weight:800;
+      box-shadow: 0 16px 34px rgba(37,99,235,0.25);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-width: 160px;
     }
-    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.10); }
-    .btn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
-    .btn.primary{ border-color: rgba(59,130,246,0.55); background: rgba(59,130,246,0.18); }
-    .btn.danger{ border-color: rgba(239,68,68,0.55); background: rgba(239,68,68,0.12); }
-    .btn.ghost{ background: transparent; }
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-
-    .kpis{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
-    @media (max-width: 980px){ .kpis{ grid-template-columns: repeat(2, 1fr); } }
-    .kpi{
-      border:1px solid var(--line); border-radius: 14px; padding:12px;
-      background: rgba(0,0,0,0.12);
+    .btn.secondary{
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      color:var(--text);
+      box-shadow:none;
+      font-weight:700;
+      min-width: 160px;
     }
-    .kpi .t{ font-size:12px; color:var(--muted); }
-    .kpi .v{ font-size:22px; font-weight: 800; margin-top:4px; }
-
-    table{ width:100%; border-collapse: separate; border-spacing:0; min-width: 1040px; }
-    thead th{
-      position: sticky; top: 0;
-      background: rgba(0,0,0,0.22); backdrop-filter: blur(8px);
-      z-index: 2; text-align:left; font-size:12px; color:var(--muted);
-      padding:10px 10px; border-bottom:1px solid var(--line);
+    .btn.danger{
+      background: rgba(239,68,68,0.16);
+      border:1px solid rgba(239,68,68,0.35);
+      color:#fecaca;
+      box-shadow:none;
+      font-weight:800;
+      min-width: 160px;
     }
-    tbody td{
-      padding:10px 10px; border-bottom:1px solid rgba(255,255,255,0.06);
-      font-size:13px; vertical-align: top;
+    .btn.small{
+      min-width:auto;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:800;
     }
-    tbody tr:hover td{ background: rgba(255,255,255,0.03); }
 
     .hint{ font-size:12px; color: var(--muted); }
-    .pill{
-      font-size:12px; padding:6px 10px; border-radius:999px;
-      border:1px solid var(--line); background: rgba(255,255,255,0.06); display:inline-block;
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      padding:2px 8px;
+      border-radius: 999px;
+      color:var(--text);
     }
+
     .msg{
-      margin-top:10px; padding:10px 12px; border-radius: 12px;
-      border:1px solid var(--line); background: rgba(255,255,255,0.06);
+      margin-top:12px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      font-size:13px;
+      color:var(--muted);
       display:none;
     }
-    .msg.ok{ border-color: rgba(34,197,94,0.55); background: rgba(34,197,94,0.10); }
-    .msg.err{ border-color: rgba(239,68,68,0.55); background: rgba(239,68,68,0.10); }
-    .msg.warn{ border-color: rgba(245,158,11,0.55); background: rgba(245,158,11,0.10); }
+    .msg.ok{ color:#bbf7d0; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.08); }
+    .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
+    .msg.warn{ color:#fde68a; border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.10); }
 
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13px;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      min-width: 1200px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+      white-space:nowrap;
+    }
+    th{
+      background: rgba(255,255,255,0.04);
+      color:var(--muted);
+      font-weight:700;
+      font-size:12px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    /* OVERLAY / MODAL */
     .overlay{
-      position:fixed; inset:0; background: rgba(0,0,0,0.55);
-      display:flex; align-items:center; justify-content:center; padding:18px; z-index: 10;
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.62);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index: 50;
     }
     .modal{
-      width: min(560px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      border:1px solid var(--line);
+      width:min(720px, 100%);
+      background: var(--cardGrad);
+      border:1px solid var(--border);
       border-radius: 18px;
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-    .modal .mhead{ padding:14px 16px; border-bottom:1px solid var(--line); background: rgba(0,0,0,0.18); }
+    .modal .mhead{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background: rgba(0,0,0,0.14);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
     .modal .mhead h3{ margin:0; font-size:14px; }
     .modal .mbody{ padding:16px; }
-    .modal .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
-    .kbd{
-      padding:2px 6px; border:1px solid var(--line); border-radius:8px;
-      background: rgba(0,0,0,0.25);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
+    .merr{ margin-top:10px; color:#fecaca; font-size:13px; display:none; }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap:10px;
     }
-
-    @media print {
-      @page{
-        size: A4 landscape;
-        margin: 12mm;
-      }
-      body{ background:#fff !important; color:#000 !important; }
-      .topbar, .controls, .actions, #msgBox, #loginOverlay, #editOverlay{ display:none !important; }
-      .card{ box-shadow:none !important; border:none !important; background:#fff !important; }
-      #printArea{ display:block !important; }
-      .pdf-header{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        border: 1px solid #000;
-        padding:10px 12px;
-        margin-bottom:10px;
-      }
-      .pdf-left, .pdf-right{
-        width:120px;
-        height:60px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        text-align:center;
-        line-height:1.1;
-      }
-      .pdf-center{ flex:1; text-align:center; line-height:1.15; }
-      .pdf-center .t1{ font-size:14px; font-weight:800; letter-spacing:0.2px; }
-      .pdf-center .t2{ font-size:12px; font-weight:700; margin-top:2px; }
-      .pdf-center .t3{ font-size:11px; margin-top:4px; }
-
-      table{ width:100% !important; border-collapse:collapse !important; font-size:10.5px !important; }
-      thead th{
-        position:static !important;
-        background:#000 !important;
-        color:#fff !important;
-        border:1px solid #000 !important;
-        padding:6px 6px !important;
-        text-align:left !important;
-      }
-      tbody td{
-        border:1px solid #000 !important;
-        padding:6px 6px !important;
-        vertical-align:top !important;
-      }
-      tbody tr:nth-child(even) td{ background:#f2f2f2 !important; }
-
-      .pdf-totals{
-        margin:10px 0 10px;
-        border:1px solid #000;
-        padding:8px 10px;
-        font-size:11px;
-      }
-      .pdf-footer{
-        position:fixed;
-        left: 12mm;
-        right: 12mm;
-        bottom: 8mm;
-        border-top:1px solid #000;
-        padding-top:6px;
-        font-size:10px;
-        display:flex;
-        justify-content:space-between;
-      }
-      .pageNumber:before { content: counter(page); }
-      .totalPages:before { content: counter(pages); }
+    .kpi{
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.16);
+      padding:12px;
+      border-radius: 16px;
+    }
+    .kpi .t{ font-size:12px; color:var(--muted); }
+    .kpi .v{ font-size:20px; font-weight:900; margin-top:2px; }
+    @media (max-width: 900px){
+      .kpis{ grid-template-columns: repeat(2, minmax(160px, 1fr)); }
     }
   </style>
 </head>
@@ -219,13 +260,13 @@
   <!-- LOGIN -->
   <div class="overlay" id="loginOverlay">
     <div class="modal">
-      <div class="mhead"><h3>🔒 Admin SEMEC</h3></div>
+      <div class="mhead"><h3>🔒 Admin SEMEC</h3><span class="kbd">Login</span></div>
       <div class="mbody">
         <div class="hint" style="margin-bottom:8px;">Digite a senha do Admin para acessar.</div>
         <label for="adminPass">Senha</label>
         <input id="adminPass" type="password" placeholder="Senha do admin..." />
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
-          <button class="btn primary" id="btnLogin" type="button">✅ Entrar</button>
+          <button class="btn" id="btnLogin" type="button">✅ Entrar</button>
         </div>
         <div class="merr" id="loginErr">Senha inválida.</div>
         <div class="hint" style="margin-top:10px;">
@@ -235,191 +276,163 @@
     </div>
   </div>
 
-  <!-- MODAL EDITAR / CADASTRAR -->
+  <!-- MODAL EDITAR / ADICIONAR -->
   <div class="overlay" id="editOverlay" style="display:none;">
     <div class="modal">
-      <div class="mhead"><h3 id="editTitle">✏️ Editar Funcionário</h3></div>
+      <div class="mhead">
+        <h3 id="editTitle">✏️ Editar Funcionário</h3>
+        <span class="kbd" id="editModeBadge">Editar</span>
+      </div>
       <div class="mbody">
 
-        <div class="grid2">
-          <div>
-            <label>Matrícula</label>
-            <input id="e_matricula" type="text" />
+        <div class="row">
+          <div style="min-width:180px; flex:1;">
+            <label for="e_matricula">Matrícula</label>
+            <input id="e_matricula" />
           </div>
-          <div>
-            <label>Lotação</label>
-            <input id="e_lotacao" type="text" placeholder="Lotação" />
+          <div style="min-width:260px; flex:2;">
+            <label for="e_lotacao">Lotação</label>
+            <input id="e_lotacao" placeholder="Ex.: Escola X" />
           </div>
-
-          <div>
-            <label>Seguimento</label>
-            <input id="e_seguimento" type="text" placeholder="Seguimento" />
-          </div>
-          <div>
-            <label>Nome</label>
-            <input id="e_nome" type="text" placeholder="Nome" />
-          </div>
-
-          <div>
-            <label>Função</label>
-            <input id="e_funcao" type="text" placeholder="Função" />
-          </div>
-          <div>
-            <label>Vínculo</label>
-            <input id="e_vinculo" type="text" placeholder="Vínculo" />
-          </div>
-          <div>
-            <label>Carga</label>
-            <input id="e_carga" type="text" placeholder="Carga" />
+          <div style="min-width:220px; flex:1;">
+            <label for="e_seguimento">Seguimento</label>
+            <input id="e_seguimento" placeholder="Ex.: Fundamental" />
           </div>
         </div>
 
-        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08); margin:14px 0;">
-
-        <div id="folhaBox" style="display:none;">
-          <div class="hint" style="margin-bottom:8px;"><b>Folha do mês</b> (período selecionado no topo)</div>
-
-          <div class="grid2">
-            <div>
-              <label>Período</label>
-              <input id="e_periodo" type="text" disabled />
-            </div>
-
-            <div>
-              <label>HE (horas extras)</label>
-              <input id="e_he" type="number" min="0" step="1" placeholder="Ex.: 10" />
-            </div>
-
-            <div>
-              <label>Faltas (total)</label>
-              <input id="e_faltas" type="number" min="0" step="1" placeholder="Ex.: 2" />
-            </div>
-
-            <div>
-              <label>Falta com atestado</label>
-              <input id="e_falta_com_atestado" type="number" min="0" step="1" placeholder="Ex.: 1" />
-            </div>
-
-            <div style="grid-column:1 / -1;">
-              <label>Observações</label>
-              <textarea id="e_obs" rows="3" placeholder="Observações do mês..."></textarea>
-            </div>
+        <div class="row" style="margin-top:10px;">
+          <div style="min-width:260px; flex:2;">
+            <label for="e_nome">Nome</label>
+            <input id="e_nome" />
           </div>
-
-          <div class="hint" style="margin-top:8px;">
-            • <b>Faltas</b> e <b>Falta com atestado</b> são lançadas <b>separadas</b>.
+          <div style="min-width:220px; flex:1;">
+            <label for="e_funcao">Função</label>
+            <input id="e_funcao" />
+          </div>
+          <div style="min-width:220px; flex:1;">
+            <label for="e_vinculo">Vínculo</label>
+            <input id="e_vinculo" />
+          </div>
+          <div style="min-width:180px; flex:1;">
+            <label for="e_carga">Carga</label>
+            <input id="e_carga" />
           </div>
         </div>
 
-        <div class="merr" id="editErr">Erro ao salvar.</div>
+        <div class="card" style="margin-top:14px;">
+          <div class="head">
+            <h2>Folha do mês</h2>
+            <span>Faltas / Com atestado / HE / Obs</span>
+          </div>
+          <div class="content">
+            <div class="row">
+              <div style="min-width:170px; flex:1;">
+                <label for="e_periodo">Período</label>
+                <input id="e_periodo" type="month" />
+              </div>
+              <div style="min-width:160px; flex:1;">
+                <label for="e_faltas">Faltas</label>
+                <input id="e_faltas" type="number" min="0" step="1" />
+              </div>
+              <div style="min-width:190px; flex:1;">
+                <label for="e_falta_com_atestado">Com atestado</label>
+                <input id="e_falta_com_atestado" type="number" min="0" step="1" />
+              </div>
+              <div style="min-width:160px; flex:1;">
+                <label for="e_he">HE</label>
+                <input id="e_he" type="number" min="0" step="1" />
+              </div>
+            </div>
 
-        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
-          <button class="btn ghost" id="btnCancelarEdicao" type="button">Cancelar</button>
-          <button class="btn primary" id="btnSalvarEdicao" type="button">💾 Salvar</button>
+            <div style="margin-top:10px;">
+              <label for="e_obs">Obs</label>
+              <textarea id="e_obs" placeholder="Observações..."></textarea>
+            </div>
+          </div>
         </div>
+
+        <div class="merr" id="editErr">Erro.</div>
+
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn secondary" id="btnCancelarEdicao" type="button">❌ Cancelar</button>
+          <button class="btn" id="btnSalvarEdicao" type="button">💾 Salvar</button>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <div class="topbar">
-    <div class="wrap">
-      <div class="row">
-        <div class="brand">
-          <div style="font-weight:900;">SEMEC</div>
-          <span class="badge">Admin • Folha de Ponto</span>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">AD</div>
+        <div>
+          <h1>SEMEC • Admin</h1>
+          <p>Cadastro + Relatório mensal + Comentários</p>
         </div>
-        <div class="status">
+      </div>
+
+      <div class="status">
+        <div class="pill">
           <span class="dot" id="dotApi"></span>
-          <span>API: <b id="apiStatus">—</b></span>
-          <span style="opacity:.55;">•</span>
-          <span>Token: <b id="tokenStatus">—</b></span>
+          <span>Servidor: <span id="apiStatus">verificando...</span></span>
         </div>
+        <div class="pill">Token: <span class="kbd" id="tokenStatus">—</span></div>
       </div>
     </div>
-  </div>
+  </header>
 
   <main>
     <div class="wrap">
 
-      <!-- ===== ÁREA DO PDF (SÓ APARECE NO PRINT) ===== -->
-      <div id="printArea" style="display:none;">
-        <div class="pdf-header">
-          <div class="pdf-left" style="border:none;">
-            <img src="logo_prefeitura.png" alt="Prefeitura"
-              style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
+      <section class="card">
+        <div class="head">
+          <h2>Controles</h2>
+          <span>Carregar mês / cadastro</span>
+        </div>
+        <div class="content">
+
+          <div class="row">
+            <div style="min-width:240px; flex:1;">
+              <label for="periodo">Período</label>
+              <input id="periodo" type="month" />
+            </div>
+
+            <div style="min-width:220px; flex:1;">
+              <label for="filtroLotacao">Filtrar por Lotação</label>
+              <select id="filtroLotacao"><option value="">Todas</option></select>
+            </div>
+
+            <div style="min-width:240px; flex:1;">
+              <label for="pesquisa">Pesquisar (nome ou matrícula)</label>
+              <input id="pesquisa" placeholder="Digite para filtrar..." />
+            </div>
           </div>
 
-          <div class="pdf-center">
-            <div class="t1">SECRETARIA MUNICIPAL DE EDUCAÇÃO</div>
-            <div class="t2">RELATÓRIO MENSAL – FOLHA DE PONTO</div>
-            <div class="t3" id="pdfPeriodoTxt">Período: —</div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn" id="btnCarregarMes" type="button">📅 Carregar mês</button>
+            <button class="btn secondary" id="btnCarregarCadastro" type="button">👥 Carregar cadastro</button>
+            <button class="btn secondary" id="btnAdicionar" type="button">➕ Adicionar funcionário</button>
+            <button class="btn secondary" id="btnPDF" type="button">🖨️ Imprimir/PDF</button>
+            <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
           </div>
 
-          <div class="pdf-right" style="border:none;">
-            <img src="logo_educacaoo.png" alt="Secretaria de Educação"
-              style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
+          <div class="msg" id="msgBox"></div>
+
+          <div class="kpis" style="margin-top:12px;">
+            <div class="kpi"><div class="t">Total funcionários</div><div class="v" id="kpiTotalFunc">0</div></div>
+            <div class="kpi"><div class="t">Com folha lançada</div><div class="v" id="kpiComFolha">0</div></div>
+            <div class="kpi"><div class="t">Faltas (soma)</div><div class="v" id="kpiFaltas">0</div></div>
+            <div class="kpi"><div class="t">HE (soma)</div><div class="v" id="kpiHE">0</div></div>
+          </div>
+
+          <div class="hint" style="margin-top:10px;">
+            • <b>Editar</b> altera cadastro e folha do mês (faltas / com atestado / HE / obs). • <b>Excluir</b> remove do cadastro.
           </div>
         </div>
+      </section>
 
-        <div class="pdf-totals" id="pdfTotalsBox"></div>
-
-        <div class="pdf-footer">
-          <div id="pdfEmitidoEm">Emitido em: —</div>
-          <div>Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>
-        </div>
-      </div>
-      <!-- ===== FIM ÁREA DO PDF ===== -->
-
-      <div class="grid">
-        <section class="card">
-          <div class="head"><h2>Controles</h2><span class="pill">Admin</span></div>
-          <div class="content">
-            <div class="controls">
-              <div>
-                <label>Período (mês)</label>
-                <input id="periodo" type="month" />
-                <div class="hint" style="margin-top:6px;">Use para carregar o relatório do mês.</div>
-              </div>
-              <div>
-                <label>Filtrar por lotação</label>
-                <select id="filtroLotacao"><option value="">Todas</option></select>
-              </div>
-              <div>
-                <label>Pesquisar (nome ou matrícula)</label>
-                <input id="pesquisa" type="text" placeholder="Digite para filtrar..." />
-              </div>
-            </div>
-
-            <div class="actions" style="margin-top:12px;">
-              <button class="btn primary" id="btnCarregarMes" type="button">📅 Carregar Mês</button>
-              <button class="btn" id="btnCarregarCadastro" type="button">👥 Cadastro</button>
-              <button class="btn" id="btnNovo" type="button">➕ Novo Funcionário</button>
-              <button class="btn" id="btnPDF" type="button">🧾 Gerar PDF</button>
-              <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
-            </div>
-
-            <div id="msgBox" class="msg"></div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="head"><h2>Resumo</h2><span class="hint">KPIs do mês carregado</span></div>
-          <div class="content">
-            <div class="kpis">
-              <div class="kpi"><div class="t">Total funcionários</div><div class="v" id="kpiTotalFunc">0</div></div>
-              <div class="kpi"><div class="t">Com folha lançada</div><div class="v" id="kpiComFolha">0</div></div>
-              <div class="kpi"><div class="t">Faltas (soma)</div><div class="v" id="kpiFaltas">0</div></div>
-              <div class="kpi"><div class="t">HE (soma)</div><div class="v" id="kpiHE">0</div></div>
-            </div>
-
-            <div class="hint" style="margin-top:10px;">
-              • O botão <b>Editar</b> edita cadastro e a folha do mês (faltas / com atestado / HE / obs).
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <section class="card" style="margin-top:14px;">
+      <section class="card">
         <div class="head">
           <h2 id="tableTitle">Lista</h2>
           <span id="tableSubtitle">—</span>
@@ -429,9 +442,9 @@
             <table id="tabelaRelatorio">
               <thead>
                 <tr>
+                  <th>Matrícula</th>
                   <th>Lotação</th>
                   <th>Seguimento</th>
-                  <th>Matrícula</th>
                   <th>Nome</th>
                   <th>Função</th>
                   <th>Vínculo</th>
@@ -448,9 +461,51 @@
               </tbody>
             </table>
           </div>
-          <div class="hint" style="margin-top:10px;">Clique em <b>Editar</b> para alterar dados.</div>
         </div>
       </section>
+
+      <section class="card">
+        <div class="head">
+          <h2>Comentários Gerais</h2>
+          <span>Por período e lotação</span>
+        </div>
+        <div class="content">
+          <div class="row">
+            <button class="btn secondary" id="btnCarregarComentarios" type="button">📝 Carregar comentários</button>
+          </div>
+
+          <div style="overflow:auto; margin-top:10px;">
+            <table style="min-width:900px;">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Período</th>
+                  <th>Lotação</th>
+                  <th>Comentário</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyComentarios">
+                <tr><td colspan="4" class="hint">Clique em “Carregar comentários”.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="hint" style="margin-top:10px;">
+            Dica: o filtro de lotação e o período acima também servem para os comentários.
+          </div>
+        </div>
+      </section>
+
+      <!-- ÁREA DE IMPRESSÃO -->
+      <div id="printArea" style="display:none;">
+        <div style="padding:10mm; font-family: Arial, sans-serif; color:#000;">
+          <h2 style="margin:0 0 6px;">Relatório SEMEC</h2>
+          <div id="pdfPeriodoTxt" style="font-size:12px;"></div>
+          <div id="pdfEmitidoEm" style="font-size:12px; margin-bottom:10px;"></div>
+          <div id="pdfTotalsBox" style="border:1px solid #000; padding:8px; font-size:12px; margin-bottom:10px;"></div>
+          <div id="pdfTableWrap"></div>
+        </div>
+      </div>
 
     </div>
   </main>
@@ -458,18 +513,12 @@
   <script>
     const API_HEALTH = "/api/health";
     const API_LOGIN = "/api/login";
-
     const API_CADASTRO = "/api/admin/funcionarios";
     const API_MES = "/api/admin/mes";
-
-    // Atualizar (PUT)
     const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
-
-    // Criar (POST) e Excluir (DELETE) — precisa existir no backend
-    const API_ADD = "/api/admin/funcionarios";
-    const API_DELETE = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
-
+    const API_DEL = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
     const API_ENVIAR_FOLHA = "/api/folha/enviar";
+    const API_COMENTARIOS = "/api/admin/comentarios";
 
     const $ = (id) => document.getElementById(id);
 
@@ -480,6 +529,7 @@
 
     const editOverlay = $("editOverlay");
     const editTitle = $("editTitle");
+    const editModeBadge = $("editModeBadge");
 
     const e_matricula = $("e_matricula");
     const e_lotacao = $("e_lotacao");
@@ -489,7 +539,6 @@
     const e_vinculo = $("e_vinculo");
     const e_carga = $("e_carga");
 
-    const folhaBox = $("folhaBox");
     const e_periodo = $("e_periodo");
     const e_he = $("e_he");
     const e_faltas = $("e_faltas");
@@ -510,7 +559,7 @@
 
     const btnCarregarMes = $("btnCarregarMes");
     const btnCarregarCadastro = $("btnCarregarCadastro");
-    const btnNovo = $("btnNovo");
+    const btnAdicionar = $("btnAdicionar");
     const btnPDF = $("btnPDF");
     const btnSair = $("btnSair");
 
@@ -524,19 +573,20 @@
     const kpiFaltas = $("kpiFaltas");
     const kpiHE = $("kpiHE");
 
-    const pdfPeriodoTxt = $("pdfPeriodoTxt");
-    const pdfTotalsBox = $("pdfTotalsBox");
-    const pdfEmitidoEm = $("pdfEmitidoEm");
+    const btnCarregarComentarios = $("btnCarregarComentarios");
+    const tbodyComentarios = $("tbodyComentarios");
+
     const printArea = $("printArea");
+    const pdfPeriodoTxt = $("pdfPeriodoTxt");
+    const pdfEmitidoEm = $("pdfEmitidoEm");
+    const pdfTotalsBox = $("pdfTotalsBox");
+    const pdfTableWrap = $("pdfTableWrap");
 
     let token = localStorage.getItem("semec_admin_token") || "";
     let lastRows = [];
-    let currentPeriodo = "";
-    let currentMode = "mes";
-
-    // controla se o modal está em "cadastrar" ou "editar"
-    let isCreateMode = false;
-    let originalMatricula = "";
+    let currentMode = "mes"; // "mes" ou "cadastro"
+    let editMode = "edit";   // "edit" ou "add"
+    let editRowCache = null;
 
     function escapeHtml(str){
       return String(str ?? "")
@@ -547,55 +597,42 @@
         .replaceAll("'","&#039;");
     }
 
-    function defaultPeriodo(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      return `${y}-${m}`;
-    }
-
     function showMsg(text, type){
       msgBox.className = "msg " + (type || "");
       msgBox.textContent = text;
       msgBox.style.display = "block";
-      setTimeout(() => { msgBox.style.display = "none"; }, 7000);
+      setTimeout(()=> msgBox.style.display = "none", 6500);
     }
 
-    function setApiDot(state){
-      dotApi.classList.remove("ok","bad");
-      if(state === "ok") dotApi.classList.add("ok");
-      else if(state === "bad") dotApi.classList.add("bad");
+    function authHeaders(){
+      return token ? { Authorization: "Bearer " + token } : {};
+    }
+
+    function defaultPeriodo(){
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
     }
 
     async function checkApi(){
       try{
-        const r = await fetch(API_HEALTH, { method:"GET" });
-        const j = await r.json().catch(() => ({}));
-        if(r.ok && j.ok){
-          apiStatus.textContent = j.db ? "online (db ok)" : "online (db off)";
-          setApiDot("ok");
-        } else {
-          apiStatus.textContent = "online? (erro)";
-          setApiDot("bad");
-        }
-      }catch(e){
-        apiStatus.textContent = "offline";
-        setApiDot("bad");
+        const r = await fetch(API_HEALTH);
+        const j = await r.json().catch(()=> ({}));
+        const ok = r.ok && j.ok;
+        apiStatus.textContent = ok ? "online" : "online?";
+        dotApi.classList.toggle("bad", !ok);
+      }catch{
+        apiStatus.textContent = "offline?";
+        dotApi.classList.add("bad");
       }
-    }
-
-    function authHeaders(){
-      return token ? { "Authorization": "Bearer " + token } : {};
+      tokenStatus.textContent = token ? "ok" : "—";
     }
 
     function ensureLogged(){
       if(!token){
         loginOverlay.style.display = "flex";
-        tokenStatus.textContent = "off";
         return false;
       }
       loginOverlay.style.display = "none";
-      tokenStatus.textContent = "ok";
       return true;
     }
 
@@ -608,244 +645,31 @@
         return;
       }
 
-      btnLogin.disabled = true;
-      btnLogin.textContent = "Entrando...";
-
       try{
         const r = await fetch(API_LOGIN, {
           method:"POST",
           headers:{ "Content-Type":"application/json" },
           body: JSON.stringify({ password: pass })
         });
-        const j = await r.json().catch(() => ({}));
-
-        if(!r.ok || !j.ok || !j.token){
+        const j = await r.json().catch(()=> ({}));
+        if(!r.ok || !j.ok){
           loginErr.textContent = j.error || "Senha inválida.";
           loginErr.style.display = "block";
           return;
         }
-
         token = j.token;
         localStorage.setItem("semec_admin_token", token);
         ensureLogged();
-        showMsg("✅ Login realizado!", "ok");
+        showMsg("✅ Logado com sucesso!", "ok");
         await carregarMes();
-
-      }catch(e){
+      }catch{
         loginErr.textContent = "Erro de conexão.";
         loginErr.style.display = "block";
-      }finally{
-        btnLogin.disabled = false;
-        btnLogin.textContent = "✅ Entrar";
       }
     }
 
     btnLogin.addEventListener("click", doLogin);
-    adminPass.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
-
-    function openEditModal(row, create=false){
-      editErr.style.display = "none";
-      isCreateMode = !!create;
-
-      if(isCreateMode){
-        editTitle.textContent = "➕ Novo Funcionário";
-        originalMatricula = "";
-        e_matricula.disabled = false;
-
-        e_matricula.value = "";
-        e_lotacao.value = "";
-        e_seguimento.value = "";
-        e_nome.value = "";
-        e_funcao.value = "";
-        e_vinculo.value = "";
-        e_carga.value = "";
-
-        folhaBox.style.display = "none"; // cadastro não lança folha aqui
-      } else {
-        editTitle.textContent = "✏️ Editar Funcionário";
-        originalMatricula = String(row.matricula || "");
-        e_matricula.disabled = true;
-
-        e_matricula.value = row.matricula || "";
-        e_lotacao.value = row.lotacao || "";
-        e_seguimento.value = row.seguimento || "";
-        e_nome.value = row.nome || "";
-        e_funcao.value = row.funcao || "";
-        e_vinculo.value = row.vinculo || "";
-        e_carga.value = row.carga || "";
-
-        if(currentMode === "mes"){
-          folhaBox.style.display = "block";
-          e_periodo.value = row.periodo || currentPeriodo || "";
-          e_he.value = (row.horas_extras ?? "");
-          e_faltas.value = (row.faltas ?? "");
-          e_falta_com_atestado.value = (row.falta_com_atestado ?? "");
-          e_obs.value = (row.observacoes ?? "");
-        }else{
-          folhaBox.style.display = "none";
-        }
-      }
-
-      editOverlay.style.display = "flex";
-    }
-
-    function closeEditModal(){ editOverlay.style.display = "none"; }
-    btnCancelarEdicao.addEventListener("click", closeEditModal);
-
-    async function salvarEdicao(){
-      if(!ensureLogged()) return;
-
-      const mat = String(e_matricula.value || "").trim();
-      if(!mat){
-        editErr.textContent = "Matrícula é obrigatória.";
-        editErr.style.display = "block";
-        return;
-      }
-
-      btnSalvarEdicao.disabled = true;
-      btnSalvarEdicao.textContent = "Salvando...";
-
-      try{
-        // Mantive compatibilidade:
-        // - UI usa lotacao, mas no back antigo talvez exista "escola"
-        // então envio os dois: lotacao e escola (mesmo valor)
-        const bodyCadastro = {
-          lotacao: e_lotacao.value.trim(),
-          escola: e_lotacao.value.trim(), // compat
-          seguimento: e_seguimento.value.trim(),
-          nome: e_nome.value.trim(),
-          funcao: e_funcao.value.trim(),
-          vinculo: e_vinculo.value.trim(),
-          carga: e_carga.value.trim(),
-          matricula: mat
-        };
-
-        if(isCreateMode){
-          const r0 = await fetch(API_ADD, {
-            method:"POST",
-            headers:{ "Content-Type":"application/json", ...authHeaders() },
-            body: JSON.stringify(bodyCadastro)
-          });
-          const j0 = await r0.json().catch(() => ({}));
-          if(!r0.ok || !j0.ok){
-            editErr.textContent = j0.error || "Erro ao cadastrar (verifique se o endpoint POST existe).";
-            editErr.style.display = "block";
-            return;
-          }
-
-          showMsg("✅ Funcionário cadastrado!", "ok");
-          closeEditModal();
-          await carregarCadastro();
-          return;
-        }
-
-        // editar (PUT)
-        const r1 = await fetch(API_EDIT(originalMatricula), {
-          method:"PUT",
-          headers:{ "Content-Type":"application/json", ...authHeaders() },
-          body: JSON.stringify(bodyCadastro)
-        });
-
-        const j1 = await r1.json().catch(() => ({}));
-        if(!r1.ok || !j1.ok){
-          editErr.textContent = j1.error || "Erro ao salvar cadastro.";
-          editErr.style.display = "block";
-          return;
-        }
-
-        // salvar folha do mês (se estiver no modo mês)
-        if(currentMode === "mes"){
-          const periodoSel = (currentPeriodo || e_periodo.value || "").trim();
-          if(!periodoSel){
-            editErr.textContent = "Selecione um período (mês) antes de salvar a folha.";
-            editErr.style.display = "block";
-            return;
-          }
-
-          const faltas = Number(e_faltas.value || 0);
-          const faltaCom = Number(e_falta_com_atestado.value || 0);
-          const he = Number(e_he.value || 0);
-
-          if(faltas < 0 || faltaCom < 0 || he < 0){
-            editErr.textContent = "Não é permitido valor negativo.";
-            editErr.style.display = "block";
-            return;
-          }
-
-          const bodyFolha = {
-            periodo: periodoSel,
-            matricula: originalMatricula,
-            lotacao: bodyCadastro.lotacao,
-            escola: bodyCadastro.escola, // compat
-            seguimento: bodyCadastro.seguimento,
-            nome: bodyCadastro.nome,
-            funcao: bodyCadastro.funcao,
-            vinculo: bodyCadastro.vinculo,
-            carga: bodyCadastro.carga,
-            faltas: Number.isNaN(faltas) ? 0 : faltas,
-            falta_com_atestado: Number.isNaN(faltaCom) ? 0 : faltaCom,
-            horas_extras: Number.isNaN(he) ? 0 : he,
-            observacoes: String(e_obs.value || "").trim()
-          };
-
-          const r2 = await fetch(API_ENVIAR_FOLHA, {
-            method:"POST",
-            headers:{ "Content-Type":"application/json", ...authHeaders() },
-            body: JSON.stringify(bodyFolha)
-          });
-
-          const j2 = await r2.json().catch(() => ({}));
-          if(!r2.ok || !j2.ok){
-            editErr.textContent = j2.error || "Erro ao salvar folha do mês.";
-            editErr.style.display = "block";
-            return;
-          }
-        }
-
-        showMsg("✅ Atualizado com sucesso!", "ok");
-        closeEditModal();
-        if(currentMode === "mes") await carregarMes();
-        else await carregarCadastro();
-
-      }catch(e){
-        editErr.textContent = "Erro de conexão.";
-        editErr.style.display = "block";
-      }finally{
-        btnSalvarEdicao.disabled = false;
-        btnSalvarEdicao.textContent = "💾 Salvar";
-      }
-    }
-
-    btnSalvarEdicao.addEventListener("click", salvarEdicao);
-
-    async function excluirFuncionario(matricula){
-      if(!ensureLogged()) return;
-      const mat = String(matricula || "").trim();
-      if(!mat) return;
-
-      const ok = confirm(`Deseja excluir o funcionário ${mat}? Essa ação não pode ser desfeita.`);
-      if(!ok) return;
-
-      try{
-        const r = await fetch(API_DELETE(mat), { method:"DELETE", headers: authHeaders() });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          showMsg("❌ " + (j.error || "Erro ao excluir (verifique se o endpoint DELETE existe)."), "err");
-          return;
-        }
-        showMsg("🗑️ Funcionário excluído.", "ok");
-        await carregarCadastro();
-      }catch(e){
-        showMsg("❌ Erro de conexão ao excluir.", "err");
-      }
-    }
-
-    btnNovo.addEventListener("click", async () => {
-      if(!ensureLogged()) return;
-      // melhor cadastrar no modo cadastro
-      currentMode = "cadastro";
-      openEditModal({}, true);
-    });
+    adminPass.addEventListener("keydown", (e)=> { if(e.key === "Enter") doLogin(); });
 
     function buildLotacaoOptions(rows){
       const lots = Array.from(new Set(rows.map(r => (r.lotacao||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
@@ -882,11 +706,10 @@
         const obs = String(r.observacoes ?? "").trim();
         const comAt = Number(r.falta_com_atestado ?? 0);
 
-        const has = (faltas > 0) || (he > 0) || (comAt > 0) || (obs.length > 0);
-        if(has) comFolha++;
+        sumFaltas += faltas;
+        sumHE += he;
 
-        if(!Number.isNaN(faltas)) sumFaltas += faltas;
-        if(!Number.isNaN(he)) sumHE += he;
+        if(faltas > 0 || comAt > 0 || he > 0 || obs) comFolha++;
       }
 
       kpiComFolha.textContent = String(comFolha);
@@ -896,168 +719,322 @@
 
     function renderTable(rows){
       if(!rows.length){
-        tbody.innerHTML = `<tr><td colspan="12" class="hint">Nenhum registro encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="hint">Nenhum registro.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = rows.map(r => {
-        const faltas = (r.faltas ?? "");
-        const comAt = (r.falta_com_atestado ?? "");
-        const he = (r.horas_extras ?? "");
-        const obs = (r.observacoes ?? "");
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td><b>${escapeHtml(r.matricula||"")}</b></td>
+          <td>${escapeHtml(r.lotacao||"")}</td>
+          <td>${escapeHtml(r.seguimento||"")}</td>
+          <td>${escapeHtml(r.nome||"")}</td>
+          <td>${escapeHtml(r.funcao||"")}</td>
+          <td>${escapeHtml(r.vinculo||"")}</td>
+          <td>${escapeHtml(r.carga||"")}</td>
+          <td>${Number(r.faltas ?? 0)}</td>
+          <td>${Number(r.falta_com_atestado ?? 0)}</td>
+          <td>${Number(r.horas_extras ?? 0)}</td>
+          <td title="${escapeHtml(r.observacoes||"")}">${escapeHtml((r.observacoes||"").slice(0,40))}${(r.observacoes||"").length>40?"…":""}</td>
+          <td style="display:flex; gap:8px;">
+            <button class="btn small secondary" data-act="edit" data-mat="${escapeHtml(r.matricula||"")}">✏️ Editar</button>
+            <button class="btn small danger" data-act="del" data-mat="${escapeHtml(r.matricula||"")}">🗑️ Excluir</button>
+          </td>
+        </tr>
+      `).join("");
 
-        return `
-          <tr>
-            <td>${escapeHtml(r.lotacao||"")}</td>
-            <td>${escapeHtml(r.seguimento||"")}</td>
-            <td><b>${escapeHtml(r.matricula||"")}</b></td>
-            <td>${escapeHtml(r.nome||"")}</td>
-            <td>${escapeHtml(r.funcao||"")}</td>
-            <td>${escapeHtml(r.vinculo||"")}</td>
-            <td>${escapeHtml(r.carga||"")}</td>
-            <td>${escapeHtml(faltas)}</td>
-            <td>${escapeHtml(comAt)}</td>
-            <td>${escapeHtml(he)}</td>
-            <td>${escapeHtml(obs)}</td>
-            <td style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="btn" type="button" data-edit="${escapeHtml(r.matricula||"")}">✏️ Editar</button>
-              <button class="btn danger" type="button" data-del="${escapeHtml(r.matricula||"")}">🗑️ Excluir</button>
-            </td>
-          </tr>
-        `;
-      }).join("");
+      tbody.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const act = btn.getAttribute("data-act");
+          const mat = btn.getAttribute("data-mat");
 
-      tbody.querySelectorAll("[data-edit]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const mat = btn.getAttribute("data-edit");
-          const row = lastRows.find(x => String(x.matricula) === String(mat));
-          if(row) openEditModal(row, false);
+          const row = lastRows.find(x => String(x.matricula||"") === String(mat));
+          if(act === "edit") openEditModal(row, "edit");
+          if(act === "del") await excluirFuncionario(mat);
         });
       });
-
-      tbody.querySelectorAll("[data-del]").forEach(btn => {
-        btn.addEventListener("click", () => excluirFuncionario(btn.getAttribute("data-del")));
-      });
-    }
-
-    filtroLotacao.addEventListener("change", applyFiltersAndRender);
-    pesquisa.addEventListener("input", applyFiltersAndRender);
-
-    async function carregarCadastro(){
-      if(!ensureLogged()) return;
-      currentMode = "cadastro";
-
-      tableTitle.textContent = "Cadastro de Funcionários";
-      tableSubtitle.textContent = "Lista completa (cadastro fixo)";
-
-      btnCarregarCadastro.disabled = true;
-      btnCarregarCadastro.textContent = "Carregando...";
-
-      try{
-        const r = await fetch(API_CADASTRO, { headers: authHeaders() });
-        const j = await r.json().catch(() => ({}));
-        if(!r.ok || !j.ok){
-          showMsg("❌ " + (j.error || "Falha ao carregar cadastro."), "err");
-          return;
-        }
-
-        lastRows = (j.funcionarios || []).map(f => ({
-          // compat: se o backend ainda mandar "escola"
-          lotacao: f.lotacao || f.escola || "",
-          seguimento: f.seguimento || "",
-          matricula: f.matricula || "",
-          nome: f.nome || "",
-          funcao: f.funcao || "",
-          vinculo: f.vinculo || "",
-          carga: f.carga || "",
-          faltas: null,
-          falta_com_atestado: null,
-          horas_extras: null,
-          observacoes: null,
-          periodo: ""
-        }));
-
-        buildLotacaoOptions(lastRows);
-        applyFiltersAndRender();
-
-      }catch(e){
-        showMsg("❌ Erro de conexão ao carregar cadastro.", "err");
-      }finally{
-        btnCarregarCadastro.disabled = false;
-        btnCarregarCadastro.textContent = "👥 Cadastro";
-      }
     }
 
     async function carregarMes(){
       if(!ensureLogged()) return;
       currentMode = "mes";
 
-      if(!periodo.value) periodo.value = defaultPeriodo();
-      currentPeriodo = periodo.value;
-
-      tableTitle.textContent = "Relatório do Mês";
-      tableSubtitle.textContent = "Período: " + currentPeriodo;
-
-      btnCarregarMes.disabled = true;
-      btnCarregarMes.textContent = "Carregando...";
+      const p = String(periodo.value || "").trim();
+      tableTitle.textContent = "Relatório do mês";
+      tableSubtitle.textContent = `Período: ${p || "—"}`;
 
       try{
-        const url = API_MES + "?periodo=" + encodeURIComponent(currentPeriodo);
-        const r = await fetch(url, { headers: authHeaders() });
-        const j = await r.json().catch(() => ({}));
+        const r = await fetch(API_MES + "?periodo=" + encodeURIComponent(p), { headers: { ...authHeaders() } });
+        const j = await r.json().catch(()=> ({}));
         if(!r.ok || !j.ok){
-          showMsg("❌ " + (j.error || "Falha ao carregar mês."), "err");
+          showMsg(j.error || "Erro ao carregar mês.", "err");
           return;
         }
+        lastRows = j.registros || [];
+        buildLotacaoOptions(lastRows);
+        applyFiltersAndRender();
+        showMsg("✅ Mês carregado.", "ok");
+      }catch{
+        showMsg("Erro de conexão.", "err");
+      }
+    }
 
-        lastRows = (j.registros || []).map(x => ({
-          lotacao: x.lotacao || x.escola || "",
-          seguimento: x.seguimento || "",
-          matricula: x.matricula || "",
-          nome: x.nome || "",
-          funcao: x.funcao || "",
-          vinculo: x.vinculo || "",
-          carga: x.carga || "",
-          periodo: x.periodo || currentPeriodo,
-          faltas: (x.faltas ?? null),
-          falta_com_atestado: (x.falta_com_atestado ?? null),
-          horas_extras: (x.horas_extras ?? null),
-          observacoes: (x.observacoes ?? null)
+    async function carregarCadastro(){
+      if(!ensureLogged()) return;
+      currentMode = "cadastro";
+
+      tableTitle.textContent = "Cadastro";
+      tableSubtitle.textContent = "Lista de funcionários";
+
+      try{
+        const r = await fetch(API_CADASTRO, { headers: { ...authHeaders() } });
+        const j = await r.json().catch(()=> ({}));
+        if(!r.ok || !j.ok){
+          showMsg(j.error || "Erro ao carregar cadastro.", "err");
+          return;
+        }
+        lastRows = (j.funcionarios || []).map(x => ({
+          ...x,
+          // no modo cadastro não tem folha, mas mantém colunas
+          faltas: 0, falta_com_atestado: 0, horas_extras: 0, observacoes: ""
         }));
 
         buildLotacaoOptions(lastRows);
         applyFiltersAndRender();
-        showMsg("✅ Mês carregado com sucesso.", "ok");
-
-      }catch(e){
-        showMsg("❌ Erro de conexão ao carregar mês.", "err");
-      }finally{
-        btnCarregarMes.disabled = false;
-        btnCarregarMes.textContent = "📅 Carregar Mês";
+        showMsg("✅ Cadastro carregado.", "ok");
+      }catch{
+        showMsg("Erro de conexão.", "err");
       }
     }
 
     btnCarregarMes.addEventListener("click", carregarMes);
     btnCarregarCadastro.addEventListener("click", carregarCadastro);
+    filtroLotacao.addEventListener("change", applyFiltersAndRender);
+    pesquisa.addEventListener("input", applyFiltersAndRender);
 
-    btnPDF.addEventListener("click", gerarPDFPrefeitura);
+    function openEditModal(row, mode){
+      editErr.style.display = "none";
+      editOverlay.style.display = "flex";
+      editMode = mode;
+      editRowCache = row || null;
 
-    function gerarPDFPrefeitura(){
+      const p = String(periodo.value || "").trim() || defaultPeriodo();
+      e_periodo.value = p;
+
+      if(mode === "add"){
+        editTitle.textContent = "➕ Adicionar Funcionário";
+        editModeBadge.textContent = "Adicionar";
+        e_matricula.readOnly = false;
+
+        e_matricula.value = "";
+        e_lotacao.value = "";
+        e_seguimento.value = "";
+        e_nome.value = "";
+        e_funcao.value = "";
+        e_vinculo.value = "";
+        e_carga.value = "";
+
+        e_faltas.value = "0";
+        e_falta_com_atestado.value = "0";
+        e_he.value = "0";
+        e_obs.value = "";
+        return;
+      }
+
+      editTitle.textContent = "✏️ Editar Funcionário";
+      editModeBadge.textContent = "Editar";
+      e_matricula.readOnly = true;
+
+      e_matricula.value = String(row?.matricula || "");
+      e_lotacao.value = String(row?.lotacao || "");
+      e_seguimento.value = String(row?.seguimento || "");
+      e_nome.value = String(row?.nome || "");
+      e_funcao.value = String(row?.funcao || "");
+      e_vinculo.value = String(row?.vinculo || "");
+      e_carga.value = String(row?.carga || "");
+
+      e_faltas.value = String(row?.faltas ?? 0);
+      e_falta_com_atestado.value = String(row?.falta_com_atestado ?? 0);
+      e_he.value = String(row?.horas_extras ?? 0);
+      e_obs.value = String(row?.observacoes ?? "");
+    }
+
+    function closeEditModal(){
+      editOverlay.style.display = "none";
+    }
+
+    btnCancelarEdicao.addEventListener("click", closeEditModal);
+
+    btnAdicionar.addEventListener("click", () => openEditModal(null, "add"));
+
+    async function salvarEdicao(){
       if(!ensureLogged()) return;
 
-      if(currentMode !== "mes"){
-        showMsg("Carregue um mês (📅 Carregar Mês) antes de gerar o PDF.", "err");
-        return;
-      }
+      editErr.style.display = "none";
+      btnSalvarEdicao.disabled = true;
+      btnSalvarEdicao.textContent = "Salvando...";
 
-      if(!lastRows || !lastRows.length){
-        showMsg("Nenhum dado para gerar PDF.", "err");
-        return;
-      }
+      try{
+        const mat = String(e_matricula.value || "").trim();
+        if(!mat){
+          editErr.textContent = "Matrícula obrigatória.";
+          editErr.style.display = "block";
+          return;
+        }
 
-      const p = (currentPeriodo || "");
-      const now = new Date();
-      const dt = now.toLocaleString("pt-BR");
+        const bodyCadastro = {
+          matricula: mat,
+          lotacao: String(e_lotacao.value || "").trim(),
+          seguimento: String(e_seguimento.value || "").trim(),
+          nome: String(e_nome.value || "").trim(),
+          funcao: String(e_funcao.value || "").trim(),
+          vinculo: String(e_vinculo.value || "").trim(),
+          carga: String(e_carga.value || "").trim()
+        };
+
+        // 1) salva cadastro (POST se adicionar / PUT se editar)
+        const urlCadastro = (editMode === "add") ? API_CADASTRO : API_EDIT(mat);
+        const methodCadastro = (editMode === "add") ? "POST" : "PUT";
+
+        const r1 = await fetch(urlCadastro, {
+          method: methodCadastro,
+          headers: { "Content-Type":"application/json", ...authHeaders() },
+          body: JSON.stringify(bodyCadastro)
+        });
+
+        const j1 = await r1.json().catch(()=> ({}));
+        if(!r1.ok || !j1.ok){
+          editErr.textContent = j1.error || "Erro ao salvar cadastro.";
+          editErr.style.display = "block";
+          return;
+        }
+
+        // 2) salva folha do mês (sempre)
+        const p = String(e_periodo.value || "").trim();
+        if(!p || !/^\d{4}-\d{2}$/.test(p)){
+          editErr.textContent = "Período inválido.";
+          editErr.style.display = "block";
+          return;
+        }
+
+        const bodyFolha = {
+          periodo: p,
+          matricula: mat,
+          lotacao: bodyCadastro.lotacao,
+          seguimento: bodyCadastro.seguimento,
+          nome: bodyCadastro.nome,
+          funcao: bodyCadastro.funcao,
+          vinculo: bodyCadastro.vinculo,
+          carga: bodyCadastro.carga,
+
+          faltas: Number(e_faltas.value || 0),
+          falta_com_atestado: Number(e_falta_com_atestado.value || 0),
+          horas_extras: Number(e_he.value || 0),
+          observacoes: String(e_obs.value || "").trim()
+        };
+
+        const r2 = await fetch(API_ENVIAR_FOLHA, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json", ...authHeaders() },
+          body: JSON.stringify(bodyFolha)
+        });
+
+        const j2 = await r2.json().catch(()=> ({}));
+        if(!r2.ok || !j2.ok){
+          editErr.textContent = j2.error || "Erro ao salvar folha do mês.";
+          editErr.style.display = "block";
+          return;
+        }
+
+        showMsg("✅ Atualizado com sucesso!", "ok");
+        closeEditModal();
+
+        if(currentMode === "mes") await carregarMes();
+        else await carregarCadastro();
+
+      }catch{
+        editErr.textContent = "Erro de conexão.";
+        editErr.style.display = "block";
+      }finally{
+        btnSalvarEdicao.disabled = false;
+        btnSalvarEdicao.textContent = "💾 Salvar";
+      }
+    }
+
+    btnSalvarEdicao.addEventListener("click", salvarEdicao);
+
+    async function excluirFuncionario(matricula){
+      if(!ensureLogged()) return;
+      const ok = confirm(`Excluir o funcionário matrícula ${matricula}?`);
+      if(!ok) return;
+
+      try{
+        const r = await fetch(API_DEL(matricula), {
+          method:"DELETE",
+          headers:{ ...authHeaders() }
+        });
+        const j = await r.json().catch(()=> ({}));
+        if(!r.ok || !j.ok){
+          showMsg(j.error || "Erro ao excluir.", "err");
+          return;
+        }
+        showMsg("🗑️ Excluído com sucesso.", "ok");
+        if(currentMode === "mes") await carregarMes();
+        else await carregarCadastro();
+      }catch{
+        showMsg("Erro de conexão.", "err");
+      }
+    }
+
+    async function carregarComentarios(){
+      if(!ensureLogged()) return;
+
+      const p = String(periodo.value || "").trim();
+      const lot = String(filtroLotacao.value || "").trim();
+
+      const qs = new URLSearchParams();
+      if(p) qs.set("periodo", p);
+      if(lot) qs.set("lotacao", lot);
+
+      try{
+        const r = await fetch(API_COMENTARIOS + "?" + qs.toString(), { headers: { ...authHeaders() } });
+        const j = await r.json().catch(()=> ({}));
+        if(!r.ok || !j.ok){
+          tbodyComentarios.innerHTML = `<tr><td colspan="4" class="hint">Erro ao carregar.</td></tr>`;
+          showMsg(j.error || "Erro ao carregar comentários.", "err");
+          return;
+        }
+
+        const rows = j.comentarios || [];
+        if(!rows.length){
+          tbodyComentarios.innerHTML = `<tr><td colspan="4" class="hint">Sem comentários.</td></tr>`;
+          return;
+        }
+
+        tbodyComentarios.innerHTML = rows.map(c => {
+          const dt = new Date(c.criado_em);
+          const when = isNaN(dt.getTime()) ? "" : dt.toLocaleString("pt-BR");
+          return `
+            <tr>
+              <td>${escapeHtml(when)}</td>
+              <td>${escapeHtml(c.periodo||"")}</td>
+              <td>${escapeHtml(c.lotacao||"")}</td>
+              <td style="white-space:normal; min-width:380px;">${escapeHtml(c.comentario||"")}</td>
+            </tr>
+          `;
+        }).join("");
+
+        showMsg("📝 Comentários carregados.", "ok");
+      }catch{
+        showMsg("Erro de conexão.", "err");
+      }
+    }
+
+    btnCarregarComentarios.addEventListener("click", carregarComentarios);
+
+    function imprimirPDF(){
+      const p = String(periodo.value || "").trim();
+      const dt = new Date().toLocaleString("pt-BR");
 
       if(pdfPeriodoTxt) pdfPeriodoTxt.textContent = `Período: ${p}`;
       if(pdfEmitidoEm) pdfEmitidoEm.textContent = `Emitido em: ${dt}`;
@@ -1082,10 +1059,18 @@
         `;
       }
 
-      if(printArea) printArea.style.display = "block";
+      // clona a tabela visível
+      const tableClone = document.getElementById("tabelaRelatorio").cloneNode(true);
+      tableClone.querySelectorAll("button").forEach(b => b.remove());
+      pdfTableWrap.innerHTML = "";
+      pdfTableWrap.appendChild(tableClone);
+
+      printArea.style.display = "block";
       window.print();
-      if(printArea) printArea.style.display = "none";
+      printArea.style.display = "none";
     }
+
+    btnPDF.addEventListener("click", imprimirPDF);
 
     btnSair.addEventListener("click", () => {
       token = "";
