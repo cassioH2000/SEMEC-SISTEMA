@@ -41,6 +41,13 @@ async function criarTabelas() {
     )
   `);
 
+  // ✅ NOVO: lotacao e seguimento (sem quebrar tabela antiga)
+  await dbQuery(`alter table funcionarios add column if not exists lotacao text;`);
+  await dbQuery(`alter table funcionarios add column if not exists seguimento text;`);
+
+  // ✅ backfill: se lotacao estiver vazio, copia de escola
+  await dbQuery(`update funcionarios set lotacao = escola where (lotacao is null or lotacao = '') and (escola is not null and escola <> '');`);
+
   await dbQuery(`
     create table if not exists folhas(
       id bigserial primary key,
@@ -95,10 +102,15 @@ function requireAdmin(req, res, next) {
 }
 
 // ================= FUNCIONÁRIOS PÚBLICO (FOLHA) =================
+// (Mantive compatibilidade: ainda retorna "escola" porque a página folha pode usar isso)
 app.get("/api/funcionarios", async (req, res) => {
   try {
     const r = await dbQuery(`
-      select matricula, nome, funcao, vinculo, carga, escola
+      select
+        matricula, nome, funcao, vinculo, carga,
+        coalesce(lotacao, escola, '') as escola,
+        coalesce(lotacao, escola, '') as lotacao,
+        coalesce(seguimento,'') as seguimento
       from funcionarios
       order by nome nulls last, matricula
     `);
@@ -129,18 +141,29 @@ app.post("/api/folha/enviar", async (req, res) => {
     const he = Number.isFinite(+b.horas_extras) ? +b.horas_extras : 0;
     const obs = (b.observacoes ?? "").toString();
 
+    const lotacao = (b.lotacao ?? b.escola ?? "").toString();
+    const seguimento = (b.seguimento ?? "").toString();
+
     // garante que funcionário existe (não altera cadastro do admin se já existir)
     await dbQuery(
       `
-      insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, atualizado_em)
-      values($1,$2,$3,$4,$5,$6, now())
+      insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, lotacao, seguimento, atualizado_em)
+      values($1,$2,$3,$4,$5,$6,$7,$8, now())
       on conflict(matricula) do update set
         atualizado_em = now()
       `,
-      [matricula, b.nome ?? null, b.funcao ?? null, b.vinculo ?? null, b.carga ?? null, b.escola ?? null]
+      [
+        matricula,
+        b.nome ?? null,
+        b.funcao ?? null,
+        b.vinculo ?? null,
+        b.carga ?? null,
+        lotacao || null,  // escola (compat)
+        lotacao || null,  // lotacao
+        seguimento || null
+      ]
     );
 
-    // ✅ IMPORTANTE: NÃO repetir o mesmo parâmetro ($4) para evitar "inconsistent types"
     await dbQuery(
       `
       insert into folhas(
@@ -172,7 +195,11 @@ app.post("/api/folha/enviar", async (req, res) => {
 app.get("/api/admin/funcionarios", requireAdmin, async (req, res) => {
   try {
     const r = await dbQuery(`
-      select matricula, nome, funcao, vinculo, carga, escola, atualizado_em
+      select
+        matricula, nome, funcao, vinculo, carga,
+        coalesce(lotacao, escola, '') as lotacao,
+        coalesce(seguimento,'') as seguimento,
+        atualizado_em
       from funcionarios
       order by nome nulls last, matricula
     `);
@@ -183,7 +210,62 @@ app.get("/api/admin/funcionarios", requireAdmin, async (req, res) => {
   }
 });
 
-// ================= ✅ ADMIN: EDITAR FUNCIONÁRIO (ERA O QUE FALTAVA) =================
+// ================= ✅ ADMIN: CRIAR FUNCIONÁRIO =================
+app.post("/api/admin/funcionarios", requireAdmin, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const matricula = String(b.matricula || "").trim();
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
+
+    const nome = (b.nome ?? "").toString();
+    const funcao = (b.funcao ?? "").toString();
+    const vinculo = (b.vinculo ?? "").toString();
+    const carga = (b.carga ?? "").toString();
+
+    const lotacao = (b.lotacao ?? b.escola ?? "").toString();
+    const seguimento = (b.seguimento ?? "").toString();
+
+    const r = await dbQuery(
+      `
+      insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, lotacao, seguimento, atualizado_em)
+      values($1,$2,$3,$4,$5,$6,$7,$8, now())
+      on conflict(matricula) do nothing
+      returning matricula, nome, funcao, vinculo, carga,
+                coalesce(lotacao, escola, '') as lotacao,
+                coalesce(seguimento,'') as seguimento,
+                atualizado_em
+      `,
+      [matricula, nome, funcao, vinculo, carga, lotacao, lotacao, seguimento]
+    );
+
+    if (!r.rows[0]) {
+      return res.status(409).json({ ok: false, error: "Já existe funcionário com essa matrícula" });
+    }
+
+    res.json({ ok: true, funcionario: r.rows[0] });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
+  }
+});
+
+// ================= ✅ ADMIN: EXCLUIR FUNCIONÁRIO =================
+app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
+  try {
+    const matricula = String(req.params.matricula || "").trim();
+    if (!matricula) return res.status(400).json({ ok: false, error: "Matrícula inválida" });
+
+    const r = await dbQuery(`delete from funcionarios where matricula=$1 returning matricula`, [matricula]);
+    if (!r.rows[0]) return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ ok: false, error: e?.message || "Erro interno" });
+  }
+});
+
+// ================= ADMIN: EDITAR FUNCIONÁRIO =================
 app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
   try {
     const matricula = String(req.params.matricula || "").trim();
@@ -194,22 +276,29 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => 
     const funcao = (b.funcao ?? "").toString();
     const vinculo = (b.vinculo ?? "").toString();
     const carga = (b.carga ?? "").toString();
-    const escola = (b.escola ?? "").toString();
+
+    const lotacao = (b.lotacao ?? b.escola ?? "").toString();
+    const seguimento = (b.seguimento ?? "").toString();
 
     const r = await dbQuery(
       `
-      insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, atualizado_em)
-      values($1,$2,$3,$4,$5,$6, now())
+      insert into funcionarios(matricula, nome, funcao, vinculo, carga, escola, lotacao, seguimento, atualizado_em)
+      values($1,$2,$3,$4,$5,$6,$7,$8, now())
       on conflict(matricula) do update set
         nome=excluded.nome,
         funcao=excluded.funcao,
         vinculo=excluded.vinculo,
         carga=excluded.carga,
         escola=excluded.escola,
+        lotacao=excluded.lotacao,
+        seguimento=excluded.seguimento,
         atualizado_em=now()
-      returning matricula, nome, funcao, vinculo, carga, escola, atualizado_em
+      returning matricula, nome, funcao, vinculo, carga,
+                coalesce(lotacao, escola, '') as lotacao,
+                coalesce(seguimento,'') as seguimento,
+                atualizado_em
       `,
-      [matricula, nome, funcao, vinculo, carga, escola]
+      [matricula, nome, funcao, vinculo, carga, lotacao, lotacao, seguimento]
     );
 
     res.json({ ok: true, funcionario: r.rows[0] });
@@ -219,7 +308,7 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => 
   }
 });
 
-// ================= ADMIN: CARREGAR MÊS (admin.html usa "registros") =================
+// ================= ADMIN: CARREGAR MÊS =================
 app.get("/api/admin/mes", requireAdmin, async (req, res) => {
   try {
     const periodo = String(req.query.periodo || "").trim();
@@ -229,8 +318,9 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 
     const r = await dbQuery(
       `
-      select 
-        f.escola,
+      select
+        coalesce(f.lotacao, f.escola, '') as lotacao,
+        coalesce(f.seguimento,'') as seguimento,
         f.matricula,
         f.nome,
         f.funcao,
