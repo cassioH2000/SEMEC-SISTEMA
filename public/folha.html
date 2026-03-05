@@ -32,7 +32,7 @@
     header{ padding:18px 18px 8px; }
 
     .topbar{
-      max-width:1100px;
+      max-width:1200px;
       margin:0 auto;
       background: var(--cardGrad);
       border:1px solid var(--border);
@@ -81,10 +81,9 @@
 
     main{ padding:14px 18px 40px; }
     .wrap{
-      max-width:1100px; margin:0 auto;
-      display:grid; grid-template-columns: 1.05fr 0.95fr; gap:14px;
+      max-width:1200px; margin:0 auto;
+      display:grid; grid-template-columns: 1fr; gap:14px;
     }
-    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
 
     .card{
       background: var(--cardGrad);
@@ -98,22 +97,18 @@
       border-bottom:1px solid var(--border);
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       background: rgba(0,0,0,0.10);
+      flex-wrap:wrap;
     }
     .card .head h2{ margin:0; font-size:14px; letter-spacing:0.2px; }
     .card .head span{ color:var(--muted); font-size:12px; }
     .content{ padding:16px; }
-
-    .grid{
-      display:grid; grid-template-columns: 1fr 1fr; gap:12px;
-    }
-    @media (max-width: 700px){ .grid{ grid-template-columns:1fr; } }
 
     label{
       font-size:12px; color:var(--muted);
       display:block; margin:0 0 6px;
     }
 
-    input, textarea{
+    input, textarea, select{
       width:100%;
       padding:12px 12px;
       border-radius:14px;
@@ -131,11 +126,9 @@
     }
 
     input::placeholder, textarea::placeholder{ color: rgba(148,163,184,0.7); }
-    textarea{ min-height:100px; resize: vertical; }
+    textarea{ min-height:110px; resize: vertical; }
 
-    .row{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-    }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
     .btn{
       cursor:pointer;
@@ -162,6 +155,12 @@
       font-weight:600;
       min-width: 160px;
     }
+    .btn.small{
+      min-width:auto;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:700;
+    }
 
     .msg{
       margin-top:12px;
@@ -183,18 +182,23 @@
       overflow:hidden;
       border-radius: 14px;
       border:1px solid var(--border);
+      min-width: 1180px;
     }
     th, td{
       padding:10px 10px;
       border-bottom:1px solid var(--border);
       text-align:left;
       vertical-align:top;
+      white-space:nowrap;
     }
     th{
       background: rgba(255,255,255,0.04);
       color:var(--muted);
       font-weight:600;
       font-size:12px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
     tr:last-child td{ border-bottom:none; }
 
@@ -209,7 +213,7 @@
       color:var(--text);
     }
 
-    /* ===== LOGIN ===== */
+    /* OVERLAY / MODAL */
     .overlay{
       position:fixed; inset:0;
       background: rgba(0,0,0,0.62);
@@ -220,7 +224,7 @@
       z-index: 50;
     }
     .modal{
-      width:min(520px, 100%);
+      width:min(560px, 100%);
       background: var(--cardGrad);
       border:1px solid var(--border);
       border-radius: 18px;
@@ -244,7 +248,7 @@
 
 <body>
 
-  <!-- 🔒 LOGIN SIMPLES (sempre pede ao entrar) -->
+  <!-- LOGIN -->
   <div class="overlay" id="loginOverlay">
     <div class="modal">
       <div class="mhead">
@@ -264,10 +268,32 @@
         </div>
 
         <div class="merr" id="loginErr">Senha inválida.</div>
+      </div>
+    </div>
+  </div>
 
-        <div class="small" style="margin-top:10px;">
-          Obs.: Digite sua senha para continuar.
+  <!-- SELECIONAR LOTAÇÃO -->
+  <div class="overlay" id="lotacaoOverlay" style="display:none;">
+    <div class="modal">
+      <div class="mhead">
+        <h3>🏫 Selecione a Lotação</h3>
+        <span class="kbd">Filtro</span>
+      </div>
+      <div class="mbody">
+        <div class="small" style="margin-bottom:10px;">
+          Depois de selecionar, serão mostrados <b>todos os funcionários</b> dessa lotação, prontos para edição e envio.
         </div>
+
+        <label for="selLotacao">Lotação</label>
+        <select id="selLotacao">
+          <option value="">Carregando...</option>
+        </select>
+
+        <div class="row" style="margin-top:12px; justify-content:flex-end;">
+          <button class="btn" id="btnConfirmarLotacao" type="button">✅ Confirmar</button>
+        </div>
+
+        <div class="merr" id="lotacaoErr">Selecione uma lotação.</div>
       </div>
     </div>
   </div>
@@ -288,7 +314,7 @@
           <span>Servidor: <span id="apiStatus">verificando...</span></span>
         </div>
         <div class="pill">Funcionários: <span class="kbd" id="funcCount">0</span></div>
-        <div class="pill">Envio: <span class="kbd">somente mês vigente</span></div>
+        <div class="pill">Período: <span class="kbd" id="periodoTxt">—</span></div>
       </div>
     </div>
   </header>
@@ -296,90 +322,88 @@
   <main>
     <div class="wrap">
 
-      <!-- FORM -->
+      <!-- TABELA (MESMAS COLUNAS DO ADMIN) -->
       <section class="card">
         <div class="head">
-          <h2>Preencher folha</h2>
-          <span>Somente faltas, HE e observações</span>
+          <div>
+            <h2>Funcionários da Lotação</h2>
+            <span id="hintLotacaoAtual">Lotação: —</span>
+          </div>
+
+          <div class="row" style="justify-content:flex-end;">
+            <button class="btn secondary" id="btnTrocarLotacao" type="button">🏫 Trocar Lotação</button>
+            <button class="btn" id="btnEnviarTodos" type="button">📤 Enviar TODOS</button>
+          </div>
         </div>
 
         <div class="content">
-          <div class="grid">
-
-            <div>
-              <label for="periodo">Mês/Ano do registro (mês vigente)</label>
+          <div class="row" style="gap:12px; margin-bottom:10px;">
+            <div style="min-width:240px; flex:1;">
+              <label for="periodo">Mês/Ano (mês vigente)</label>
               <input id="periodo" type="month" disabled />
               <div class="small" style="margin-top:6px;">
                 O envio é permitido somente para o mês atual.
               </div>
             </div>
 
-            <div>
-              <label for="matricula">Matrícula (busca no cadastro)</label>
-              <input id="matricula" type="text" placeholder="Ex.: 101" list="dlMatriculas" />
-              <datalist id="dlMatriculas"></datalist>
-              <div class="small" id="hintMatricula"></div>
-            </div>
-
-            <div>
-              <label for="nome">Nome do funcionário (busca no cadastro)</label>
-              <input id="nome" type="text" placeholder="Ex.: Maria Silva" list="dlNomes" />
-              <datalist id="dlNomes"></datalist>
-              <div class="small" id="hintNome"></div>
-            </div>
-
-            <div>
-              <label for="escola">Escola (somente leitura)</label>
-              <input id="escola" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="funcao">Função (somente leitura)</label>
-              <input id="funcao" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="vinculo">Vínculo (somente leitura)</label>
-              <input id="vinculo" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="carga">Carga horária (somente leitura)</label>
-              <input id="carga" type="text" readonly />
-            </div>
-
-            <div>
-              <label for="horas_extras">Horas Extras (soma)</label>
-              <input id="horas_extras" type="number" min="0" step="1" placeholder="0" />
-            </div>
-
-            <div>
-              <label for="faltas">Faltas (total)</label>
-              <input id="faltas" type="number" min="0" step="1" placeholder="0" />
-            </div>
-
-            <div>
-              <label for="falta_com_atestado">Falta com atestado</label>
-              <input id="falta_com_atestado" type="number" min="0" step="1" placeholder="0" />
+            <div style="min-width:240px; flex:1;">
+              <label for="pesquisa">Pesquisar na lotação (nome ou matrícula)</label>
+              <input id="pesquisa" type="text" placeholder="Digite para filtrar..." />
             </div>
           </div>
 
-          <div style="margin-top:12px;">
-            <label for="observacoes">Observações</label>
-            <textarea id="observacoes" placeholder="Digite observações do mês..."></textarea>
-          </div>
-
-          <div class="row" style="margin-top:14px;">
-            <button class="btn" id="btnEnviar" type="button">📩 Enviar para ADM</button>
-            <button class="btn secondary" id="btnLimpar" type="button">🧹 Limpar</button>
-            <span class="small">Pesquise por matrícula ou nome para preencher automático.</span>
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Matrícula</th>
+                  <th>Lotação</th>
+                  <th>Seguimento</th>
+                  <th>Nome</th>
+                  <th>Função</th>
+                  <th>Vínculo</th>
+                  <th>Carga</th>
+                  <th>Faltas</th>
+                  <th>Com atestado</th>
+                  <th>HE</th>
+                  <th>Obs</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyLotacao">
+                <tr><td colspan="12" class="small">Selecione a lotação para carregar.</td></tr>
+              </tbody>
+            </table>
           </div>
 
           <div class="msg" id="msgBox"></div>
         </div>
       </section>
 
-      <!-- HIST -->
+      <!-- COMENTÁRIO GERAL (POR LOTAÇÃO) -->
+      <section class="card">
+        <div class="head">
+          <h2>Comentário Geral (sem matrícula)</h2>
+          <span>Envia para o Admin</span>
+        </div>
+
+        <div class="content">
+          <div class="small" style="margin-bottom:10px;">
+            Use para avisos/observações gerais do mês e da lotação (não ligado a funcionário).
+          </div>
+
+          <label for="comentarioGeral">Comentário Geral</label>
+          <textarea id="comentarioGeral" placeholder="Ex.: Houve paralisação no dia X, evento, faltou transporte, etc..."></textarea>
+
+          <div class="row" style="margin-top:12px; justify-content:flex-end;">
+            <button class="btn" id="btnEnviarComentario" type="button">📝 Enviar Comentário</button>
+          </div>
+
+          <div class="msg" id="msgComentario"></div>
+        </div>
+      </section>
+
+      <!-- HISTÓRICO LOCAL -->
       <section class="card">
         <div class="head">
           <h2>Registros enviados (local)</h2>
@@ -397,7 +421,7 @@
           </div>
 
           <div style="overflow:auto;">
-            <table>
+            <table style="min-width:760px;">
               <thead>
                 <tr>
                   <th>Período</th>
@@ -424,10 +448,10 @@
   <script>
     const $ = (id) => document.getElementById(id);
 
-    // ✅ senha simples (não exibida na tela)
+    // senha simples
     const FOLHA_PASSWORD = "2026";
 
-    // ===== LOGIN =====
+    // LOGIN
     const loginOverlay = $("loginOverlay");
     const senhaFolha = $("senhaFolha");
     const btnEntrar = $("btnEntrar");
@@ -449,42 +473,70 @@
         return;
       }
       closeLogin();
+      openLotacaoModal();
     }
-
     btnEntrar.addEventListener("click", doLogin);
     senhaFolha.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
 
-    // ===== DOM =====
+    // MODAL LOTAÇÃO
+    const lotacaoOverlay = $("lotacaoOverlay");
+    const selLotacao = $("selLotacao");
+    const btnConfirmarLotacao = $("btnConfirmarLotacao");
+    const lotacaoErr = $("lotacaoErr");
+
+    let lotacaoSelecionada = localStorage.getItem("semec_lotacao") || "";
+
+    function openLotacaoModal(){
+      lotacaoErr.style.display = "none";
+      lotacaoOverlay.style.display = "flex";
+      fillSelectLotacoes();
+      if(lotacaoSelecionada){
+        selLotacao.value = lotacaoSelecionada;
+      }
+    }
+    function closeLotacaoModal(){ lotacaoOverlay.style.display = "none"; }
+
+    btnConfirmarLotacao.addEventListener("click", () => {
+      lotacaoErr.style.display = "none";
+      const v = String(selLotacao.value || "").trim();
+      if(!v){
+        lotacaoErr.textContent = "Selecione uma lotação.";
+        lotacaoErr.style.display = "block";
+        return;
+      }
+      lotacaoSelecionada = v;
+      localStorage.setItem("semec_lotacao", lotacaoSelecionada);
+      closeLotacaoModal();
+      carregarTabelaDaLotacao();
+    });
+
+    // DOM
     const dotApi = $("dotApi");
     const apiStatus = $("apiStatus");
     const funcCount = $("funcCount");
-
     const periodo = $("periodo");
-    const matricula = $("matricula");
-    const nome = $("nome");
-    const escola = $("escola");
-    const funcao = $("funcao");
-    const vinculo = $("vinculo");
-    const carga = $("carga");
-    const horas_extras = $("horas_extras");
-    const faltas = $("faltas");
-    const falta_com_atestado = $("falta_com_atestado");
-    const observacoes = $("observacoes");
+    const periodoTxt = $("periodoTxt");
 
-    const dlMatriculas = $("dlMatriculas");
-    const dlNomes = $("dlNomes");
-    const hintMatricula = $("hintMatricula");
-    const hintNome = $("hintNome");
+    const hintLotacaoAtual = $("hintLotacaoAtual");
+    const tbodyLotacao = $("tbodyLotacao");
+    const btnEnviarTodos = $("btnEnviarTodos");
+    const btnTrocarLotacao = $("btnTrocarLotacao");
+    const pesquisa = $("pesquisa");
+
+    const comentarioGeral = $("comentarioGeral");
+    const btnEnviarComentario = $("btnEnviarComentario");
+    const msgComentario = $("msgComentario");
 
     const msgBox = $("msgBox");
     const msgList = $("msgList");
 
+    // APIs
     const API_FUNC = "/api/funcionarios";
     const API_SEND = "/api/folha/enviar";
+    const API_COMENTARIO = "/api/folha/comentario"; // precisa existir no server.js
 
     let funcionarios = [];
-    let byMat = new Map();
-    let byNome = new Map();
+    let funcionariosDaLotacao = [];
 
     function showMsg(el, text, type){
       el.className = "msg " + (type || "");
@@ -512,6 +564,7 @@
     function ensurePeriodoVigente(){
       const vigente = defaultPeriodoAtual();
       if(periodo.value !== vigente) periodo.value = vigente;
+      periodoTxt.textContent = vigente;
       return vigente;
     }
 
@@ -526,46 +579,30 @@
       }
     }
 
-    function buildIndexes(list){
-      funcionarios = Array.isArray(list) ? list : [];
-      byMat = new Map();
-      byNome = new Map();
-
-      dlMatriculas.innerHTML = "";
-      dlNomes.innerHTML = "";
-
-      for(const f of funcionarios){
-        const mat = String(f.matricula || "").trim();
-        const nm = String(f.nome || "").trim();
-
-        if(mat){
-          byMat.set(mat, f);
-          const opt = document.createElement("option");
-          opt.value = mat;
-          dlMatriculas.appendChild(opt);
-        }
-        if(nm){
-          byNome.set(nm.toLowerCase(), f);
-          const opt = document.createElement("option");
-          opt.value = nm;
-          dlNomes.appendChild(opt);
-        }
-      }
-      funcCount.textContent = String(funcionarios.length);
+    // compat: se o back ainda manda "escola"
+    function getLotacaoFromFuncionario(f){
+      return String(f?.lotacao || f?.escola || "").trim();
     }
 
-    function fillFuncionario(f){
-      if(!f) return;
+    function fillSelectLotacoes(){
+      if(!selLotacao) return;
 
-      matricula.value = String(f.matricula || "");
-      nome.value = String(f.nome || "");
-      escola.value = String(f.escola || "");
-      funcao.value = String(f.funcao || "");
-      vinculo.value = String(f.vinculo || "");
-      carga.value = String(f.carga || "");
+      const lotacoes = Array.from(
+        new Set(funcionarios.map(getLotacaoFromFuncionario).filter(Boolean))
+      ).sort((a,b)=>a.localeCompare(b));
 
-      hintMatricula.textContent = f.nome ? `Encontrado: ${f.nome}` : "Encontrado.";
-      hintNome.textContent = f.matricula ? `Matrícula: ${f.matricula}` : "";
+      if(!lotacoes.length){
+        selLotacao.innerHTML = `<option value="">(sem lotações no cadastro)</option>`;
+        return;
+      }
+
+      selLotacao.innerHTML =
+        `<option value="">Selecione...</option>` +
+        lotacoes.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join("");
+
+      if(lotacaoSelecionada && lotacoes.includes(lotacaoSelecionada)){
+        selLotacao.value = lotacaoSelecionada;
+      }
     }
 
     async function carregarFuncionarios(){
@@ -576,41 +613,287 @@
           showMsg(msgBox, "⚠️ Não foi possível carregar funcionários. (Verifique /api/funcionarios)", "err");
           return;
         }
-        buildIndexes(j.funcionarios || []);
+        funcionarios = Array.isArray(j.funcionarios) ? j.funcionarios : [];
+        funcCount.textContent = String(funcionarios.length);
+
+        fillSelectLotacoes();
+
+        if(lotacaoSelecionada && lotacaoOverlay.style.display === "none"){
+          carregarTabelaDaLotacao();
+        }
       }catch(e){
         showMsg(msgBox, "⚠️ Falha ao carregar funcionários (sem conexão).", "err");
       }
     }
 
-    function clearForm(){
-      matricula.value = "";
-      nome.value = "";
-      escola.value = "";
-      funcao.value = "";
-      vinculo.value = "";
-      carga.value = "";
-      horas_extras.value = "";
-      faltas.value = "";
-      falta_com_atestado.value = "";
-      observacoes.value = "";
-      hintMatricula.textContent = "";
-      hintNome.textContent = "";
+    function renderTabelaLotacao(lista){
+      if(!lista.length){
+        tbodyLotacao.innerHTML = `<tr><td colspan="12" class="small">Nenhum funcionário encontrado para essa lotação.</td></tr>`;
+        return;
+      }
+
+      tbodyLotacao.innerHTML = lista.map(f => {
+        const mat = String(f.matricula || "");
+        const lot = getLotacaoFromFuncionario(f);
+        const seg = String(f.seguimento || "");
+
+        return `
+          <tr data-mat="${escapeHtml(mat)}">
+            <td><b>${escapeHtml(mat)}</b></td>
+            <td>${escapeHtml(lot)}</td>
+            <td>${escapeHtml(seg)}</td>
+            <td>${escapeHtml(f.nome || "")}</td>
+            <td>${escapeHtml(f.funcao || "")}</td>
+            <td>${escapeHtml(f.vinculo || "")}</td>
+            <td>${escapeHtml(f.carga || "")}</td>
+
+            <td><input type="number" min="0" step="1" class="in-faltas" style="width:90px" value="0"></td>
+            <td><input type="number" min="0" step="1" class="in-atestado" style="width:120px" value="0"></td>
+            <td><input type="number" min="0" step="1" class="in-he" style="width:90px" value="0"></td>
+            <td><input type="text" class="in-obs" style="width:260px" placeholder="Observações..."></td>
+
+            <td>
+              <button class="btn small btn-enviar-um" type="button">📤 Enviar</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbodyLotacao.querySelectorAll(".btn-enviar-um").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const tr = btn.closest("tr");
+          await enviarLinha(tr);
+        });
+      });
     }
 
-    function validateAndLock(){
-      const vigente = ensurePeriodoVigente();
-      if(periodo.value !== vigente) return "Só é permitido enviar o mês vigente.";
+    function coletarPayloadDaLinha(tr){
+      const mat = String(tr.getAttribute("data-mat") || "").trim();
+      const f = funcionariosDaLotacao.find(x => String(x.matricula||"") === mat);
 
-      const mat = matricula.value.trim();
-      const nm = nome.value.trim().toLowerCase();
+      const faltas = Number(tr.querySelector(".in-faltas")?.value || 0);
+      const faltaCom = Number(tr.querySelector(".in-atestado")?.value || 0);
+      const he = Number(tr.querySelector(".in-he")?.value || 0);
+      const obs = String(tr.querySelector(".in-obs")?.value || "").trim();
 
-      const f = byMat.get(mat) || byNome.get(nm);
-      if(!f) return "Funcionário não encontrado no cadastro. Pesquise pela matrícula ou nome.";
+      if(!mat) return { error:"Matrícula inválida." };
+      if(faltas < 0 || faltaCom < 0 || he < 0) return { error:"Não é permitido valor negativo." };
 
-      fillFuncionario(f);
-      return null;
+      const p = ensurePeriodoVigente();
+
+      // compatibilidade: manda lotacao e também escola com o mesmo valor
+      const lot = lotacaoSelecionada;
+
+      return {
+        periodo: p,
+        matricula: mat,
+
+        // cadastro (mesmas infos do admin)
+        lotacao: lot,
+        escola: lot, // compat
+        seguimento: String(f?.seguimento || ""),
+        nome: String(f?.nome || ""),
+        funcao: String(f?.funcao || ""),
+        vinculo: String(f?.vinculo || ""),
+        carga: String(f?.carga || ""),
+
+        // folha
+        faltas: Number.isNaN(faltas) ? 0 : faltas,
+        falta_com_atestado: Number.isNaN(faltaCom) ? 0 : faltaCom,
+        horas_extras: Number.isNaN(he) ? 0 : he,
+        observacoes: obs
+      };
     }
 
+    async function enviarLinha(tr){
+      const payload = coletarPayloadDaLinha(tr);
+      if(payload.error){
+        showMsg(msgBox, "❌ " + payload.error, "err");
+        return;
+      }
+
+      const btn = tr.querySelector(".btn-enviar-um");
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Enviando...";
+
+      try{
+        const res = await fetch(API_SEND, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if(!res.ok || !data?.ok){
+          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
+          showMsg(msgBox, "❌ " + msg, "err");
+          tr.style.outline = "2px solid rgba(239,68,68,0.7)";
+          setTimeout(() => tr.style.outline = "none", 1200);
+          return;
+        }
+
+        tr.style.outline = "2px solid rgba(34,197,94,0.7)";
+        setTimeout(() => tr.style.outline = "none", 1200);
+        showMsg(msgBox, `✅ Enviado: ${payload.matricula} - ${payload.nome}`, "ok");
+
+        addToHistory({
+          quando: new Date().toISOString(),
+          periodo: payload.periodo,
+          matricula: payload.matricula,
+          nome: payload.nome,
+          faltas: payload.faltas,
+          falta_com_atestado: payload.falta_com_atestado,
+          horas_extras: payload.horas_extras
+        });
+        renderHistory();
+
+      }catch(e){
+        showMsg(msgBox, "❌ Erro de conexão: não foi possível enviar", "err");
+      }finally{
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    async function enviarTodos(){
+      const trs = Array.from(tbodyLotacao.querySelectorAll("tr[data-mat]"));
+      if(!trs.length){
+        showMsg(msgBox, "⚠️ Não há funcionários para enviar.", "err");
+        return;
+      }
+
+      btnEnviarTodos.disabled = true;
+      const original = btnEnviarTodos.textContent;
+      btnEnviarTodos.textContent = "Enviando...";
+
+      let ok = 0, fail = 0;
+      for(const tr of trs){
+        try{
+          const payload = coletarPayloadDaLinha(tr);
+          if(payload.error){ fail++; continue; }
+
+          const res = await fetch(API_SEND, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json().catch(() => ({}));
+          if(res.ok && data?.ok){
+            ok++;
+            tr.style.outline = "2px solid rgba(34,197,94,0.7)";
+            addToHistory({
+              quando: new Date().toISOString(),
+              periodo: payload.periodo,
+              matricula: payload.matricula,
+              nome: payload.nome,
+              faltas: payload.faltas,
+              falta_com_atestado: payload.falta_com_atestado,
+              horas_extras: payload.horas_extras
+            });
+          } else {
+            fail++;
+            tr.style.outline = "2px solid rgba(239,68,68,0.7)";
+          }
+          setTimeout(() => tr.style.outline = "none", 1200);
+        }catch{
+          fail++;
+        }
+      }
+
+      renderHistory();
+      showMsg(msgBox, `📤 Envio finalizado — ✅ ${ok} | ❌ ${fail}`, fail ? "err" : "ok");
+
+      btnEnviarTodos.disabled = false;
+      btnEnviarTodos.textContent = original;
+    }
+
+    function carregarTabelaDaLotacao(){
+      if(!lotacaoSelecionada){
+        hintLotacaoAtual.textContent = "Lotação: —";
+        tbodyLotacao.innerHTML = `<tr><td colspan="12" class="small">Selecione a lotação para carregar.</td></tr>`;
+        return;
+      }
+
+      hintLotacaoAtual.textContent = `Lotação: ${lotacaoSelecionada}`;
+
+      funcionariosDaLotacao = funcionarios.filter(f => getLotacaoFromFuncionario(f) === lotacaoSelecionada);
+      renderTabelaLotacao(funcionariosDaLotacao);
+
+      showMsg(msgBox, `🏫 Lotação selecionada: ${lotacaoSelecionada}`, "ok");
+    }
+
+    // filtro de pesquisa dentro da lotação
+    pesquisa.addEventListener("input", () => {
+      const q = String(pesquisa.value || "").trim().toLowerCase();
+      if(!q){
+        renderTabelaLotacao(funcionariosDaLotacao);
+        return;
+      }
+      const filtrados = funcionariosDaLotacao.filter(f => {
+        const mat = String(f.matricula||"").toLowerCase();
+        const nm  = String(f.nome||"").toLowerCase();
+        return mat.includes(q) || nm.includes(q);
+      });
+      renderTabelaLotacao(filtrados);
+    });
+
+    btnEnviarTodos.addEventListener("click", enviarTodos);
+
+    btnTrocarLotacao.addEventListener("click", () => {
+      localStorage.removeItem("semec_lotacao");
+      lotacaoSelecionada = "";
+      openLotacaoModal();
+    });
+
+    // COMENTÁRIO GERAL (POR LOTAÇÃO)
+    btnEnviarComentario.addEventListener("click", async () => {
+      const texto = String(comentarioGeral.value || "").trim();
+      if(!lotacaoSelecionada){
+        showMsg(msgComentario, "❌ Selecione a lotação antes de enviar.", "err");
+        return;
+      }
+      if(!texto){
+        showMsg(msgComentario, "❌ Digite um comentário.", "err");
+        return;
+      }
+
+      const p = ensurePeriodoVigente();
+      const lot = lotacaoSelecionada;
+
+      const payload = {
+        periodo: p,
+        lotacao: lot,
+        escola: lot, // compat
+        comentario: texto
+      };
+
+      btnEnviarComentario.disabled = true;
+      const original = btnEnviarComentario.textContent;
+      btnEnviarComentario.textContent = "Enviando...";
+
+      try{
+        const res = await fetch(API_COMENTARIO, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if(!res.ok || !data?.ok){
+          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
+          showMsg(msgComentario, "❌ " + msg, "err");
+          return;
+        }
+        showMsg(msgComentario, "✅ Comentário enviado para o Admin!", "ok");
+        comentarioGeral.value = "";
+      }catch(e){
+        showMsg(msgComentario, "❌ Erro de conexão: não foi possível enviar.", "err");
+      }finally{
+        btnEnviarComentario.disabled = false;
+        btnEnviarComentario.textContent = original;
+      }
+    });
+
+    // HISTÓRICO LOCAL
     function getLocalHistory(){
       try{ return JSON.parse(localStorage.getItem("semec_envios") || "[]"); }
       catch{ return []; }
@@ -642,85 +925,6 @@
       `).join("");
     }
 
-    async function enviar(){
-      const err = validateAndLock();
-      if(err){
-        showMsg(msgBox, "❌ " + err, "err");
-        return;
-      }
-
-      const payload = {
-        periodo: periodo.value,
-        matricula: matricula.value.trim(),
-        nome: nome.value.trim(),
-        funcao: funcao.value.trim(),
-        vinculo: vinculo.value.trim(),
-        carga: carga.value.trim(),
-        escola: escola.value.trim(),
-
-        faltas: Number(faltas.value || 0),
-        falta_com_atestado: Number(falta_com_atestado.value || 0),
-        horas_extras: Number(horas_extras.value || 0),
-        observacoes: (observacoes.value || "").trim()
-      };
-
-      const btn = $("btnEnviar");
-      btn.disabled = true;
-      btn.textContent = "Enviando...";
-
-      try{
-        const res = await fetch(API_SEND, {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if(!res.ok || !data?.ok){
-          const msg = data?.error || data?.message || ("Falha no envio (" + res.status + ")");
-          showMsg(msgBox, "❌ " + msg, "err");
-          return;
-        }
-
-        addToHistory({
-          quando: new Date().toISOString(),
-          periodo: payload.periodo,
-          matricula: payload.matricula,
-          nome: payload.nome,
-          faltas: payload.faltas,
-          falta_com_atestado: payload.falta_com_atestado,
-          horas_extras: payload.horas_extras
-        });
-
-        renderHistory();
-        showMsg(msgBox, "✅ Enviado com sucesso!", "ok");
-        clearForm();
-
-      }catch(e){
-        showMsg(msgBox, "❌ Erro de conexão: " + (e?.message || "não foi possível enviar"), "err");
-      }finally{
-        btn.disabled = false;
-        btn.textContent = "📩 Enviar para ADM";
-      }
-    }
-
-    // Autocomplete / preenchimento
-    matricula.addEventListener("input", () => {
-      const f = byMat.get(matricula.value.trim());
-      if(f) fillFuncionario(f);
-    });
-    nome.addEventListener("input", () => {
-      const f = byNome.get(nome.value.trim().toLowerCase());
-      if(f) fillFuncionario(f);
-    });
-
-    // Botões
-    $("btnEnviar").addEventListener("click", enviar);
-    $("btnLimpar").addEventListener("click", () => {
-      clearForm();
-      showMsg(msgBox, "🧹 Campos limpos.", "");
-    });
-
     $("btnAtualizarLista").addEventListener("click", () => {
       renderHistory();
       showMsg(msgList, "🔄 Lista atualizada.", "ok");
@@ -734,15 +938,12 @@
 
     // INIT
     (function init(){
-      // ✅ sempre pede senha ao abrir
       openLogin();
-
       periodo.value = defaultPeriodoAtual();
       ensurePeriodoVigente();
       renderHistory();
       pingServer();
       carregarFuncionarios();
-
       setInterval(ensurePeriodoVigente, 5000);
     })();
   </script>
