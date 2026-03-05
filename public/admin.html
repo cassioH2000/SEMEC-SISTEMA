@@ -91,7 +91,7 @@
     .kpi .t{ font-size:12px; color:var(--muted); }
     .kpi .v{ font-size:22px; font-weight: 800; margin-top:4px; }
 
-    table{ width:100%; border-collapse: separate; border-spacing:0; min-width: 920px; }
+    table{ width:100%; border-collapse: separate; border-spacing:0; min-width: 1040px; }
     thead th{
       position: sticky; top: 0;
       background: rgba(0,0,0,0.22); backdrop-filter: blur(8px);
@@ -123,7 +123,7 @@
       display:flex; align-items:center; justify-content:center; padding:18px; z-index: 10;
     }
     .modal{
-      width: min(540px, 100%);
+      width: min(560px, 100%);
       background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
       border:1px solid var(--line);
       border-radius: 18px;
@@ -143,35 +143,15 @@
       font-size: 12px;
     }
 
-    /* =========================
-       PDF PROFISSIONAL - PREFEITURA (PRINT)
-       ========================= */
     @media print {
-
       @page{
         size: A4 landscape;
         margin: 12mm;
       }
-
-      body{
-        background:#fff !important;
-        color:#000 !important;
-      }
-
-      .topbar, .controls, .actions, #msgBox, #loginOverlay, #editOverlay{
-        display:none !important;
-      }
-
-      .card{
-        box-shadow:none !important;
-        border:none !important;
-        background:#fff !important;
-      }
-
-      #printArea{
-        display:block !important;
-      }
-
+      body{ background:#fff !important; color:#000 !important; }
+      .topbar, .controls, .actions, #msgBox, #loginOverlay, #editOverlay{ display:none !important; }
+      .card{ box-shadow:none !important; border:none !important; background:#fff !important; }
+      #printArea{ display:block !important; }
       .pdf-header{
         display:flex;
         align-items:center;
@@ -181,7 +161,6 @@
         padding:10px 12px;
         margin-bottom:10px;
       }
-
       .pdf-left, .pdf-right{
         width:120px;
         height:60px;
@@ -191,36 +170,12 @@
         text-align:center;
         line-height:1.1;
       }
+      .pdf-center{ flex:1; text-align:center; line-height:1.15; }
+      .pdf-center .t1{ font-size:14px; font-weight:800; letter-spacing:0.2px; }
+      .pdf-center .t2{ font-size:12px; font-weight:700; margin-top:2px; }
+      .pdf-center .t3{ font-size:11px; margin-top:4px; }
 
-      .pdf-center{
-        flex:1;
-        text-align:center;
-        line-height:1.15;
-      }
-
-      .pdf-center .t1{
-        font-size:14px;
-        font-weight:800;
-        letter-spacing:0.2px;
-      }
-
-      .pdf-center .t2{
-        font-size:12px;
-        font-weight:700;
-        margin-top:2px;
-      }
-
-      .pdf-center .t3{
-        font-size:11px;
-        margin-top:4px;
-      }
-
-      table{
-        width:100% !important;
-        border-collapse:collapse !important;
-        font-size:10.5px !important;
-      }
-
+      table{ width:100% !important; border-collapse:collapse !important; font-size:10.5px !important; }
       thead th{
         position:static !important;
         background:#000 !important;
@@ -229,16 +184,12 @@
         padding:6px 6px !important;
         text-align:left !important;
       }
-
       tbody td{
         border:1px solid #000 !important;
         padding:6px 6px !important;
         vertical-align:top !important;
       }
-
-      tbody tr:nth-child(even) td{
-        background:#f2f2f2 !important;
-      }
+      tbody tr:nth-child(even) td{ background:#f2f2f2 !important; }
 
       .pdf-totals{
         margin:10px 0 10px;
@@ -246,7 +197,6 @@
         padding:8px 10px;
         font-size:11px;
       }
-
       .pdf-footer{
         position:fixed;
         left: 12mm;
@@ -258,7 +208,6 @@
         display:flex;
         justify-content:space-between;
       }
-
       .pageNumber:before { content: counter(page); }
       .totalPages:before { content: counter(pages); }
     }
@@ -286,25 +235,31 @@
     </div>
   </div>
 
-  <!-- MODAL EDITAR (CADASTRO + FOLHA DO MÊS) -->
+  <!-- MODAL EDITAR / CADASTRAR -->
   <div class="overlay" id="editOverlay" style="display:none;">
     <div class="modal">
-      <div class="mhead"><h3>✏️ Editar Funcionário</h3></div>
+      <div class="mhead"><h3 id="editTitle">✏️ Editar Funcionário</h3></div>
       <div class="mbody">
 
         <div class="grid2">
           <div>
             <label>Matrícula</label>
-            <input id="e_matricula" type="text" disabled />
+            <input id="e_matricula" type="text" />
           </div>
           <div>
-            <label>Escola</label>
-            <input id="e_escola" type="text" placeholder="Escola" />
+            <label>Lotação</label>
+            <input id="e_lotacao" type="text" placeholder="Lotação" />
+          </div>
+
+          <div>
+            <label>Seguimento</label>
+            <input id="e_seguimento" type="text" placeholder="Seguimento" />
           </div>
           <div>
             <label>Nome</label>
             <input id="e_nome" type="text" placeholder="Nome" />
           </div>
+
           <div>
             <label>Função</label>
             <input id="e_funcao" type="text" placeholder="Função" />
@@ -388,10 +343,7 @@
 
       <!-- ===== ÁREA DO PDF (SÓ APARECE NO PRINT) ===== -->
       <div id="printArea" style="display:none;">
-
-        <!-- ✅ CORRIGIDO: agora o pdf-header fecha certinho -->
         <div class="pdf-header">
-
           <div class="pdf-left" style="border:none;">
             <img src="logo_prefeitura.png" alt="Prefeitura"
               style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
@@ -407,8 +359,7 @@
             <img src="logo_educacaoo.png" alt="Secretaria de Educação"
               style="max-width:120px; max-height:60px; width:auto; height:auto; display:block; margin:0 auto;">
           </div>
-
-        </div><!-- ✅ fecha pdf-header -->
+        </div>
 
         <div class="pdf-totals" id="pdfTotalsBox"></div>
 
@@ -416,7 +367,6 @@
           <div id="pdfEmitidoEm">Emitido em: —</div>
           <div>Página <span class="pageNumber"></span> de <span class="totalPages"></span></div>
         </div>
-
       </div>
       <!-- ===== FIM ÁREA DO PDF ===== -->
 
@@ -431,8 +381,8 @@
                 <div class="hint" style="margin-top:6px;">Use para carregar o relatório do mês.</div>
               </div>
               <div>
-                <label>Filtrar por escola</label>
-                <select id="filtroEscola"><option value="">Todas</option></select>
+                <label>Filtrar por lotação</label>
+                <select id="filtroLotacao"><option value="">Todas</option></select>
               </div>
               <div>
                 <label>Pesquisar (nome ou matrícula)</label>
@@ -443,6 +393,7 @@
             <div class="actions" style="margin-top:12px;">
               <button class="btn primary" id="btnCarregarMes" type="button">📅 Carregar Mês</button>
               <button class="btn" id="btnCarregarCadastro" type="button">👥 Cadastro</button>
+              <button class="btn" id="btnNovo" type="button">➕ Novo Funcionário</button>
               <button class="btn" id="btnPDF" type="button">🧾 Gerar PDF</button>
               <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
             </div>
@@ -478,7 +429,8 @@
             <table id="tabelaRelatorio">
               <thead>
                 <tr>
-                  <th>Escola</th>
+                  <th>Lotação</th>
+                  <th>Seguimento</th>
                   <th>Matrícula</th>
                   <th>Nome</th>
                   <th>Função</th>
@@ -492,7 +444,7 @@
                 </tr>
               </thead>
               <tbody id="tbody">
-                <tr><td colspan="11" class="hint">Carregue um mês para visualizar.</td></tr>
+                <tr><td colspan="12" class="hint">Carregue um mês para visualizar.</td></tr>
               </tbody>
             </table>
           </div>
@@ -506,9 +458,17 @@
   <script>
     const API_HEALTH = "/api/health";
     const API_LOGIN = "/api/login";
+
     const API_CADASTRO = "/api/admin/funcionarios";
     const API_MES = "/api/admin/mes";
+
+    // Atualizar (PUT)
     const API_EDIT = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
+
+    // Criar (POST) e Excluir (DELETE) — precisa existir no backend
+    const API_ADD = "/api/admin/funcionarios";
+    const API_DELETE = (mat) => "/api/admin/funcionarios/" + encodeURIComponent(mat);
+
     const API_ENVIAR_FOLHA = "/api/folha/enviar";
 
     const $ = (id) => document.getElementById(id);
@@ -519,8 +479,11 @@
     const loginErr = $("loginErr");
 
     const editOverlay = $("editOverlay");
+    const editTitle = $("editTitle");
+
     const e_matricula = $("e_matricula");
-    const e_escola = $("e_escola");
+    const e_lotacao = $("e_lotacao");
+    const e_seguimento = $("e_seguimento");
     const e_nome = $("e_nome");
     const e_funcao = $("e_funcao");
     const e_vinculo = $("e_vinculo");
@@ -542,11 +505,12 @@
     const tokenStatus = $("tokenStatus");
 
     const periodo = $("periodo");
-    const filtroEscola = $("filtroEscola");
+    const filtroLotacao = $("filtroLotacao");
     const pesquisa = $("pesquisa");
 
     const btnCarregarMes = $("btnCarregarMes");
     const btnCarregarCadastro = $("btnCarregarCadastro");
+    const btnNovo = $("btnNovo");
     const btnPDF = $("btnPDF");
     const btnSair = $("btnSair");
 
@@ -569,6 +533,10 @@
     let lastRows = [];
     let currentPeriodo = "";
     let currentMode = "mes";
+
+    // controla se o modal está em "cadastrar" ou "editar"
+    let isCreateMode = false;
+    let originalMatricula = "";
 
     function escapeHtml(str){
       return String(str ?? "")
@@ -675,25 +643,47 @@
     btnLogin.addEventListener("click", doLogin);
     adminPass.addEventListener("keydown", (e) => { if(e.key === "Enter") doLogin(); });
 
-    function openEditModal(row){
+    function openEditModal(row, create=false){
       editErr.style.display = "none";
+      isCreateMode = !!create;
 
-      e_matricula.value = row.matricula || "";
-      e_escola.value = row.escola || "";
-      e_nome.value = row.nome || "";
-      e_funcao.value = row.funcao || "";
-      e_vinculo.value = row.vinculo || "";
-      e_carga.value = row.carga || "";
+      if(isCreateMode){
+        editTitle.textContent = "➕ Novo Funcionário";
+        originalMatricula = "";
+        e_matricula.disabled = false;
 
-      if(currentMode === "mes"){
-        folhaBox.style.display = "block";
-        e_periodo.value = row.periodo || currentPeriodo || "";
-        e_he.value = (row.horas_extras ?? "");
-        e_faltas.value = (row.faltas ?? "");
-        e_falta_com_atestado.value = (row.falta_com_atestado ?? "");
-        e_obs.value = (row.observacoes ?? "");
-      }else{
-        folhaBox.style.display = "none";
+        e_matricula.value = "";
+        e_lotacao.value = "";
+        e_seguimento.value = "";
+        e_nome.value = "";
+        e_funcao.value = "";
+        e_vinculo.value = "";
+        e_carga.value = "";
+
+        folhaBox.style.display = "none"; // cadastro não lança folha aqui
+      } else {
+        editTitle.textContent = "✏️ Editar Funcionário";
+        originalMatricula = String(row.matricula || "");
+        e_matricula.disabled = true;
+
+        e_matricula.value = row.matricula || "";
+        e_lotacao.value = row.lotacao || "";
+        e_seguimento.value = row.seguimento || "";
+        e_nome.value = row.nome || "";
+        e_funcao.value = row.funcao || "";
+        e_vinculo.value = row.vinculo || "";
+        e_carga.value = row.carga || "";
+
+        if(currentMode === "mes"){
+          folhaBox.style.display = "block";
+          e_periodo.value = row.periodo || currentPeriodo || "";
+          e_he.value = (row.horas_extras ?? "");
+          e_faltas.value = (row.faltas ?? "");
+          e_falta_com_atestado.value = (row.falta_com_atestado ?? "");
+          e_obs.value = (row.observacoes ?? "");
+        }else{
+          folhaBox.style.display = "none";
+        }
       }
 
       editOverlay.style.display = "flex";
@@ -705,22 +695,52 @@
     async function salvarEdicao(){
       if(!ensureLogged()) return;
 
-      const mat = e_matricula.value.trim();
-      if(!mat) return;
+      const mat = String(e_matricula.value || "").trim();
+      if(!mat){
+        editErr.textContent = "Matrícula é obrigatória.";
+        editErr.style.display = "block";
+        return;
+      }
 
       btnSalvarEdicao.disabled = true;
       btnSalvarEdicao.textContent = "Salvando...";
 
       try{
+        // Mantive compatibilidade:
+        // - UI usa lotacao, mas no back antigo talvez exista "escola"
+        // então envio os dois: lotacao e escola (mesmo valor)
         const bodyCadastro = {
-          escola: e_escola.value.trim(),
+          lotacao: e_lotacao.value.trim(),
+          escola: e_lotacao.value.trim(), // compat
+          seguimento: e_seguimento.value.trim(),
           nome: e_nome.value.trim(),
           funcao: e_funcao.value.trim(),
           vinculo: e_vinculo.value.trim(),
-          carga: e_carga.value.trim()
+          carga: e_carga.value.trim(),
+          matricula: mat
         };
 
-        const r1 = await fetch(API_EDIT(mat), {
+        if(isCreateMode){
+          const r0 = await fetch(API_ADD, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json", ...authHeaders() },
+            body: JSON.stringify(bodyCadastro)
+          });
+          const j0 = await r0.json().catch(() => ({}));
+          if(!r0.ok || !j0.ok){
+            editErr.textContent = j0.error || "Erro ao cadastrar (verifique se o endpoint POST existe).";
+            editErr.style.display = "block";
+            return;
+          }
+
+          showMsg("✅ Funcionário cadastrado!", "ok");
+          closeEditModal();
+          await carregarCadastro();
+          return;
+        }
+
+        // editar (PUT)
+        const r1 = await fetch(API_EDIT(originalMatricula), {
           method:"PUT",
           headers:{ "Content-Type":"application/json", ...authHeaders() },
           body: JSON.stringify(bodyCadastro)
@@ -733,6 +753,7 @@
           return;
         }
 
+        // salvar folha do mês (se estiver no modo mês)
         if(currentMode === "mes"){
           const periodoSel = (currentPeriodo || e_periodo.value || "").trim();
           if(!periodoSel){
@@ -753,8 +774,10 @@
 
           const bodyFolha = {
             periodo: periodoSel,
-            matricula: mat,
-            escola: bodyCadastro.escola,
+            matricula: originalMatricula,
+            lotacao: bodyCadastro.lotacao,
+            escola: bodyCadastro.escola, // compat
+            seguimento: bodyCadastro.seguimento,
             nome: bodyCadastro.nome,
             funcao: bodyCadastro.funcao,
             vinculo: bodyCadastro.vinculo,
@@ -795,22 +818,51 @@
 
     btnSalvarEdicao.addEventListener("click", salvarEdicao);
 
-    function buildSchoolOptions(rows){
-      const schools = Array.from(new Set(rows.map(r => (r.escola||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-      const cur = filtroEscola.value;
-      filtroEscola.innerHTML = `<option value="">Todas</option>` + schools.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
-      if(schools.includes(cur)) filtroEscola.value = cur;
+    async function excluirFuncionario(matricula){
+      if(!ensureLogged()) return;
+      const mat = String(matricula || "").trim();
+      if(!mat) return;
+
+      const ok = confirm(`Deseja excluir o funcionário ${mat}? Essa ação não pode ser desfeita.`);
+      if(!ok) return;
+
+      try{
+        const r = await fetch(API_DELETE(mat), { method:"DELETE", headers: authHeaders() });
+        const j = await r.json().catch(() => ({}));
+        if(!r.ok || !j.ok){
+          showMsg("❌ " + (j.error || "Erro ao excluir (verifique se o endpoint DELETE existe)."), "err");
+          return;
+        }
+        showMsg("🗑️ Funcionário excluído.", "ok");
+        await carregarCadastro();
+      }catch(e){
+        showMsg("❌ Erro de conexão ao excluir.", "err");
+      }
+    }
+
+    btnNovo.addEventListener("click", async () => {
+      if(!ensureLogged()) return;
+      // melhor cadastrar no modo cadastro
+      currentMode = "cadastro";
+      openEditModal({}, true);
+    });
+
+    function buildLotacaoOptions(rows){
+      const lots = Array.from(new Set(rows.map(r => (r.lotacao||"").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+      const cur = filtroLotacao.value;
+      filtroLotacao.innerHTML = `<option value="">Todas</option>` + lots.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+      if(lots.includes(cur)) filtroLotacao.value = cur;
     }
 
     function applyFiltersAndRender(){
-      const sch = (filtroEscola.value || "").trim().toLowerCase();
+      const lot = (filtroLotacao.value || "").trim().toLowerCase();
       const q = (pesquisa.value || "").trim().toLowerCase();
 
       const rows = lastRows.filter(r => {
-        const schoolOk = !sch || (String(r.escola||"").toLowerCase() === sch);
+        const lotOk = !lot || (String(r.lotacao||"").toLowerCase() === lot);
         const txt = (String(r.nome||"") + " " + String(r.matricula||"")).toLowerCase();
         const qOk = !q || txt.includes(q);
-        return schoolOk && qOk;
+        return lotOk && qOk;
       });
 
       renderTable(rows);
@@ -844,7 +896,7 @@
 
     function renderTable(rows){
       if(!rows.length){
-        tbody.innerHTML = `<tr><td colspan="11" class="hint">Nenhum registro encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="hint">Nenhum registro encontrado.</td></tr>`;
         return;
       }
 
@@ -856,7 +908,8 @@
 
         return `
           <tr>
-            <td>${escapeHtml(r.escola||"")}</td>
+            <td>${escapeHtml(r.lotacao||"")}</td>
+            <td>${escapeHtml(r.seguimento||"")}</td>
             <td><b>${escapeHtml(r.matricula||"")}</b></td>
             <td>${escapeHtml(r.nome||"")}</td>
             <td>${escapeHtml(r.funcao||"")}</td>
@@ -866,7 +919,10 @@
             <td>${escapeHtml(comAt)}</td>
             <td>${escapeHtml(he)}</td>
             <td>${escapeHtml(obs)}</td>
-            <td><button class="btn" type="button" data-edit="${escapeHtml(r.matricula||"")}">✏️ Editar</button></td>
+            <td style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn" type="button" data-edit="${escapeHtml(r.matricula||"")}">✏️ Editar</button>
+              <button class="btn danger" type="button" data-del="${escapeHtml(r.matricula||"")}">🗑️ Excluir</button>
+            </td>
           </tr>
         `;
       }).join("");
@@ -875,12 +931,16 @@
         btn.addEventListener("click", () => {
           const mat = btn.getAttribute("data-edit");
           const row = lastRows.find(x => String(x.matricula) === String(mat));
-          if(row) openEditModal(row);
+          if(row) openEditModal(row, false);
         });
+      });
+
+      tbody.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", () => excluirFuncionario(btn.getAttribute("data-del")));
       });
     }
 
-    filtroEscola.addEventListener("change", applyFiltersAndRender);
+    filtroLotacao.addEventListener("change", applyFiltersAndRender);
     pesquisa.addEventListener("input", applyFiltersAndRender);
 
     async function carregarCadastro(){
@@ -902,7 +962,9 @@
         }
 
         lastRows = (j.funcionarios || []).map(f => ({
-          escola: f.escola || "",
+          // compat: se o backend ainda mandar "escola"
+          lotacao: f.lotacao || f.escola || "",
+          seguimento: f.seguimento || "",
           matricula: f.matricula || "",
           nome: f.nome || "",
           funcao: f.funcao || "",
@@ -915,7 +977,7 @@
           periodo: ""
         }));
 
-        buildSchoolOptions(lastRows);
+        buildLotacaoOptions(lastRows);
         applyFiltersAndRender();
 
       }catch(e){
@@ -949,7 +1011,8 @@
         }
 
         lastRows = (j.registros || []).map(x => ({
-          escola: x.escola || "",
+          lotacao: x.lotacao || x.escola || "",
+          seguimento: x.seguimento || "",
           matricula: x.matricula || "",
           nome: x.nome || "",
           funcao: x.funcao || "",
@@ -962,7 +1025,7 @@
           observacoes: (x.observacoes ?? null)
         }));
 
-        buildSchoolOptions(lastRows);
+        buildLotacaoOptions(lastRows);
         applyFiltersAndRender();
         showMsg("✅ Mês carregado com sucesso.", "ok");
 
@@ -1028,7 +1091,7 @@
       token = "";
       localStorage.removeItem("semec_admin_token");
       ensureLogged();
-      tbody.innerHTML = `<tr><td colspan="11" class="hint">Deslogado. Faça login novamente.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12" class="hint">Deslogado. Faça login novamente.</td></tr>`;
       showMsg("🚪 Você saiu do Admin.", "warn");
     });
 
