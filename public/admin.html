@@ -738,6 +738,11 @@
       kpiFaltas.textContent = String(sumFaltas);
       kpiHE.textContent = String(sumHE);
     }
+    function formatarData(data){
+  if(!data) return "";
+  const d = new Date(data);
+  return d.toLocaleDateString("pt-BR");
+}
 
     function renderTable(rows){
       if(!rows.length){
@@ -755,7 +760,7 @@
           <td>${escapeHtml(r.vinculo||"")}</td>
          <td>${escapeHtml(r.carga||"")}</td>
          <td>${escapeHtml(r.categoria||"")}</td>
-          <td>${escapeHtml(r.data_admissao||"")}</td>
+         <td>${formatarData(r.data_admissao)}</td>
           <td>${Number(r.faltas ?? 0)}</td>
           <td>${Number(r.falta_com_atestado ?? 0)}</td>
           <td>${Number(r.horas_extras ?? 0)}</td>
@@ -1124,6 +1129,7 @@
   </script>
 </body>
 </html>
+
 
 
 
