@@ -9,7 +9,7 @@ const { Pool } = pg;
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -80,7 +80,7 @@ app.post("/api/login", (req,res)=>{
   const pass = req.body.password;
 
   if(pass !== ADMIN_PASSWORD){
-    return res.status(401).json({ok:false});
+    return res.status(401).json({ok:false,error:"senha inválida"});
   }
 
   const token = jwt.sign({role:"admin"}, JWT_SECRET, {expiresIn:"7d"});
@@ -95,18 +95,24 @@ function requireAdmin(req,res,next){
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
 
   try{
+
     const payload = jwt.verify(token, JWT_SECRET);
+
     if(payload.role !== "admin") throw new Error();
+
     next();
+
   }catch{
-    res.status(401).json({ok:false});
+
+    res.status(401).json({ok:false,error:"token inválido"});
+
   }
 
 }
 
-// ================= LISTAR FUNCIONARIOS =================
+// ================= FUNCIONARIOS (FOLHA) =================
 
-app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
+app.get("/api/funcionarios", async (req,res)=>{
 
   try{
 
@@ -119,8 +125,8 @@ app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
       carga,
       categoria,
       data_admissao,
-      lotacao,
-      seguimento
+      coalesce(lotacao,'SEMEC') as lotacao,
+      coalesce(seguimento,'') as seguimento
       from funcionarios
       order by nome
     `);
@@ -136,100 +142,7 @@ app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
 
 });
 
-// ================= CRIAR FUNCIONARIO =================
-
-app.post("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
-
-  try{
-
-    const b = req.body;
-
-    const r = await dbQuery(`
-      insert into funcionarios(
-        matricula,
-        nome,
-        funcao,
-        vinculo,
-        carga,
-        lotacao,
-        seguimento,
-        categoria,
-        data_admissao
-      )
-      values($1,$2,$3,$4,$5,$6,$7,$8,$9)
-      returning *
-    `,
-    [
-      b.matricula,
-      b.nome,
-      b.funcao,
-      b.vinculo,
-      b.carga,
-      b.lotacao,
-      b.seguimento,
-      b.categoria,
-      b.data_admissao
-    ]);
-
-    res.json({ok:true, funcionario:r.rows[0]});
-
-  }catch(e){
-
-    console.log(e);
-    res.status(500).json({ok:false});
-
-  }
-
-});
-
-// ================= EDITAR FUNCIONARIO =================
-
-app.put("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
-
-  try{
-
-    const b = req.body;
-    const matricula = req.params.matricula;
-
-    const r = await dbQuery(`
-      update funcionarios
-      set
-        nome=$1,
-        funcao=$2,
-        vinculo=$3,
-        carga=$4,
-        lotacao=$5,
-        seguimento=$6,
-        categoria=$7,
-        data_admissao=$8,
-        atualizado_em=now()
-      where matricula=$9
-      returning *
-    `,
-    [
-      b.nome,
-      b.funcao,
-      b.vinculo,
-      b.carga,
-      b.lotacao,
-      b.seguimento,
-      b.categoria,
-      b.data_admissao,
-      matricula
-    ]);
-
-    res.json({ok:true, funcionario:r.rows[0]});
-
-  }catch(e){
-
-    console.log(e);
-    res.status(500).json({ok:false});
-
-  }
-
-});
-
-// ================= SALVAR FOLHA =================
+// ================= ENVIAR FOLHA =================
 
 app.post("/api/folha/enviar", async(req,res)=>{
 
@@ -278,6 +191,131 @@ app.post("/api/folha/enviar", async(req,res)=>{
 
 });
 
+// ================= ADMIN FUNCIONARIOS =================
+
+app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
+
+  try{
+
+    const r = await dbQuery(`
+      select
+      matricula,
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      categoria,
+      data_admissao,
+      coalesce(lotacao,'SEMEC') as lotacao,
+      coalesce(seguimento,'') as seguimento
+      from funcionarios
+      order by nome
+    `);
+
+    res.json({ok:true, funcionarios:r.rows});
+
+  }catch(e){
+
+    console.log(e);
+    res.status(500).json({ok:false});
+
+  }
+
+});
+
+// ================= CRIAR FUNCIONARIO =================
+
+app.post("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
+
+  try{
+
+    const b = req.body;
+
+    const r = await dbQuery(`
+      insert into funcionarios(
+        matricula,
+        nome,
+        funcao,
+        vinculo,
+        carga,
+        lotacao,
+        seguimento,
+        categoria,
+        data_admissao
+      )
+      values($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      returning *
+    `,
+    [
+      b.matricula,
+      b.nome,
+      b.funcao,
+      b.vinculo,
+      b.carga,
+      b.lotacao || "SEMEC",
+      b.seguimento,
+      b.categoria,
+      b.data_admissao
+    ]);
+
+    res.json({ok:true, funcionario:r.rows[0]});
+
+  }catch(e){
+
+    console.log(e);
+    res.status(500).json({ok:false});
+
+  }
+
+});
+
+// ================= EDITAR FUNCIONARIO =================
+
+app.put("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
+
+  try{
+
+    const matricula = req.params.matricula;
+    const b = req.body;
+
+    const r = await dbQuery(`
+      update funcionarios
+      set
+      nome=$1,
+      funcao=$2,
+      vinculo=$3,
+      carga=$4,
+      lotacao=$5,
+      seguimento=$6,
+      categoria=$7,
+      data_admissao=$8,
+      atualizado_em=now()
+      where matricula=$9
+      returning *
+    `,
+    [
+      b.nome,
+      b.funcao,
+      b.vinculo,
+      b.carga,
+      b.lotacao || "SEMEC",
+      b.seguimento,
+      b.categoria,
+      b.data_admissao,
+      matricula
+    ]);
+
+    res.json({ok:true, funcionario:r.rows[0]});
+
+  }catch(e){
+
+    console.log(e);
+    res.status(500).json({ok:false});
+
+  }
+
+});
+
 // ================= RELATORIO DO MES =================
 
 app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
@@ -295,8 +333,8 @@ app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
       f.carga,
       f.categoria,
       f.data_admissao,
-      f.lotacao,
-      f.seguimento,
+      coalesce(f.lotacao,'SEMEC') as lotacao,
+      coalesce(f.seguimento,'') as seguimento,
       coalesce(fl.faltas,0) as faltas,
       coalesce(fl.falta_com_atestado,0) as falta_com_atestado,
       coalesce(fl.horas_extras,0) as horas_extras,
@@ -320,5 +358,7 @@ app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
 });
 
 app.listen(PORT, ()=>{
+
   console.log("🚀 Servidor rodando na porta",PORT);
+
 });
