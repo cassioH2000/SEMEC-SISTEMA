@@ -23,7 +23,6 @@
 
     *{ box-sizing:border-box; }
     body{
-      zoom: 0.9;
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:#ffffff;
@@ -33,8 +32,9 @@
 
     header{ padding:18px 18px 8px; }
     .topbar{
-      max-width:1200px;
-      margin:0 auto;
+       width:100%;
+       max-width:1600px;
+       margin:auto;
       background: var(--cardGrad);
       border:1px solid var(--border);
       border-radius: var(--radius);
@@ -82,7 +82,13 @@
     }
 
     main{ padding:14px 18px 40px; }
-    .wrap{ max-width:1200px; margin:0 auto; display:grid; gap:14px; }
+  .wrap{
+   width:100%;
+   max-width:1600px;
+   margin:auto;
+   display:grid;
+   gap:14px;
+ }
 
     .card{
       background: var(--cardGrad);
@@ -1098,5 +1104,6 @@
   </script>
 </body>
 </html>
+
 
 
