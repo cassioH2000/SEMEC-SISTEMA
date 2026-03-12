@@ -28,7 +28,7 @@ async function dbQuery(text, values = []) {
   return pool.query({ text, values, queryMode: "simple" });
 }
 
-// ================= CRIAR TABELAS =================
+// ================= TABELAS =================
 async function criarTabelas() {
 
   await dbQuery(`
@@ -261,7 +261,7 @@ app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
 
 });
 
-// ================= CARREGAR MÊS =================
+// ================= RELATÓRIO DO MÊS =================
 app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
 
   try{
