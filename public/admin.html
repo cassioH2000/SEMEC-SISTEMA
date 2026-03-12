@@ -326,6 +326,15 @@
             <input id="e_carga" />
           </div>
         </div>
+        <div style="min-width:200px; flex:1;">
+  <label for="e_categoria">Categoria</label>
+  <input id="e_categoria" placeholder="Ex.: Efetivo / Contrato" />
+</div>
+
+<div style="min-width:200px; flex:1;">
+  <label for="e_admissao">Data de Admissão</label>
+  <input id="e_admissao" type="date" />
+</div>
 
         <div class="card" style="margin-top:14px;">
           <div class="head">
@@ -456,8 +465,10 @@
                   <th>Nome</th>
                   <th>Função</th>
                   <th>Vínculo</th>
-                  <th>Carga</th>
-                  <th>Faltas</th>
+                 <th>Carga</th>
+                <th>Categoria</th>
+                 <th>Admissão</th>
+                 <th>Faltas</th>
                   <th>Com atestado</th>
                   <th>HE</th>
                   <th>Obs</th>
@@ -546,6 +557,8 @@
     const e_funcao = $("e_funcao");
     const e_vinculo = $("e_vinculo");
     const e_carga = $("e_carga");
+    const e_categoria = $("e_categoria");
+    const e_admissao = $("e_admissao");
 
     const e_periodo = $("e_periodo");
     const e_he = $("e_he");
@@ -739,7 +752,9 @@
           <td>${escapeHtml(r.nome||"")}</td>
           <td>${escapeHtml(r.funcao||"")}</td>
           <td>${escapeHtml(r.vinculo||"")}</td>
-          <td>${escapeHtml(r.carga||"")}</td>
+         <td>${escapeHtml(r.carga||"")}</td>
+         <td>${escapeHtml(r.categoria||"")}</td>
+          <td>${escapeHtml(r.data_admissao||"")}</td>
           <td>${Number(r.faltas ?? 0)}</td>
           <td>${Number(r.falta_com_atestado ?? 0)}</td>
           <td>${Number(r.horas_extras ?? 0)}</td>
@@ -846,6 +861,8 @@
         e_falta_com_atestado.value = "0";
         e_he.value = "0";
         e_obs.value = "";
+        e_categoria.value = String(row?.categoria || "");
+        e_admissao.value = String(row?.data_admissao || "");
         return;
       }
 
@@ -898,6 +915,8 @@
           funcao: String(e_funcao.value || "").trim(),
           vinculo: String(e_vinculo.value || "").trim(),
           carga: String(e_carga.value || "").trim()
+          categoria: String(e_categoria.value || "").trim(),
+          data_admissao: String(e_admissao.value || "").trim(),
         };
 
         // 1) salva cadastro (POST se adicionar / PUT se editar)
@@ -1104,6 +1123,7 @@
   </script>
 </body>
 </html>
+
 
 
 
