@@ -557,6 +557,7 @@
     const e_funcao = $("e_funcao");
     const e_vinculo = $("e_vinculo");
     const e_carga = $("e_carga");
+    
     const e_categoria = $("e_categoria");
     const e_admissao = $("e_admissao");
 
@@ -861,8 +862,8 @@
         e_falta_com_atestado.value = "0";
         e_he.value = "0";
         e_obs.value = "";
-        e_categoria.value = String(row?.categoria || "");
-        e_admissao.value = String(row?.data_admissao || "");
+        e_categoria.value = "";
+        e_admissao.value = "";
         return;
       }
 
@@ -914,7 +915,7 @@
           nome: String(e_nome.value || "").trim(),
           funcao: String(e_funcao.value || "").trim(),
           vinculo: String(e_vinculo.value || "").trim(),
-          carga: String(e_carga.value || "").trim()
+          carga: String(e_carga.value || "").trim(),
           categoria: String(e_categoria.value || "").trim(),
           data_admissao: String(e_admissao.value || "").trim(),
         };
@@ -1123,6 +1124,7 @@
   </script>
 </body>
 </html>
+
 
 
 
