@@ -301,7 +301,7 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
       b.lotacao || "SEMEC",
       b.seguimento,
       b.categoria,
-      b.data_admissao,
+      b.data_admissao || null,
       matricula
     ]);
 
@@ -362,3 +362,4 @@ app.listen(PORT, ()=>{
   console.log("🚀 Servidor rodando na porta",PORT);
 
 });
+
