@@ -29,7 +29,7 @@ async function dbQuery(text, values = []) {
 
 // ================= TABELAS =================
 
-async function criarTabelas() {
+async function criarTabelas(){
 
   await dbQuery(`
   create table if not exists funcionarios(
@@ -80,12 +80,11 @@ criarTabelas();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 app.use(express.static(path.join(__dirname, "public")));
 
 // ================= LOGIN =================
 
-app.post("/api/login", (req,res)=>{
+app.post("/api/login",(req,res)=>{
 
   const pass = req.body.password;
 
@@ -93,8 +92,7 @@ app.post("/api/login", (req,res)=>{
     return res.status(401).json({ok:false,error:"senha inválida"});
   }
 
-  const token = jwt.sign({role:"admin"}, JWT_SECRET, {expiresIn:"7d"});
-
+  const token = jwt.sign({role:"admin"}, JWT_SECRET,{expiresIn:"7d"});
   res.json({ok:true,token});
 
 });
@@ -106,7 +104,7 @@ function requireAdmin(req,res,next){
 
   try{
 
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token,JWT_SECRET);
 
     if(payload.role !== "admin") throw new Error();
 
@@ -122,7 +120,7 @@ function requireAdmin(req,res,next){
 
 // ================= FUNCIONARIOS (FOLHA) =================
 
-app.get("/api/funcionarios", async (req,res)=>{
+app.get("/api/funcionarios", async(req,res)=>{
 
   try{
 
@@ -198,9 +196,9 @@ app.post("/api/folha/enviar", async(req,res)=>{
 
 });
 
-// ================= COMENTARIO GERAL =================
+// ================= COMENTARIO GERAL (FOLHA) =================
 
-app.post("/api/folha/comentario", async (req,res)=>{
+app.post("/api/folha/comentario", async(req,res)=>{
 
   try{
 
@@ -210,42 +208,31 @@ app.post("/api/folha/comentario", async (req,res)=>{
     const lotacao = String(b.lotacao || "").trim();
     const comentario = String(b.comentario || "").trim();
 
-    if(!periodo){
-      return res.status(400).json({ok:false,error:"Período obrigatório"});
-    }
+    if(!periodo) return res.status(400).json({ok:false,error:"Período obrigatório"});
+    if(!lotacao) return res.status(400).json({ok:false,error:"Lotação obrigatória"});
+    if(!comentario) return res.status(400).json({ok:false,error:"Comentário vazio"});
 
-    if(!lotacao){
-      return res.status(400).json({ok:false,error:"Lotação obrigatória"});
-    }
-
-    if(!comentario){
-      return res.status(400).json({ok:false,error:"Comentário vazio"});
-    }
-
-    await dbQuery(
-      `
+    await dbQuery(`
       insert into comentarios_gerais(
         periodo,
         lotacao,
         comentario
       )
       values($1,$2,$3)
-      `,
-      [periodo, lotacao, comentario]
-    );
+    `,[periodo,lotacao,comentario]);
 
     res.json({ok:true});
 
   }catch(e){
 
     console.log(e);
-    res.status(500).json({ok:false,error:"Erro ao salvar comentário"});
+    res.status(500).json({ok:false});
 
   }
 
 });
 
-// ================= ADMIN FUNCIONARIOS =================
+// ================= ADMIN: FUNCIONARIOS =================
 
 app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
 
@@ -277,7 +264,7 @@ app.get("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
 
 });
 
-// ================= CRIAR FUNCIONARIO =================
+// ================= ADMIN: CRIAR FUNCIONARIO =================
 
 app.post("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
 
@@ -309,7 +296,7 @@ app.post("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
       b.lotacao || "SEMEC",
       b.seguimento,
       b.categoria,
-      b.data_admissao
+      b.data_admissao || null
     ]);
 
     res.json({ok:true, funcionario:r.rows[0]});
@@ -323,7 +310,7 @@ app.post("/api/admin/funcionarios", requireAdmin, async(req,res)=>{
 
 });
 
-// ================= EDITAR FUNCIONARIO =================
+// ================= ADMIN: EDITAR FUNCIONARIO =================
 
 app.put("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
 
@@ -370,7 +357,7 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async(req,res)=>{
 
 });
 
-// ================= RELATORIO DO MES =================
+// ================= ADMIN: RELATORIO DO MES =================
 
 app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
 
@@ -401,6 +388,54 @@ app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
     `,[periodo]);
 
     res.json({ok:true, registros:r.rows});
+
+  }catch(e){
+
+    console.log(e);
+    res.status(500).json({ok:false});
+
+  }
+
+});
+
+// ================= ADMIN: LISTAR COMENTARIOS =================
+
+app.get("/api/admin/comentarios", requireAdmin, async(req,res)=>{
+
+  try{
+
+    const periodo = String(req.query.periodo || "").trim();
+    const lotacao = String(req.query.lotacao || "").trim();
+
+    const where = [];
+    const vals = [];
+
+    if(periodo){
+      vals.push(periodo);
+      where.push(`periodo = $${vals.length}`);
+    }
+
+    if(lotacao){
+      vals.push(lotacao);
+      where.push(`lotacao = $${vals.length}`);
+    }
+
+    const sql = `
+      select
+      id,
+      periodo,
+      lotacao,
+      comentario,
+      criado_em
+      from comentarios_gerais
+      ${where.length ? "where " + where.join(" and ") : ""}
+      order by criado_em desc
+      limit 200
+    `;
+
+    const r = await dbQuery(sql,vals);
+
+    res.json({ok:true, comentarios:r.rows});
 
   }catch(e){
 
