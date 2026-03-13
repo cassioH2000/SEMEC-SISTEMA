@@ -884,6 +884,9 @@
       e_vinculo.value = String(row?.vinculo || "");
       e_carga.value = String(row?.carga || "");
 
+      e_categoria.value = String(row?.categoria || "");
+      e_admissao.value = row?.data_admissao ? row.data_admissao.split("T")[0] : "";
+
       e_faltas.value = String(row?.faltas ?? 0);
       e_falta_com_atestado.value = String(row?.falta_com_atestado ?? 0);
       e_he.value = String(row?.horas_extras ?? 0);
@@ -1129,6 +1132,7 @@
   </script>
 </body>
 </html>
+
 
 
 
