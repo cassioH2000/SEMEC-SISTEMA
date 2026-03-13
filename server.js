@@ -60,6 +60,16 @@ async function criarTabelas() {
   )
   `);
 
+  await dbQuery(`
+  create table if not exists comentarios_gerais(
+    id bigserial primary key,
+    periodo text not null,
+    lotacao text not null,
+    comentario text not null,
+    criado_em timestamptz default now()
+  )
+  `);
+
   console.log("✅ Banco pronto");
 
 }
@@ -150,9 +160,6 @@ app.post("/api/folha/enviar", async(req,res)=>{
 
     const b = req.body;
 
-    const periodo = b.periodo;
-    const matricula = b.matricula;
-
     await dbQuery(`
       insert into folhas(
         periodo,
@@ -172,8 +179,8 @@ app.post("/api/folha/enviar", async(req,res)=>{
         atualizado_em=now()
     `,
     [
-      periodo,
-      matricula,
+      b.periodo,
+      b.matricula,
       b.faltas || 0,
       b.falta_com_atestado || 0,
       b.horas_extras || 0,
@@ -186,6 +193,53 @@ app.post("/api/folha/enviar", async(req,res)=>{
 
     console.log(e);
     res.status(500).json({ok:false});
+
+  }
+
+});
+
+// ================= COMENTARIO GERAL =================
+
+app.post("/api/folha/comentario", async (req,res)=>{
+
+  try{
+
+    const b = req.body || {};
+
+    const periodo = String(b.periodo || "").trim();
+    const lotacao = String(b.lotacao || "").trim();
+    const comentario = String(b.comentario || "").trim();
+
+    if(!periodo){
+      return res.status(400).json({ok:false,error:"Período obrigatório"});
+    }
+
+    if(!lotacao){
+      return res.status(400).json({ok:false,error:"Lotação obrigatória"});
+    }
+
+    if(!comentario){
+      return res.status(400).json({ok:false,error:"Comentário vazio"});
+    }
+
+    await dbQuery(
+      `
+      insert into comentarios_gerais(
+        periodo,
+        lotacao,
+        comentario
+      )
+      values($1,$2,$3)
+      `,
+      [periodo, lotacao, comentario]
+    );
+
+    res.json({ok:true});
+
+  }catch(e){
+
+    console.log(e);
+    res.status(500).json({ok:false,error:"Erro ao salvar comentário"});
 
   }
 
@@ -358,8 +412,5 @@ app.get("/api/admin/mes", requireAdmin, async(req,res)=>{
 });
 
 app.listen(PORT, ()=>{
-
   console.log("🚀 Servidor rodando na porta",PORT);
-
 });
-
