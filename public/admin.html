@@ -1071,12 +1071,11 @@
     btnCarregarComentarios.addEventListener("click", carregarComentarios);
     btnPDF.addEventListener("click", imprimirPDF);
 
-    function imprimirPDF(){
+  function imprimirPDF(){
 
   const p = String(periodo.value || "").trim();
   const dt = new Date().toLocaleString("pt-BR");
 
-  // aplica os mesmos filtros da tela
   const lot = (filtroLotacao.value || "").trim().toLowerCase();
   const q = (pesquisa.value || "").trim().toLowerCase();
 
@@ -1097,45 +1096,111 @@
     totalHE += Number(r.horas_extras||0);
   });
 
-  // monta tabela limpa
   pdfTableWrap.innerHTML = `
-    <table style="width:100%; border-collapse:collapse; font-size:11px;">
+    <style>
+      .pdf-header{
+        background: linear-gradient(90deg, #2563eb, #1d4ed8);
+        color:#fff;
+        padding:12px;
+        border-radius:8px;
+        text-align:center;
+        margin-bottom:10px;
+      }
+
+      .pdf-header h2{
+        margin:0;
+        font-size:18px;
+      }
+
+      .pdf-header p{
+        margin:2px 0;
+        font-size:12px;
+      }
+
+      .pdf-resumo{
+        background:#f1f5f9;
+        border-left:5px solid #2563eb;
+        padding:10px;
+        margin-bottom:12px;
+        font-size:12px;
+        border-radius:6px;
+      }
+
+      .pdf-table{
+        width:100%;
+        border-collapse:collapse;
+        font-size:11px;
+      }
+
+      .pdf-table th{
+        background:#2563eb;
+        color:#fff;
+        padding:6px;
+        border:1px solid #ddd;
+      }
+
+      .pdf-table td{
+        padding:6px;
+        border:1px solid #ddd;
+      }
+
+      .pdf-table tr:nth-child(even){
+        background:#f9fafb;
+      }
+
+      .pdf-footer{
+        margin-top:25px;
+        text-align:right;
+        font-size:12px;
+      }
+    </style>
+
+    <div class="pdf-header">
+      <h2>RELATÓRIO DE FREQUÊNCIA</h2>
+      <p>Secretaria Municipal de Educação</p>
+      <p><b>Período:</b> ${p}</p>
+      <p><b>Emitido em:</b> ${dt}</p>
+    </div>
+
+    <div class="pdf-resumo">
+      <b>Resumo:</b><br>
+      Funcionários: ${rows.length} • 
+      Faltas: ${totalFaltas} • 
+      Atestado: ${totalComAt} • 
+      HE: ${totalHE}
+    </div>
+
+    <table class="pdf-table">
       <thead>
         <tr>
-          <th style="border:1px solid #000; padding:6px;">Matrícula</th>
-          <th style="border:1px solid #000; padding:6px;">Nome</th>
-          <th style="border:1px solid #000; padding:6px;">Função</th>
-          <th style="border:1px solid #000; padding:6px;">Lotação</th>
-          <th style="border:1px solid #000; padding:6px;">Faltas</th>
-          <th style="border:1px solid #000; padding:6px;">Atestado</th>
-          <th style="border:1px solid #000; padding:6px;">HE</th>
+          <th>Matrícula</th>
+          <th>Nome</th>
+          <th>Função</th>
+          <th>Lotação</th>
+          <th>Faltas</th>
+          <th>Atestado</th>
+          <th>HE</th>
         </tr>
       </thead>
       <tbody>
         ${rows.map(r => `
           <tr>
-            <td style="border:1px solid #000; padding:6px;">${r.matricula||""}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.nome||""}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.funcao||""}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.lotacao||""}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.faltas||0}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.falta_com_atestado||0}</td>
-            <td style="border:1px solid #000; padding:6px;">${r.horas_extras||0}</td>
+            <td>${r.matricula||""}</td>
+            <td>${r.nome||""}</td>
+            <td>${r.funcao||""}</td>
+            <td>${r.lotacao||""}</td>
+            <td>${r.faltas||0}</td>
+            <td>${r.falta_com_atestado||0}</td>
+            <td>${r.horas_extras||0}</td>
           </tr>
         `).join("")}
       </tbody>
     </table>
-  `;
 
-  pdfPeriodoTxt.textContent = `Período: ${p}`;
-  pdfEmitidoEm.textContent = `Emitido em: ${dt}`;
-
-  pdfTotalsBox.innerHTML = `
-    <b>Resumo</b><br>
-    Funcionários: ${rows.length} • 
-    Faltas: ${totalFaltas} • 
-    Atestado: ${totalComAt} • 
-    HE: ${totalHE}
+    <div class="pdf-footer">
+      _______________________________________<br>
+      Assinatura responsável
+    </div>
   `;
 
   printArea.style.display = "block";
