@@ -1071,53 +1071,149 @@
     btnCarregarComentarios.addEventListener("click", carregarComentarios);
 
     function imprimirPDF(){
-      const p = String(periodo.value || "").trim();
-      const dt = new Date().toLocaleString("pt-BR");
 
-      if(pdfPeriodoTxt) pdfPeriodoTxt.textContent = `Período: ${p}`;
-      if(pdfEmitidoEm) pdfEmitidoEm.textContent = `Emitido em: ${dt}`;
+  const p = String(periodo.value || "").trim();
+  const dt = new Date().toLocaleString("pt-BR");
 
-      let totalFaltas = 0;
-      let totalComAt = 0;
-      let totalHE = 0;
+  // FILTRA igual a tela (IMPORTANTE)
+  const lot = (filtroLotacao.value || "").trim().toLowerCase();
+  const q = (pesquisa.value || "").trim().toLowerCase();
 
-      for(const r of lastRows){
-        totalFaltas += Number(r.faltas || 0);
-        totalComAt += Number(r.falta_com_atestado || 0);
-        totalHE += Number(r.horas_extras || 0);
+  const rows = lastRows.filter(r => {
+    const lotOk = !lot || (String(r.lotacao||"").toLowerCase() === lot);
+    const txt = (String(r.nome||"") + " " + String(r.matricula||"")).toLowerCase();
+    const qOk = !q || txt.includes(q);
+    return lotOk && qOk;
+  });
+
+  // totais
+  let totalFaltas = 0;
+  let totalComAt = 0;
+  let totalHE = 0;
+
+  rows.forEach(r=>{
+    totalFaltas += Number(r.faltas||0);
+    totalComAt += Number(r.falta_com_atestado||0);
+    totalHE += Number(r.horas_extras||0);
+  });
+
+  // monta tabela limpa
+  const linhas = rows.map(r => `
+    <tr>
+      <td>${r.matricula||""}</td>
+      <td>${r.nome||""}</td>
+      <td>${r.funcao||""}</td>
+      <td>${r.lotacao||""}</td>
+      <td>${r.faltas||0}</td>
+      <td>${r.falta_com_atestado||0}</td>
+      <td>${r.horas_extras||0}</td>
+    </tr>
+  `).join("");
+
+  const html = `
+  <html>
+  <head>
+    <title>Relatório SEMEC</title>
+    <style>
+      body{
+        font-family: Arial, sans-serif;
+        padding:20px;
+        color:#000;
       }
 
-      if(pdfTotalsBox){
-        pdfTotalsBox.innerHTML = `
-          <b>Resumo do Período</b><br>
-          Total de funcionários: ${lastRows.length} &nbsp;•&nbsp;
-          Total de faltas: ${totalFaltas} &nbsp;•&nbsp;
-          Total com atestado: ${totalComAt} &nbsp;•&nbsp;
-          Total HE: ${totalHE}
-        `;
+      .header{
+        text-align:center;
+        margin-bottom:20px;
       }
 
-      // clona a tabela visível
-      const tableClone = document.getElementById("tabelaRelatorio").cloneNode(true);
-      tableClone.querySelectorAll("button").forEach(b => b.remove());
-      pdfTableWrap.innerHTML = "";
-      pdfTableWrap.appendChild(tableClone);
+      .header h1{
+        margin:0;
+        font-size:20px;
+      }
 
-      printArea.style.display = "block";
-      window.print();
-      printArea.style.display = "none";
-    }
+      .header p{
+        margin:4px 0;
+        font-size:12px;
+      }
 
-    btnPDF.addEventListener("click", imprimirPDF);
+      .box{
+        border:1px solid #000;
+        padding:8px;
+        margin-bottom:10px;
+        font-size:12px;
+      }
 
-    btnSair.addEventListener("click", () => {
-      token = "";
-      localStorage.removeItem("semec_admin_token");
-      ensureLogged();
-      tbody.innerHTML = `<tr><td colspan="12" class="hint">Deslogado. Faça login novamente.</td></tr>`;
-      showMsg("🚪 Você saiu do Admin.", "warn");
-    });
+      table{
+        width:100%;
+        border-collapse:collapse;
+        font-size:11px;
+      }
 
+      th, td{
+        border:1px solid #000;
+        padding:6px;
+        text-align:left;
+      }
+
+      th{
+        background:#f2f2f2;
+      }
+
+      .footer{
+        margin-top:30px;
+        font-size:12px;
+        text-align:right;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="header">
+      <h1>RELATÓRIO DE FREQUÊNCIA</h1>
+      <p>Secretaria Municipal de Educação</p>
+      <p>Período: <b>${p}</b></p>
+      <p>Emitido em: ${dt}</p>
+    </div>
+
+    <div class="box">
+      Total de Funcionários: ${rows.length} |
+      Faltas: ${totalFaltas} |
+      Com Atestado: ${totalComAt} |
+      Horas Extras: ${totalHE}
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Matrícula</th>
+          <th>Nome</th>
+          <th>Função</th>
+          <th>Lotação</th>
+          <th>Faltas</th>
+          <th>Atestado</th>
+          <th>HE</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${linhas}
+      </tbody>
+    </table>
+
+    <div class="footer">
+      _______________________________________<br>
+      Assinatura responsável
+    </div>
+
+  </body>
+  </html>
+  `;
+
+  const win = window.open("", "", "width=900,height=700");
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
     (function init(){
       periodo.value = defaultPeriodo();
       checkApi();
