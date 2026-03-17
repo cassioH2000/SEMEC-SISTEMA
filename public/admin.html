@@ -1071,7 +1071,7 @@
     btnCarregarComentarios.addEventListener("click", carregarComentarios);
     btnPDF.addEventListener("click", imprimirPDF);
 
-  function imprimirPDF(){
+   function imprimirPDF(){
 
   const p = String(periodo.value || "").trim();
   const dt = new Date().toLocaleString("pt-BR");
@@ -1098,108 +1098,158 @@
 
   pdfTableWrap.innerHTML = `
     <style>
+
+      body{
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+
+      .pdf-container{
+        padding:10px;
+      }
+
       .pdf-header{
-        background: linear-gradient(90deg, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, #2563eb, #22c55e);
         color:#fff;
-        padding:12px;
-        border-radius:8px;
+        padding:16px;
+        border-radius:10px;
         text-align:center;
-        margin-bottom:10px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.15);
       }
 
       .pdf-header h2{
         margin:0;
-        font-size:18px;
+        font-size:20px;
+        letter-spacing:1px;
       }
 
       .pdf-header p{
-        margin:2px 0;
+        margin:3px 0;
         font-size:12px;
       }
 
-      .pdf-resumo{
-        background:#f1f5f9;
-        border-left:5px solid #2563eb;
-        padding:10px;
-        margin-bottom:12px;
+      .pdf-info{
+        display:flex;
+        justify-content:space-between;
+        margin:12px 0;
         font-size:12px;
-        border-radius:6px;
+      }
+
+      .cards{
+        display:flex;
+        gap:10px;
+        margin-bottom:12px;
+      }
+
+      .card{
+        flex:1;
+        padding:10px;
+        border-radius:8px;
+        color:#fff;
+        font-size:12px;
+        text-align:center;
+      }
+
+      .card.blue{ background:#2563eb; }
+      .card.green{ background:#22c55e; }
+      .card.orange{ background:#f59e0b; }
+      .card.purple{ background:#7c3aed; }
+
+      .card b{
+        display:block;
+        font-size:16px;
+        margin-top:4px;
       }
 
       .pdf-table{
         width:100%;
         border-collapse:collapse;
         font-size:11px;
+        border-radius:8px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,0.08);
       }
 
       .pdf-table th{
-        background:#2563eb;
+        background:#1e293b;
         color:#fff;
-        padding:6px;
-        border:1px solid #ddd;
+        padding:8px;
+        text-align:left;
       }
 
       .pdf-table td{
-        padding:6px;
-        border:1px solid #ddd;
+        padding:7px;
+        border-bottom:1px solid #eee;
       }
 
       .pdf-table tr:nth-child(even){
-        background:#f9fafb;
+        background:#f8fafc;
       }
 
       .pdf-footer{
-        margin-top:25px;
-        text-align:right;
+        margin-top:30px;
+        display:flex;
+        justify-content:space-between;
         font-size:12px;
       }
+
+      .assinatura{
+        text-align:center;
+        margin-top:40px;
+      }
+
     </style>
 
-    <div class="pdf-header">
-      <h2>RELATÓRIO DE FREQUÊNCIA</h2>
-      <p>Secretaria Municipal de Educação</p>
-      <p><b>Período:</b> ${p}</p>
-      <p><b>Emitido em:</b> ${dt}</p>
-    </div>
+    <div class="pdf-container">
 
-    <div class="pdf-resumo">
-      <b>Resumo:</b><br>
-      Funcionários: ${rows.length} • 
-      Faltas: ${totalFaltas} • 
-      Atestado: ${totalComAt} • 
-      HE: ${totalHE}
-    </div>
+      <div class="pdf-header">
+        <h2>RELATÓRIO DE FREQUÊNCIA</h2>
+        <p>Secretaria Municipal de Educação</p>
+      </div>
 
-    <table class="pdf-table">
-      <thead>
-        <tr>
-          <th>Matrícula</th>
-          <th>Nome</th>
-          <th>Função</th>
-          <th>Lotação</th>
-          <th>Faltas</th>
-          <th>Atestado</th>
-          <th>HE</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map(r => `
+      <div class="pdf-info">
+        <div><b>Período:</b> ${p}</div>
+        <div><b>Emitido:</b> ${dt}</div>
+      </div>
+
+      <div class="cards">
+        <div class="card blue">Funcionários <b>${rows.length}</b></div>
+        <div class="card orange">Faltas <b>${totalFaltas}</b></div>
+        <div class="card green">Atestado <b>${totalComAt}</b></div>
+        <div class="card purple">HE <b>${totalHE}</b></div>
+      </div>
+
+      <table class="pdf-table">
+        <thead>
           <tr>
-            <td>${r.matricula||""}</td>
-            <td>${r.nome||""}</td>
-            <td>${r.funcao||""}</td>
-            <td>${r.lotacao||""}</td>
-            <td>${r.faltas||0}</td>
-            <td>${r.falta_com_atestado||0}</td>
-            <td>${r.horas_extras||0}</td>
+            <th>Matrícula</th>
+            <th>Nome</th>
+            <th>Função</th>
+            <th>Lotação</th>
+            <th>Faltas</th>
+            <th>Atestado</th>
+            <th>HE</th>
           </tr>
-        `).join("")}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${r.matricula||""}</td>
+              <td>${r.nome||""}</td>
+              <td>${r.funcao||""}</td>
+              <td>${r.lotacao||""}</td>
+              <td>${r.faltas||0}</td>
+              <td>${r.falta_com_atestado||0}</td>
+              <td>${r.horas_extras||0}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
 
-    <div class="pdf-footer">
-      _______________________________________<br>
-      Assinatura responsável
+      <div class="assinatura">
+        _______________________________________<br>
+        Assinatura responsável
+      </div>
+
     </div>
   `;
 
@@ -1207,7 +1257,7 @@
   window.print();
   printArea.style.display = "none";
 }
-
+    
     (function init(){
       periodo.value = defaultPeriodo();
       checkApi();
