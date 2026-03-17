@@ -1075,7 +1075,7 @@
   const p = String(periodo.value || "").trim();
   const dt = new Date().toLocaleString("pt-BR");
 
-  // FILTRA igual a tela (IMPORTANTE)
+  // aplica os mesmos filtros da tela
   const lot = (filtroLotacao.value || "").trim().toLowerCase();
   const q = (pesquisa.value || "").trim().toLowerCase();
 
@@ -1086,7 +1086,6 @@
     return lotOk && qOk;
   });
 
-  // totais
   let totalFaltas = 0;
   let totalComAt = 0;
   let totalHE = 0;
@@ -1098,122 +1097,51 @@
   });
 
   // monta tabela limpa
-  const linhas = rows.map(r => `
-    <tr>
-      <td>${r.matricula||""}</td>
-      <td>${r.nome||""}</td>
-      <td>${r.funcao||""}</td>
-      <td>${r.lotacao||""}</td>
-      <td>${r.faltas||0}</td>
-      <td>${r.falta_com_atestado||0}</td>
-      <td>${r.horas_extras||0}</td>
-    </tr>
-  `).join("");
-
-  const html = `
-  <html>
-  <head>
-    <title>Relatório SEMEC</title>
-    <style>
-      body{
-        font-family: Arial, sans-serif;
-        padding:20px;
-        color:#000;
-      }
-
-      .header{
-        text-align:center;
-        margin-bottom:20px;
-      }
-
-      .header h1{
-        margin:0;
-        font-size:20px;
-      }
-
-      .header p{
-        margin:4px 0;
-        font-size:12px;
-      }
-
-      .box{
-        border:1px solid #000;
-        padding:8px;
-        margin-bottom:10px;
-        font-size:12px;
-      }
-
-      table{
-        width:100%;
-        border-collapse:collapse;
-        font-size:11px;
-      }
-
-      th, td{
-        border:1px solid #000;
-        padding:6px;
-        text-align:left;
-      }
-
-      th{
-        background:#f2f2f2;
-      }
-
-      .footer{
-        margin-top:30px;
-        font-size:12px;
-        text-align:right;
-      }
-    </style>
-  </head>
-
-  <body>
-
-    <div class="header">
-      <h1>RELATÓRIO DE FREQUÊNCIA</h1>
-      <p>Secretaria Municipal de Educação</p>
-      <p>Período: <b>${p}</b></p>
-      <p>Emitido em: ${dt}</p>
-    </div>
-
-    <div class="box">
-      Total de Funcionários: ${rows.length} |
-      Faltas: ${totalFaltas} |
-      Com Atestado: ${totalComAt} |
-      Horas Extras: ${totalHE}
-    </div>
-
-    <table>
+  pdfTableWrap.innerHTML = `
+    <table style="width:100%; border-collapse:collapse; font-size:11px;">
       <thead>
         <tr>
-          <th>Matrícula</th>
-          <th>Nome</th>
-          <th>Função</th>
-          <th>Lotação</th>
-          <th>Faltas</th>
-          <th>Atestado</th>
-          <th>HE</th>
+          <th style="border:1px solid #000; padding:6px;">Matrícula</th>
+          <th style="border:1px solid #000; padding:6px;">Nome</th>
+          <th style="border:1px solid #000; padding:6px;">Função</th>
+          <th style="border:1px solid #000; padding:6px;">Lotação</th>
+          <th style="border:1px solid #000; padding:6px;">Faltas</th>
+          <th style="border:1px solid #000; padding:6px;">Atestado</th>
+          <th style="border:1px solid #000; padding:6px;">HE</th>
         </tr>
       </thead>
       <tbody>
-        ${linhas}
+        ${rows.map(r => `
+          <tr>
+            <td style="border:1px solid #000; padding:6px;">${r.matricula||""}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.nome||""}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.funcao||""}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.lotacao||""}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.faltas||0}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.falta_com_atestado||0}</td>
+            <td style="border:1px solid #000; padding:6px;">${r.horas_extras||0}</td>
+          </tr>
+        `).join("")}
       </tbody>
     </table>
-
-    <div class="footer">
-      _______________________________________<br>
-      Assinatura responsável
-    </div>
-
-  </body>
-  </html>
   `;
 
-  const win = window.open("", "", "width=900,height=700");
-  win.document.write(html);
-  win.document.close();
-  win.print();
+  pdfPeriodoTxt.textContent = `Período: ${p}`;
+  pdfEmitidoEm.textContent = `Emitido em: ${dt}`;
+
+  pdfTotalsBox.innerHTML = `
+    <b>Resumo</b><br>
+    Funcionários: ${rows.length} • 
+    Faltas: ${totalFaltas} • 
+    Atestado: ${totalComAt} • 
+    HE: ${totalHE}
+  `;
+
+  printArea.style.display = "block";
+  window.print();
+  printArea.style.display = "none";
 }
+
     (function init(){
       periodo.value = defaultPeriodo();
       checkApi();
