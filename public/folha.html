@@ -176,21 +176,53 @@
     .msg.err{ color:#fecaca; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.08); }
 
     table{
-      width:100%;
-      border-collapse: collapse;
-      font-size:13px;
-      overflow:hidden;
-      border-radius: 14px;
-      border:1px solid var(--border);
-      min-width: 1180px;
-    }
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:top;
-      white-space:nowrap;
-    }
+  width:100%;
+  border-collapse: collapse;
+  font-size:12px;
+  table-layout: fixed;
+  overflow:hidden;
+  border-radius: 14px;
+  border:1px solid var(--border);
+  min-width: 0;
+}
+
+th, td{
+  padding:8px 6px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  vertical-align:top;
+  white-space:normal;
+  word-break:break-word;
+}
+    th:nth-child(1), td:nth-child(1){ width: 90px; }
+th:nth-child(2), td:nth-child(2){ width: 120px; }
+th:nth-child(3), td:nth-child(3){ width: 100px; }
+th:nth-child(4), td:nth-child(4){ width: 170px; }
+th:nth-child(5), td:nth-child(5){ width: 120px; }
+th:nth-child(6), td:nth-child(6){ width: 90px; }
+th:nth-child(7), td:nth-child(7){ width: 70px; }
+th:nth-child(8), td:nth-child(8){ width: 70px; }
+th:nth-child(9), td:nth-child(9){ width: 90px; }
+th:nth-child(10), td:nth-child(10){ width: 60px; }
+th:nth-child(11), td:nth-child(11){ width: 170px; }
+th:nth-child(12), td:nth-child(12){ width: 95px; }
+
+.in-faltas,
+.in-atestado,
+.in-he,
+.in-obs{
+  width:100% !important;
+  min-width:0;
+  font-size:12px;
+  padding:8px 6px;
+}
+
+.btn.small{
+  min-width:auto;
+  width:100%;
+  padding:8px 6px;
+  font-size:12px;
+}
     th{
       background: rgba(255,255,255,0.04);
       color:var(--muted);
@@ -647,11 +679,10 @@
             <td>${escapeHtml(f.vinculo || "")}</td>
             <td>${escapeHtml(f.carga || "")}</td>
 
-            <td><input type="number" min="0" step="1" class="in-faltas" style="width:90px" value="0"></td>
-            <td><input type="number" min="0" step="1" class="in-atestado" style="width:120px" value="0"></td>
-            <td><input type="number" min="0" step="1" class="in-he" style="width:90px" value="0"></td>
-            <td><input type="text" class="in-obs" style="width:260px" placeholder="Observações..."></td>
-
+            <td><input type="number" min="0" step="1" class="in-faltas" value="0"></td>
+            <td><input type="number" min="0" step="1" class="in-atestado" value="0"></td>
+            <td><input type="number" min="0" step="1" class="in-he" value="0"></td>
+            <td><input type="text" class="in-obs" placeholder="Observações..."></td>
             <td>
               <button class="btn small btn-enviar-um" type="button">📤 Enviar</button>
             </td>
