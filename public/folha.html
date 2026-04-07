@@ -566,10 +566,12 @@ th:nth-child(12), td:nth-child(12){ width: 95px; }
     const API_FUNC = "/api/funcionarios";
     const API_SEND = "/api/folha/enviar";
     const API_COMENTARIO = "/api/folha/comentario"; // precisa existir no server.js
+    const API_FOLHA_GET = "/api/folha";
 
     let funcionarios = [];
-    let funcionariosDaLotacao = [];
-
+     let funcionariosDaLotacao = [];
+     let registrosFolha = [];
+    
     function showMsg(el, text, type){
       el.className = "msg " + (type || "");
       el.textContent = text;
@@ -657,6 +659,37 @@ th:nth-child(12), td:nth-child(12){ width: 95px; }
         showMsg(msgBox, "⚠️ Falha ao carregar funcionários (sem conexão).", "err");
       }
     }
+    async function carregarRegistrosFolha(){
+
+  try{
+
+    const periodoAtual = ensurePeriodoVigente();
+
+    const res = await fetch(
+      API_FOLHA_GET +
+      "?periodo=" + periodoAtual +
+      "&lotacao=" + encodeURIComponent(lotacaoSelecionada)
+    );
+
+    const data = await res.json();
+
+    registrosFolha = data.registros || [];
+
+  }catch{
+
+    registrosFolha = [];
+
+  }
+
+}
+
+function getRegistro(matricula){
+
+  return registrosFolha.find(r =>
+    String(r.matricula) === String(matricula)
+  ) || null;
+
+}
 
     function renderTabelaLotacao(lista){
       if(!lista.length){
@@ -668,6 +701,12 @@ th:nth-child(12), td:nth-child(12){ width: 95px; }
         const mat = String(f.matricula || "");
         const lot = getLotacaoFromFuncionario(f);
         const seg = String(f.seguimento || "");
+        const reg = getRegistro(mat);
+
+      const faltas = reg ? reg.faltas : 0;
+      const atestado = reg ? reg.falta_com_atestado : 0;
+      const he = reg ? reg.horas_extras : 0;
+      const obs = reg ? reg.observacoes : "";
 
         return `
           <tr data-mat="${escapeHtml(mat)}">
@@ -679,12 +718,26 @@ th:nth-child(12), td:nth-child(12){ width: 95px; }
             <td>${escapeHtml(f.vinculo || "")}</td>
             <td>${escapeHtml(f.carga || "")}</td>
 
-            <td><input type="number" min="0" step="1" class="in-faltas" value="0"></td>
-            <td><input type="number" min="0" step="1" class="in-atestado" value="0"></td>
-            <td><input type="number" min="0" step="1" class="in-he" value="0"></td>
-            <td><input type="text" class="in-obs" placeholder="Observações..."></td>
-            <td>
-              <button class="btn small btn-enviar-um" type="button">📤 Enviar</button>
+           <td>
+<input type="number" class="in-faltas" value="${faltas}">
+</td>
+
+<td>
+<input type="number" class="in-atestado" value="${atestado}">
+</td>
+
+<td>
+<input type="number" class="in-he" value="${he}">
+</td>
+
+<td>
+<input type="text" class="in-obs" value="${obs}">
+</td>
+<td>
+        
+              <button class="btn small btn-enviar-um" type="button">
+              📤 Enviar
+              </button>
             </td>
           </tr>
         `;
@@ -838,20 +891,21 @@ th:nth-child(12), td:nth-child(12){ width: 95px; }
       btnEnviarTodos.textContent = original;
     }
 
-    function carregarTabelaDaLotacao(){
-      if(!lotacaoSelecionada){
-        hintLotacaoAtual.textContent = "Lotação: —";
-        tbodyLotacao.innerHTML = `<tr><td colspan="12" class="small">Selecione a lotação para carregar.</td></tr>`;
-        return;
-      }
+   async function carregarTabelaDaLotacao(){
 
-      hintLotacaoAtual.textContent = `Lotação: ${lotacaoSelecionada}`;
+  hintLotacaoAtual.textContent =
+    `Lotação: ${lotacaoSelecionada}`;
 
-      funcionariosDaLotacao = funcionarios.filter(f => getLotacaoFromFuncionario(f) === lotacaoSelecionada);
-      renderTabelaLotacao(funcionariosDaLotacao);
+  funcionariosDaLotacao =
+    funcionarios.filter(f =>
+      getLotacaoFromFuncionario(f) === lotacaoSelecionada
+    );
 
-      showMsg(msgBox, `🏫 Lotação selecionada: ${lotacaoSelecionada}`, "ok");
-    }
+  await carregarRegistrosFolha();
+
+  renderTabelaLotacao(funcionariosDaLotacao);
+
+}
 
     // filtro de pesquisa dentro da lotação
     pesquisa.addEventListener("input", () => {
