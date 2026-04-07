@@ -16,8 +16,6 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ================= BANCO =================
-
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -27,9 +25,8 @@ async function dbQuery(text, values = []) {
   return pool.query(text, values);
 }
 
-// ================= TABELAS =================
-
 async function criarTabelas() {
+
   await dbQuery(`
     create table if not exists funcionarios(
       matricula text primary key,
@@ -41,6 +38,7 @@ async function criarTabelas() {
       seguimento text,
       categoria text,
       data_admissao date,
+      obs_fixas text,
       atualizado_em timestamptz default now()
     )
   `);
@@ -69,406 +67,244 @@ async function criarTabelas() {
     )
   `);
 
-  console.log("✅ Banco pronto");
+  console.log("Banco pronto");
 }
 
-criarTabelas().catch((e) => {
-  console.error("Erro ao criar tabelas:", e);
-});
-
-// ================= STATIC =================
+criarTabelas();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 app.use(express.static(path.join(__dirname, "public")));
 
-// ================= HEALTH =================
-
-app.get("/api/health", async (req, res) => {
-  try {
-    await dbQuery("select 1");
-    res.json({ ok: true });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
-});
-
-// ================= LOGIN =================
-
 app.post("/api/login", (req, res) => {
-  const pass = req.body.password;
 
-  if (pass !== ADMIN_PASSWORD) {
-    return res.status(401).json({ ok: false, error: "senha inválida" });
+  if (req.body.password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ ok:false });
   }
 
-  const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
-  res.json({ ok: true, token });
+  const token = jwt.sign(
+    { role:"admin" },
+    JWT_SECRET,
+    { expiresIn:"7d" }
+  );
+
+  res.json({ ok:true, token });
 });
 
-function requireAdmin(req, res, next) {
+function requireAdmin(req,res,next){
+
   const auth = req.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  const token = auth.replace("Bearer ","");
 
-  try {
-    const payload = jwt.verify(token, JWT_SECRET);
+  try{
 
-    if (payload.role !== "admin") throw new Error();
+    jwt.verify(token, JWT_SECRET);
 
     next();
-  } catch {
-    res.status(401).json({ ok: false, error: "token inválido" });
+
+  }catch{
+
+    res.status(401).json({ ok:false });
+
   }
+
 }
 
-// ================= FUNCIONARIOS (FOLHA) =================
+app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
-app.get("/api/funcionarios", async (req, res) => {
-  try {
-    const r = await dbQuery(`
-      select
-        matricula,
-        nome,
-        funcao,
-        vinculo,
-        carga,
-        categoria,
-        data_admissao,
-        coalesce(lotacao,'SEMEC') as lotacao,
-        coalesce(seguimento,'') as seguimento
-      from funcionarios
-      order by nome
-    `);
+  const r = await dbQuery(`
+    select
+      matricula,
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      categoria,
+      data_admissao,
+      obs_fixas,
+      coalesce(lotacao,'SEMEC') as lotacao,
+      coalesce(seguimento,'') as seguimento
+    from funcionarios
+    order by nome
+  `);
 
-    res.json({ ok: true, funcionarios: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
+  res.json({
+    ok:true,
+    funcionarios:r.rows
+  });
+
 });
 
-// ================= ENVIAR FOLHA =================
+app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
-app.post("/api/folha/enviar", async (req, res) => {
-  try {
-    const b = req.body || {};
+  const b = req.body;
 
-    if (!b.periodo || !b.matricula) {
-      return res.status(400).json({
-        ok: false,
-        error: "Período e matrícula são obrigatórios"
-      });
-    }
+  await dbQuery(`
+    insert into funcionarios(
+      matricula,
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      lotacao,
+      seguimento,
+      categoria,
+      data_admissao,
+      obs_fixas
+    )
+    values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 
-    await dbQuery(
-      `
-      insert into folhas(
-        periodo,
-        matricula,
-        faltas,
-        falta_com_atestado,
-        horas_extras,
-        observacoes
-      )
-      values($1,$2,$3,$4,$5,$6)
-      on conflict(periodo,matricula)
-      do update set
-        faltas=excluded.faltas,
-        falta_com_atestado=excluded.falta_com_atestado,
-        horas_extras=excluded.horas_extras,
-        observacoes=excluded.observacoes,
-        atualizado_em=now()
-    `,
-      [
-        b.periodo,
-        b.matricula,
-        Number(b.faltas || 0),
-        Number(b.falta_com_atestado || 0),
-        Number(b.horas_extras || 0),
-        b.observacoes || ""
-      ]
-    );
+    on conflict(matricula)
 
-    res.json({ ok: true });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
+    do update set
+      nome=excluded.nome,
+      funcao=excluded.funcao,
+      vinculo=excluded.vinculo,
+      carga=excluded.carga,
+      lotacao=excluded.lotacao,
+      seguimento=excluded.seguimento,
+      categoria=excluded.categoria,
+      data_admissao=excluded.data_admissao,
+      obs_fixas=excluded.obs_fixas,
+      atualizado_em=now()
+  `,
+  [
+    b.matricula,
+    b.nome,
+    b.funcao,
+    b.vinculo,
+    b.carga,
+    b.lotacao,
+    b.seguimento,
+    b.categoria,
+    b.data_admissao,
+    b.obs_fixas
+  ]);
+
+  res.json({ ok:true });
+
 });
 
-// ================= COMENTARIO GERAL (FOLHA) =================
+app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
 
-app.post("/api/folha/comentario", async (req, res) => {
-  try {
-    const b = req.body || {};
+  const matricula = req.params.matricula;
+  const b = req.body;
 
-    const periodo = String(b.periodo || "").trim();
-    const lotacao = String(b.lotacao || "").trim();
-    const comentario = String(b.comentario || "").trim();
+  const r = await dbQuery(`
+    update funcionarios
+    set
+      nome=$1,
+      funcao=$2,
+      vinculo=$3,
+      carga=$4,
+      lotacao=$5,
+      seguimento=$6,
+      categoria=$7,
+      data_admissao=$8,
+      obs_fixas=$9,
+      atualizado_em=now()
+    where matricula=$10
+    returning *
+  `,
+  [
+    b.nome,
+    b.funcao,
+    b.vinculo,
+    b.carga,
+    b.lotacao,
+    b.seguimento,
+    b.categoria,
+    b.data_admissao,
+    b.obs_fixas,
+    matricula
+  ]);
 
-    if (!periodo) return res.status(400).json({ ok: false, error: "Período obrigatório" });
-    if (!lotacao) return res.status(400).json({ ok: false, error: "Lotação obrigatória" });
-    if (!comentario) return res.status(400).json({ ok: false, error: "Comentário vazio" });
+  res.json({
+    ok:true,
+    funcionario:r.rows[0]
+  });
 
-    await dbQuery(
-      `
-      insert into comentarios_gerais(
-        periodo,
-        lotacao,
-        comentario
-      )
-      values($1,$2,$3)
-    `,
-      [periodo, lotacao, comentario]
-    );
-
-    res.json({ ok: true });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
 });
 
-// ================= ADMIN: FUNCIONARIOS =================
+app.get("/api/admin/mes", requireAdmin, async (req,res)=>{
 
-app.get("/api/admin/funcionarios", requireAdmin, async (req, res) => {
-  try {
-    const r = await dbQuery(`
-      select
-        matricula,
-        nome,
-        funcao,
-        vinculo,
-        carga,
-        categoria,
-        data_admissao,
-        coalesce(lotacao,'SEMEC') as lotacao,
-        coalesce(seguimento,'') as seguimento
-      from funcionarios
-      order by nome
-    `);
+  const periodo = req.query.periodo;
 
-    res.json({ ok: true, funcionarios: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
+  const r = await dbQuery(`
+    select
+      f.matricula,
+      f.nome,
+      f.funcao,
+      f.vinculo,
+      f.carga,
+      f.categoria,
+      f.data_admissao,
+      f.obs_fixas,
+
+      coalesce(f.lotacao,'SEMEC') as lotacao,
+      coalesce(f.seguimento,'') as seguimento,
+
+      coalesce(fl.faltas,0) as faltas,
+      coalesce(fl.falta_com_atestado,0) as falta_com_atestado,
+      coalesce(fl.horas_extras,0) as horas_extras,
+      coalesce(fl.observacoes,'') as observacoes
+
+    from funcionarios f
+
+    left join folhas fl
+      on fl.matricula=f.matricula
+     and fl.periodo=$1
+
+    order by f.nome
+  `,
+  [periodo]);
+
+  res.json({
+    ok:true,
+    registros:r.rows
+  });
+
 });
 
-// ================= ADMIN: CRIAR FUNCIONARIO =================
+app.post("/api/folha/enviar", async (req,res)=>{
 
-app.post("/api/admin/funcionarios", requireAdmin, async (req, res) => {
-  try {
-    const b = req.body || {};
-    const matricula = String(b.matricula || "").trim();
+  const b = req.body;
 
-    if (!matricula) {
-      return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
-    }
+  await dbQuery(`
+    insert into folhas(
+      periodo,
+      matricula,
+      faltas,
+      falta_com_atestado,
+      horas_extras,
+      observacoes
+    )
+    values($1,$2,$3,$4,$5,$6)
 
-    const r = await dbQuery(
-      `
-      insert into funcionarios(
-        matricula,
-        nome,
-        funcao,
-        vinculo,
-        carga,
-        lotacao,
-        seguimento,
-        categoria,
-        data_admissao
-      )
-      values($1,$2,$3,$4,$5,$6,$7,$8,$9)
-      returning *
-    `,
-      [
-        matricula,
-        b.nome || "",
-        b.funcao || "",
-        b.vinculo || "",
-        b.carga || "",
-        b.lotacao || "SEMEC",
-        b.seguimento || "",
-        b.categoria || "",
-        b.data_admissao || null
-      ]
-    );
+    on conflict(periodo,matricula)
 
-    res.json({ ok: true, funcionario: r.rows[0] });
-  } catch (e) {
-    console.log(e);
+    do update set
+      faltas=excluded.faltas,
+      falta_com_atestado=excluded.falta_com_atestado,
+      horas_extras=excluded.horas_extras,
+      observacoes=excluded.observacoes
+  `,
+  [
+    b.periodo,
+    b.matricula,
+    b.faltas,
+    b.falta_com_atestado,
+    b.horas_extras,
+    b.observacoes
+  ]);
 
-    if (String(e.code) === "23505") {
-      return res.status(400).json({ ok: false, error: "Matrícula já cadastrada" });
-    }
+  res.json({ ok:true });
 
-    res.status(500).json({ ok: false, error: "Erro ao criar funcionário" });
-  }
 });
 
-// ================= ADMIN: EDITAR FUNCIONARIO =================
+app.listen(PORT, ()=>{
 
-app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
-  try {
-    const matricula = req.params.matricula;
-    const b = req.body || {};
+  console.log("Servidor rodando");
 
-    const r = await dbQuery(
-      `
-      update funcionarios
-      set
-        nome=$1,
-        funcao=$2,
-        vinculo=$3,
-        carga=$4,
-        lotacao=$5,
-        seguimento=$6,
-        categoria=$7,
-        data_admissao=$8,
-        atualizado_em=now()
-      where matricula=$9
-      returning *
-    `,
-      [
-        b.nome || "",
-        b.funcao || "",
-        b.vinculo || "",
-        b.carga || "",
-        b.lotacao || "SEMEC",
-        b.seguimento || "",
-        b.categoria || "",
-        b.data_admissao || null,
-        matricula
-      ]
-    );
-
-    if (!r.rows.length) {
-      return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
-    }
-
-    res.json({ ok: true, funcionario: r.rows[0] });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "Erro ao editar funcionário" });
-  }
-});
-
-// ================= ADMIN: EXCLUIR FUNCIONARIO =================
-
-app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req, res) => {
-  try {
-    const matricula = String(req.params.matricula || "").trim();
-
-    if (!matricula) {
-      return res.status(400).json({ ok: false, error: "Matrícula obrigatória" });
-    }
-
-    const r = await dbQuery(
-      `
-      delete from funcionarios
-      where matricula = $1
-      returning matricula
-    `,
-      [matricula]
-    );
-
-    if (!r.rows.length) {
-      return res.status(404).json({ ok: false, error: "Funcionário não encontrado" });
-    }
-
-    res.json({ ok: true, matricula });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false, error: "Erro ao excluir funcionário" });
-  }
-});
-
-// ================= ADMIN: RELATORIO DO MES =================
-
-app.get("/api/admin/mes", requireAdmin, async (req, res) => {
-  try {
-    const periodo = String(req.query.periodo || "").trim();
-
-    if (!periodo) {
-      return res.status(400).json({ ok: false, error: "Período obrigatório" });
-    }
-
-    const r = await dbQuery(
-      `
-      select
-        f.matricula,
-        f.nome,
-        f.funcao,
-        f.vinculo,
-        f.carga,
-        f.categoria,
-        f.data_admissao,
-        coalesce(f.lotacao,'SEMEC') as lotacao,
-        coalesce(f.seguimento,'') as seguimento,
-        coalesce(fl.faltas,0) as faltas,
-        coalesce(fl.falta_com_atestado,0) as falta_com_atestado,
-        coalesce(fl.horas_extras,0) as horas_extras,
-        coalesce(fl.observacoes,'') as observacoes
-      from funcionarios f
-      left join folhas fl
-        on fl.matricula = f.matricula
-       and fl.periodo = $1
-      order by f.nome
-    `,
-      [periodo]
-    );
-
-    res.json({ ok: true, registros: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
-});
-
-// ================= ADMIN: LISTAR COMENTARIOS =================
-
-app.get("/api/admin/comentarios", requireAdmin, async (req, res) => {
-  try {
-    const periodo = String(req.query.periodo || "").trim();
-    const lotacao = String(req.query.lotacao || "").trim();
-
-    const where = [];
-    const vals = [];
-
-    if (periodo) {
-      vals.push(periodo);
-      where.push(`periodo = $${vals.length}`);
-    }
-
-    if (lotacao) {
-      vals.push(lotacao);
-      where.push(`lotacao = $${vals.length}`);
-    }
-
-    const sql = `
-      select
-        id,
-        periodo,
-        lotacao,
-        comentario,
-        criado_em
-      from comentarios_gerais
-      ${where.length ? "where " + where.join(" and ") : ""}
-      order by criado_em desc
-      limit 200
-    `;
-
-    const r = await dbQuery(sql, vals);
-
-    res.json({ ok: true, comentarios: r.rows });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ ok: false });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log("🚀 Servidor rodando na porta", PORT);
 });
