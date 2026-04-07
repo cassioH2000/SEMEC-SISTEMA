@@ -68,7 +68,6 @@ async function criarTabelas() {
   `);
 
   console.log("Banco pronto");
-
 }
 
 criarTabelas();
@@ -166,7 +165,7 @@ app.post("/api/folha/enviar", async (req, res) => {
 
   try {
 
-    const b = req.body;
+    const b = req.body || {};
 
     await dbQuery(`
       insert into folhas(
@@ -206,7 +205,6 @@ app.post("/api/folha/enviar", async (req, res) => {
 
 });
 
-
 app.get("/api/folha", async (req, res) => {
 
   try {
@@ -243,12 +241,11 @@ app.get("/api/folha", async (req, res) => {
 
 });
 
-
 app.post("/api/folha/comentario", async (req, res) => {
 
   try {
 
-    const b = req.body;
+    const b = req.body || {};
 
     await dbQuery(`
       insert into comentarios_gerais(
@@ -272,7 +269,6 @@ app.post("/api/folha/comentario", async (req, res) => {
   }
 
 });
-
 
 app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 
@@ -299,9 +295,6 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 
 });
 
-// ================= ADMIN FUNCIONARIOS =================
-
-// listar cadastro
 app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
   const r = await dbQuery(`
@@ -327,11 +320,9 @@ app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
 });
 
-
-// criar funcionario
 app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
-  const b = req.body;
+  const b = req.body || {};
 
   await dbQuery(`
     insert into funcionarios(
@@ -349,14 +340,14 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
     values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
   `,[
     b.matricula,
-    b.nome,
-    b.funcao,
-    b.vinculo,
-    b.carga,
-    b.lotacao,
-    b.seguimento,
-    b.categoria,
-    b.data_admissao,
+    b.nome || "",
+    b.funcao || "",
+    b.vinculo || "",
+    b.carga || "",
+    b.lotacao || "SEMEC",
+    b.seguimento || "",
+    b.categoria || "",
+    b.data_admissao || null,
     b.obs_fixas || ""
   ]);
 
@@ -364,46 +355,52 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
 });
 
-
-// editar funcionario
 app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
 
-  const b = req.body;
-  const matricula = req.params.matricula;
+  try{
 
-  await dbQuery(`
-    update funcionarios
-    set
-      nome=$1,
-      funcao=$2,
-      vinculo=$3,
-      carga=$4,
-      lotacao=$5,
-      seguimento=$6,
-      categoria=$7,
-      data_admissao=$8,
-      obs_fixas=$9,
-      atualizado_em=now()
-    where matricula=$10
-  `,[
-    b.nome,
-    b.funcao,
-    b.vinculo,
-    b.carga,
-    b.lotacao,
-    b.seguimento,
-    b.categoria,
-    b.data_admissao,
-    b.obs_fixas || "",
-    matricula
-  ]);
+    const b = req.body || {};
+    const matricula = req.params.matricula;
 
-  res.json({ ok:true });
+    await dbQuery(`
+      update funcionarios
+      set
+        nome=$1,
+        funcao=$2,
+        vinculo=$3,
+        carga=$4,
+        lotacao=$5,
+        seguimento=$6,
+        categoria=$7,
+        data_admissao=$8,
+        obs_fixas=$9,
+        atualizado_em=now()
+      where matricula=$10
+    `,[
+      b.nome || "",
+      b.funcao || "",
+      b.vinculo || "",
+      b.carga || "",
+      b.lotacao || "SEMEC",
+      b.seguimento || "",
+      b.categoria || "",
+      b.data_admissao || null,
+      b.obs_fixas || "",
+      matricula
+    ]);
+
+    res.json({ ok:true });
+
+  }catch(e){
+
+    console.log("erro editar", e);
+
+    res.status(500).json({ ok:false });
+
+  }
 
 });
 
-
-// excluir funcionario
 app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
 
   await dbQuery(`
