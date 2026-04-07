@@ -299,6 +299,121 @@ app.get("/api/admin/mes", requireAdmin, async (req, res) => {
 
 });
 
+// ================= ADMIN FUNCIONARIOS =================
+
+// listar cadastro
+app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
+
+  const r = await dbQuery(`
+    select
+      matricula,
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      categoria,
+      data_admissao,
+      obs_fixas,
+      coalesce(lotacao,'SEMEC') as lotacao,
+      coalesce(seguimento,'') as seguimento
+    from funcionarios
+    order by nome
+  `);
+
+  res.json({
+    ok:true,
+    funcionarios:r.rows
+  });
+
+});
+
+
+// criar funcionario
+app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
+
+  const b = req.body;
+
+  await dbQuery(`
+    insert into funcionarios(
+      matricula,
+      nome,
+      funcao,
+      vinculo,
+      carga,
+      lotacao,
+      seguimento,
+      categoria,
+      data_admissao,
+      obs_fixas
+    )
+    values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+  `,[
+    b.matricula,
+    b.nome,
+    b.funcao,
+    b.vinculo,
+    b.carga,
+    b.lotacao,
+    b.seguimento,
+    b.categoria,
+    b.data_admissao,
+    b.obs_fixas || ""
+  ]);
+
+  res.json({ ok:true });
+
+});
+
+
+// editar funcionario
+app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
+
+  const b = req.body;
+  const matricula = req.params.matricula;
+
+  await dbQuery(`
+    update funcionarios
+    set
+      nome=$1,
+      funcao=$2,
+      vinculo=$3,
+      carga=$4,
+      lotacao=$5,
+      seguimento=$6,
+      categoria=$7,
+      data_admissao=$8,
+      obs_fixas=$9,
+      atualizado_em=now()
+    where matricula=$10
+  `,[
+    b.nome,
+    b.funcao,
+    b.vinculo,
+    b.carga,
+    b.lotacao,
+    b.seguimento,
+    b.categoria,
+    b.data_admissao,
+    b.obs_fixas || "",
+    matricula
+  ]);
+
+  res.json({ ok:true });
+
+});
+
+
+// excluir funcionario
+app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
+
+  await dbQuery(`
+    delete from funcionarios
+    where matricula=$1
+  `,[req.params.matricula]);
+
+  res.json({ ok:true });
+
+});
 
 app.listen(PORT, () => {
 
