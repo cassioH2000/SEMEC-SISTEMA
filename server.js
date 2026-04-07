@@ -16,6 +16,8 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// ================= BANCO =================
+
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -24,6 +26,8 @@ const pool = new Pool({
 async function dbQuery(text, values = []) {
   return pool.query(text, values);
 }
+
+// ================= TABELAS =================
 
 async function criarTabelas() {
 
@@ -67,19 +71,25 @@ async function criarTabelas() {
     )
   `);
 
-  console.log("Banco pronto");
+  console.log("✅ Banco pronto");
 }
 
-criarTabelas();
+criarTabelas().catch(console.error);
+
+// ================= STATIC =================
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
 
+// ================= LOGIN =================
+
 app.post("/api/login", (req, res) => {
 
-  if (req.body.password !== ADMIN_PASSWORD) {
+  const pass = req.body.password;
+
+  if (pass !== ADMIN_PASSWORD) {
     return res.status(401).json({ ok:false });
   }
 
@@ -90,16 +100,19 @@ app.post("/api/login", (req, res) => {
   );
 
   res.json({ ok:true, token });
+
 });
 
 function requireAdmin(req,res,next){
 
   const auth = req.headers.authorization || "";
-  const token = auth.replace("Bearer ","");
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
 
   try{
 
-    jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET);
+
+    if(payload.role !== "admin") throw new Error();
 
     next();
 
@@ -110,6 +123,8 @@ function requireAdmin(req,res,next){
   }
 
 }
+
+// ================= FUNCIONARIOS =================
 
 app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
@@ -136,12 +151,26 @@ app.get("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
 });
 
+// ================= CRIAR FUNCIONARIO =================
+
 app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
 
-  const b = req.body;
+  const b = req.body || {};
+  const matricula = String(b.matricula || "").trim();
 
-  await dbQuery(`
+  if(!matricula){
+
+    return res.status(400).json({
+      ok:false,
+      error:"Matrícula obrigatória"
+    });
+
+  }
+
+  const r = await dbQuery(`
+
     insert into funcionarios(
+
       matricula,
       nome,
       funcao,
@@ -152,12 +181,15 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
       categoria,
       data_admissao,
       obs_fixas
+
     )
+
     values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 
     on conflict(matricula)
 
     do update set
+
       nome=excluded.nome,
       funcao=excluded.funcao,
       vinculo=excluded.vinculo,
@@ -168,32 +200,43 @@ app.post("/api/admin/funcionarios", requireAdmin, async (req,res)=>{
       data_admissao=excluded.data_admissao,
       obs_fixas=excluded.obs_fixas,
       atualizado_em=now()
+
+    returning *
+
   `,
   [
-    b.matricula,
-    b.nome,
-    b.funcao,
-    b.vinculo,
-    b.carga,
-    b.lotacao,
-    b.seguimento,
-    b.categoria,
-    b.data_admissao,
-    b.obs_fixas
+    matricula,
+    b.nome || "",
+    b.funcao || "",
+    b.vinculo || "",
+    b.carga || "",
+    b.lotacao || "SEMEC",
+    b.seguimento || "",
+    b.categoria || "",
+    b.data_admissao || null,
+    b.obs_fixas || ""
   ]);
 
-  res.json({ ok:true });
+  res.json({
+    ok:true,
+    funcionario:r.rows[0]
+  });
 
 });
+
+// ================= EDITAR FUNCIONARIO =================
 
 app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
 
   const matricula = req.params.matricula;
-  const b = req.body;
+  const b = req.body || {};
 
   const r = await dbQuery(`
+
     update funcionarios
+
     set
+
       nome=$1,
       funcao=$2,
       vinculo=$3,
@@ -204,19 +247,22 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
       data_admissao=$8,
       obs_fixas=$9,
       atualizado_em=now()
+
     where matricula=$10
+
     returning *
+
   `,
   [
-    b.nome,
-    b.funcao,
-    b.vinculo,
-    b.carga,
-    b.lotacao,
-    b.seguimento,
-    b.categoria,
-    b.data_admissao,
-    b.obs_fixas,
+    b.nome || "",
+    b.funcao || "",
+    b.vinculo || "",
+    b.carga || "",
+    b.lotacao || "SEMEC",
+    b.seguimento || "",
+    b.categoria || "",
+    b.data_admissao || null,
+    b.obs_fixas || "",
     matricula
   ]);
 
@@ -227,12 +273,86 @@ app.put("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
 
 });
 
-app.get("/api/admin/mes", requireAdmin, async (req,res)=>{
+// ================= EXCLUIR =================
 
-  const periodo = req.query.periodo;
+app.delete("/api/admin/funcionarios/:matricula", requireAdmin, async (req,res)=>{
+
+  const matricula = String(req.params.matricula || "").trim();
 
   const r = await dbQuery(`
+
+    delete from funcionarios
+
+    where matricula=$1
+
+    returning matricula
+
+  `,
+  [matricula]);
+
+  res.json({
+    ok:true
+  });
+
+});
+
+// ================= ENVIAR FOLHA =================
+
+app.post("/api/folha/enviar", async (req,res)=>{
+
+  const b = req.body || {};
+
+  await dbQuery(`
+
+    insert into folhas(
+
+      periodo,
+      matricula,
+      faltas,
+      falta_com_atestado,
+      horas_extras,
+      observacoes
+
+    )
+
+    values($1,$2,$3,$4,$5,$6)
+
+    on conflict(periodo,matricula)
+
+    do update set
+
+      faltas=excluded.faltas,
+      falta_com_atestado=excluded.falta_com_atestado,
+      horas_extras=excluded.horas_extras,
+      observacoes=excluded.observacoes,
+      atualizado_em=now()
+
+  `,
+  [
+    b.periodo,
+    b.matricula,
+    Number(b.faltas || 0),
+    Number(b.falta_com_atestado || 0),
+    Number(b.horas_extras || 0),
+    b.observacoes || ""
+  ]);
+
+  res.json({
+    ok:true
+  });
+
+});
+
+// ================= RELATORIO MES =================
+
+app.get("/api/admin/mes", requireAdmin, async (req,res)=>{
+
+  const periodo = String(req.query.periodo || "").trim();
+
+  const r = await dbQuery(`
+
     select
+
       f.matricula,
       f.nome,
       f.funcao,
@@ -253,10 +373,12 @@ app.get("/api/admin/mes", requireAdmin, async (req,res)=>{
     from funcionarios f
 
     left join folhas fl
+
       on fl.matricula=f.matricula
      and fl.periodo=$1
 
     order by f.nome
+
   `,
   [periodo]);
 
@@ -267,44 +389,59 @@ app.get("/api/admin/mes", requireAdmin, async (req,res)=>{
 
 });
 
-app.post("/api/folha/enviar", async (req,res)=>{
+// ================= COMENTARIOS =================
 
-  const b = req.body;
+app.get("/api/admin/comentarios", requireAdmin, async (req,res)=>{
 
-  await dbQuery(`
-    insert into folhas(
+  const periodo = String(req.query.periodo || "").trim();
+  const lotacao = String(req.query.lotacao || "").trim();
+
+  const where = [];
+  const vals = [];
+
+  if(periodo){
+
+    vals.push(periodo);
+
+    where.push(`periodo=$${vals.length}`);
+
+  }
+
+  if(lotacao){
+
+    vals.push(lotacao);
+
+    where.push(`lotacao=$${vals.length}`);
+
+  }
+
+  const r = await dbQuery(`
+
+    select
+      id,
       periodo,
-      matricula,
-      faltas,
-      falta_com_atestado,
-      horas_extras,
-      observacoes
-    )
-    values($1,$2,$3,$4,$5,$6)
+      lotacao,
+      comentario,
+      criado_em
 
-    on conflict(periodo,matricula)
+    from comentarios_gerais
 
-    do update set
-      faltas=excluded.faltas,
-      falta_com_atestado=excluded.falta_com_atestado,
-      horas_extras=excluded.horas_extras,
-      observacoes=excluded.observacoes
+    ${where.length ? "where " + where.join(" and ") : ""}
+
+    order by criado_em desc
+
   `,
-  [
-    b.periodo,
-    b.matricula,
-    b.faltas,
-    b.falta_com_atestado,
-    b.horas_extras,
-    b.observacoes
-  ]);
+  vals);
 
-  res.json({ ok:true });
+  res.json({
+    ok:true,
+    comentarios:r.rows
+  });
 
 });
 
 app.listen(PORT, ()=>{
 
-  console.log("Servidor rodando");
+  console.log("🚀 Servidor rodando");
 
 });
