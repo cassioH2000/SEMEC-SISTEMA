@@ -367,6 +367,11 @@
               <label for="e_obs">Obs</label>
               <textarea id="e_obs" placeholder="Observações..."></textarea>
             </div>
+
+            <div style="margin-top:10px;">
+              <label for="e_obs_fixas">Obs Fixas</label>
+              <textarea id="e_obs_fixas" placeholder="Observações fixas..."></textarea>
+            </div>
           </div>
         </div>
 
@@ -433,6 +438,7 @@
             <button class="btn secondary" id="btnCarregarCadastro" type="button">👥 Carregar cadastro</button>
             <button class="btn secondary" id="btnAdicionar" type="button">➕ Adicionar funcionário</button>
             <button class="btn secondary" id="btnPDF" type="button">🖨️ Imprimir/PDF</button>
+            <button class="btn secondary" id="btnExcel" type="button">📊 Excel</button>
             <button class="btn danger" id="btnSair" type="button">🚪 Sair</button>
           </div>
 
@@ -474,11 +480,12 @@
                   <th>Com atestado</th>
                   <th>HE</th>
                   <th>Obs</th>
+                  <th>Obs Fixas</th>
                   <th>Ações</th>
                 </tr>
               </thead>
               <tbody id="tbody">
-                <tr><td colspan="12" class="hint">Carregue um mês para visualizar.</td></tr>
+                <tr><td colspan="14" class="hint">Carregue um mês para visualizar.</td></tr>
               </tbody>
             </table>
           </div>
@@ -568,6 +575,7 @@
     const e_faltas = $("e_faltas");
     const e_falta_com_atestado = $("e_falta_com_atestado");
     const e_obs = $("e_obs");
+    const e_obs_fixas = $("e_obs_fixas");
 
     const btnSalvarEdicao = $("btnSalvarEdicao");
     const btnCancelarEdicao = $("btnCancelarEdicao");
@@ -585,6 +593,7 @@
     const btnCarregarCadastro = $("btnCarregarCadastro");
     const btnAdicionar = $("btnAdicionar");
     const btnPDF = $("btnPDF");
+    const btnExcel = $("btnExcel");
     const btnSair = $("btnSair");
 
     const msgBox = $("msgBox");
@@ -728,12 +737,13 @@
         const faltas = Number(r.faltas ?? 0);
         const he = Number(r.horas_extras ?? 0);
         const obs = String(r.observacoes ?? "").trim();
+        const obsFixas = String(r.obs_fixas ?? "").trim();
         const comAt = Number(r.falta_com_atestado ?? 0);
 
         sumFaltas += faltas;
         sumHE += he;
 
-        if(faltas > 0 || comAt > 0 || he > 0 || obs) comFolha++;
+        if(faltas > 0 || comAt > 0 || he > 0 || obs || obsFixas) comFolha++;
       }
 
       kpiComFolha.textContent = String(comFolha);
@@ -748,7 +758,7 @@
 
     function renderTable(rows){
       if(!rows.length){
-        tbody.innerHTML = `<tr><td colspan="12" class="hint">Nenhum registro.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="hint">Nenhum registro.</td></tr>`;
         return;
       }
 
@@ -767,6 +777,7 @@
           <td>${Number(r.falta_com_atestado ?? 0)}</td>
           <td>${Number(r.horas_extras ?? 0)}</td>
           <td title="${escapeHtml(r.observacoes||"")}">${escapeHtml((r.observacoes||"").slice(0,40))}${(r.observacoes||"").length>40?"…":""}</td>
+          <td title="${escapeHtml(r.obs_fixas||"")}">${escapeHtml((r.obs_fixas||"").slice(0,40))}${(r.obs_fixas||"").length>40?"…":""}</td>
           <td style="display:flex; gap:8px;">
             <button class="btn small secondary" data-act="edit" data-mat="${escapeHtml(r.matricula||"")}">✏️ Editar</button>
             <button class="btn small danger" data-act="del" data-mat="${escapeHtml(r.matricula||"")}">🗑️ Excluir</button>
@@ -827,7 +838,7 @@
         lastRows = (j.funcionarios || []).map(x => ({
           ...x,
           // no modo cadastro não tem folha, mas mantém colunas
-          faltas: 0, falta_com_atestado: 0, horas_extras: 0, observacoes: ""
+          faltas: 0, falta_com_atestado: 0, horas_extras: 0, observacoes: "", obs_fixas: x.obs_fixas || ""
         }));
 
         buildLotacaoOptions(lastRows);
@@ -869,6 +880,7 @@
         e_falta_com_atestado.value = "0";
         e_he.value = "0";
         e_obs.value = "";
+        e_obs_fixas.value = "";
         e_categoria.value = "";
         e_admissao.value = "";
         return;
@@ -893,6 +905,7 @@
       e_falta_com_atestado.value = String(row?.falta_com_atestado ?? 0);
       e_he.value = String(row?.horas_extras ?? 0);
       e_obs.value = String(row?.observacoes ?? "");
+      e_obs_fixas.value = String(row?.obs_fixas ?? "");
     }
 
     function closeEditModal(){
@@ -928,6 +941,7 @@
           carga: String(e_carga.value || "").trim(),
           categoria: String(e_categoria.value || "").trim(),
           data_admissao: String(e_admissao.value || "").trim(),
+          obs_fixas: String(e_obs_fixas.value || "").trim(),
         };
 
         // 1) salva cadastro (POST se adicionar / PUT se editar)
@@ -968,7 +982,8 @@
           faltas: Number(e_faltas.value || 0),
           falta_com_atestado: Number(e_falta_com_atestado.value || 0),
           horas_extras: Number(e_he.value || 0),
-          observacoes: String(e_obs.value || "").trim()
+          observacoes: String(e_obs.value || "").trim(),
+          obs_fixas: String(e_obs_fixas.value || "").trim()
         };
 
         const r2 = await fetch(API_ENVIAR_FOLHA, {
@@ -1108,13 +1123,67 @@
       printArea.style.display = "none";
     }
 
+
+    function exportarExcel(){
+      if(!lastRows.length){
+        showMsg("Nenhum dado para exportar.", "warn");
+        return;
+      }
+
+      const linhasFiltradas = lastRows.filter(r => {
+        const lot = (filtroLotacao.value || "").trim().toLowerCase();
+        const q = (pesquisa.value || "").trim().toLowerCase();
+        const lotOk = !lot || (String(r.lotacao||"").toLowerCase() === lot);
+        const txt = (String(r.nome||"") + " " + String(r.matricula||"")).toLowerCase();
+        const qOk = !q || txt.includes(q);
+        return lotOk && qOk;
+      });
+
+      let csv = "\ufeff";
+      csv += [
+        "Matricula","Lotacao","Seguimento","Nome","Funcao","Vinculo","Carga","Categoria",
+        "Admissao","Faltas","Com atestado","HE","Obs","Obs Fixas"
+      ].join(";") + "\n";
+
+      for(const r of linhasFiltradas){
+        csv += [
+          r.matricula ?? "",
+          r.lotacao ?? "",
+          r.seguimento ?? "",
+          r.nome ?? "",
+          r.funcao ?? "",
+          r.vinculo ?? "",
+          r.carga ?? "",
+          r.categoria ?? "",
+          formatarData(r.data_admissao),
+          Number(r.faltas ?? 0),
+          Number(r.falta_com_atestado ?? 0),
+          Number(r.horas_extras ?? 0),
+          `"${String(r.observacoes || "").replace(/"/g, '""')}"`,
+          `"${String(r.obs_fixas || "").replace(/"/g, '""')}"`
+        ].join(";") + "\n";
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `relatorio_semec_${String(periodo.value || "sem_periodo")}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    btnExcel.addEventListener("click", exportarExcel);
+
     btnPDF.addEventListener("click", imprimirPDF);
 
     btnSair.addEventListener("click", () => {
       token = "";
       localStorage.removeItem("semec_admin_token");
       ensureLogged();
-      tbody.innerHTML = `<tr><td colspan="12" class="hint">Deslogado. Faça login novamente.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="14" class="hint">Deslogado. Faça login novamente.</td></tr>`;
       showMsg("🚪 Você saiu do Admin.", "warn");
     });
 
@@ -1134,7 +1203,6 @@
   </script>
 </body>
 </html>
-
 
 
 
