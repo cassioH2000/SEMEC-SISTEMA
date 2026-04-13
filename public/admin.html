@@ -436,6 +436,42 @@
               <input id="pesquisa" placeholder="Digite para filtrar..." />
             </div>
           </div>
+          <!-- HISTORICO -->
+<div class="card">
+
+  <div class="head">
+    <h2>Histórico do Funcionário</h2>
+    <span>Buscar de um mês até outro mês</span>
+  </div>
+
+  <div class="content">
+
+    <div class="row">
+
+      <div style="min-width:200px;">
+        <label>Matrícula</label>
+        <input id="histMatricula" placeholder="Digite a matrícula">
+      </div>
+
+      <div>
+        <label>De</label>
+        <input type="month" id="histInicio">
+      </div>
+
+      <div>
+        <label>Até</label>
+        <input type="month" id="histFim">
+      </div>
+
+      <button class="btn" id="btnBuscarHistorico">
+        🔎 Buscar histórico
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 
           <div class="row" style="margin-top:12px;">
             <button class="btn" id="btnCarregarMes" type="button">📅 Carregar mês</button>
@@ -592,6 +628,10 @@
     const periodo = $("periodo");
     const filtroLotacao = $("filtroLotacao");
     const pesquisa = $("pesquisa");
+    const histMatricula = $("histMatricula");
+    const histInicio = $("histInicio");
+    const histFim = $("histFim");
+    const btnBuscarHistorico = $("btnBuscarHistorico");
 
     const btnCarregarMes = $("btnCarregarMes");
     const btnCarregarCadastro = $("btnCarregarCadastro");
@@ -1180,6 +1220,65 @@
     }
 
     btnExcel.addEventListener("click", exportarExcel);
+    btnBuscarHistorico.addEventListener("click", buscarHistorico);
+
+async function buscarHistorico(){
+
+  if(!ensureLogged()) return;
+
+  const matricula = histMatricula.value.trim();
+  const inicio = histInicio.value;
+  const fim = histFim.value;
+
+  if(!matricula || !inicio || !fim){
+
+    showMsg("Preencha matrícula e período", "warn");
+    return;
+
+  }
+
+  try{
+
+    const url =
+    "/api/admin/historico?matricula="
+    + encodeURIComponent(matricula)
+    + "&inicio=" + inicio
+    + "&fim=" + fim;
+
+    const r = await fetch(url,{
+      headers:{ ...authHeaders() }
+    });
+
+    const j = await r.json();
+
+    if(!j.ok){
+
+      showMsg("Erro ao buscar histórico","err");
+      return;
+
+    }
+
+    lastRows = j.registros;
+
+    tableTitle.textContent =
+    "Histórico do funcionário";
+
+    tableSubtitle.textContent =
+    matricula + " • " + inicio + " até " + fim;
+
+    buildLotacaoOptions(lastRows);
+
+    applyFiltersAndRender();
+
+    showMsg("Histórico carregado","ok");
+
+  }catch{
+
+    showMsg("Erro de conexão","err");
+
+  }
+
+}
 
     btnPDF.addEventListener("click", imprimirPDF);
 
