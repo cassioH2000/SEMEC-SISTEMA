@@ -160,6 +160,72 @@ app.get("/api/funcionarios", async (req, res) => {
   }
 
 });
+app.get("/api/admin/historico", requireAdmin, async (req,res)=>{
+
+  try{
+
+    const matricula = req.query.matricula;
+    const inicio = req.query.inicio;
+    const fim = req.query.fim;
+
+    const r = await dbQuery(`
+
+      select
+        f.matricula,
+        f.nome,
+        f.funcao,
+        f.vinculo,
+        f.carga,
+        f.lotacao,
+        f.seguimento,
+        f.categoria,
+        f.data_admissao,
+        f.obs_fixas,
+
+        fl.periodo,
+        coalesce(fl.faltas,0) faltas,
+        coalesce(fl.falta_com_atestado,0) falta_com_atestado,
+        coalesce(fl.horas_extras,0) horas_extras,
+        coalesce(fl.observacoes,'') observacoes
+
+      from funcionarios f
+
+      left join folhas fl
+        on fl.matricula = f.matricula
+
+      where f.matricula = $1
+      and fl.periodo between $2 and $3
+
+      order by fl.periodo
+
+    `,[
+
+      matricula,
+      inicio,
+      fim
+
+    ]);
+
+    res.json({
+
+      ok:true,
+      registros:r.rows
+
+    });
+
+  }catch(e){
+
+    console.log("erro historico", e);
+
+    res.status(500).json({
+
+      ok:false
+
+    });
+
+  }
+
+});
 
 app.post("/api/folha/enviar", async (req, res) => {
 
